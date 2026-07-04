@@ -1,0 +1,62 @@
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
+
+export async function GET() {
+  const { data, error } = await supabaseAdmin
+    .from('wishes')
+    .select('*')
+    .order('submitted_at', { ascending: false });
+
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  const mapped = data.map((w) => ({
+    name: w.name,
+    message: w.message,
+    photo: w.photo_url,
+    submittedAt: w.submitted_at,
+  }));
+  return Response.json(mapped);
+}
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    if (!body.name || !body.message) {
+      return Response.json({ ok: false, error: 'Name and message are required.' }, { status: 400 });
+    }
+    if (body.photo && body.photo.length > 3_000_000) {
+      return Response.json({ ok: false, error: 'Photo is too large.' }, { status: 400 });
+    }
+
+    let photoUrl = null;
+    if (body.photo) {
+      const matches = body.photo.match(/^data:(image\/\w+);base64,(.+)$/);
+      if (matches) {
+        const mimeType = matches[1];
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+        const ext = mimeType.split('/')[1];
+        const fileName = `wish-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+        const { error: uploadError } = await supabaseAdmin.storage
+          .from('wish-photos')
+          .upload(fileName, buffer, { contentType: mimeType });
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabaseAdmin.storage
+          .from('wish-photos')
+          .getPublicUrl(fileName);
+        photoUrl = publicUrlData.publicUrl;
+      }
+    }
+
+    const { error } = await supabaseAdmin.from('wishes').insert({
+      name: String(body.name).slice(0, 80),
+      message: String(body.message).slice(0, 600),
+      photo_url: photoUrl,
+    });
+    if (error) throw error;
+    return Response.json({ ok: true });
+  } catch (e) {
+    return Response.json({ ok: false, error: e.message }, { status: 500 });
+  }
+}
