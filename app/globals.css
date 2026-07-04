@@ -521,6 +521,102 @@ table.rsvp-table td{ color:var(--ink); }
 .wish-name{ font-size:13px; color:var(--gold-bright); font-weight:500; }
 .wish-date{ font-size:11px; color:var(--muted); }
 
+/* ---------- ADMIN PANEL ---------- */
+.admin-tabs{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  border-bottom:1px solid var(--line);
+  padding-bottom:0;
+}
+.admin-tab{
+  background:none;
+  border:none;
+  border-bottom:2px solid transparent;
+  color:var(--muted);
+  padding:10px 4px;
+  margin-right:14px;
+  font-size:13.5px;
+  font-weight:500;
+  cursor:pointer;
+}
+.admin-tab:hover{ color:var(--gold-bright); }
+.admin-tab.active{ color:var(--gold-bright); border-bottom-color:var(--gold-bright); }
+
+.admin-list{ display:flex; flex-direction:column; gap:14px; }
+.admin-item{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  background:var(--bg-panel);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:16px;
+  flex-wrap:wrap;
+}
+.admin-item-photo{
+  width:72px;
+  height:72px;
+  object-fit:cover;
+  border-radius:4px;
+  border:1px solid var(--line);
+  flex:0 0 auto;
+}
+.admin-item-body{ flex:1; min-width:180px; }
+.admin-item-head{ display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+.admin-item-body p{ margin:0 0 4px; font-size:14px; color:var(--ink); }
+.admin-item-body p.si{ font-family:'Noto Serif Sinhala',serif; color:var(--muted); font-size:13.5px; }
+.admin-item-meta{ font-size:11.5px; color:var(--muted); }
+.admin-item-actions{ display:flex; gap:8px; flex:0 0 auto; align-items:flex-start; flex-wrap:wrap; }
+
+.badge{
+  font-size:10.5px;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+  padding:3px 9px;
+  border-radius:12px;
+  border:1px solid var(--line);
+}
+.badge-approved{ color:#5f8f5a; border-color:#5f8f5a; }
+.badge-pending{ color:var(--gold-bright); border-color:var(--gold-bright); }
+
+.btn-small{
+  padding:7px 14px;
+  font-size:12.5px;
+  border-radius:4px;
+  border:1px solid var(--line);
+  background:var(--bg-panel-2);
+  color:var(--ink);
+  cursor:pointer;
+}
+.btn-small:hover{ border-color:var(--gold); }
+.btn-approve{ color:#5f8f5a; border-color:#5f8f5a; }
+.btn-delete{ color:var(--rose); border-color:var(--rose); }
+
+.admin-edit-form{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  width:100%;
+}
+.admin-edit-form input,
+.admin-edit-form textarea{
+  width:100%;
+  background:var(--bg-panel-2);
+  border:1px solid var(--line);
+  color:var(--ink);
+  padding:9px 12px;
+  border-radius:4px;
+  font-size:13.5px;
+  font-family:'Poppins',sans-serif;
+}
+.admin-edit-form textarea{ min-height:60px; }
+.admin-edit-form label{
+  font-size:12px;
+  color:var(--gold-bright);
+  margin-top:6px;
+}
+
 @media (max-width:560px){
   .event-card{ gap:14px; }
   .event-index{ flex:0 0 44px; height:44px; font-size:16px; }

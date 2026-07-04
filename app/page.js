@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-// Year assumed 2026 based on the schedule you provided.
-const events = [
+// Fallback data — shown until /api/schedule and /api/settings load, or if tables are empty.
+const DEFAULT_EVENTS = [
   { en: 'Invitation to the Auspicious Ceremony', si: 'නැකතට ආරාධනා කිරීම', date: '2026-07-23T10:52:00', dirEn: 'East', dirSi: 'නැගෙනහිර' },
   { en: 'Traditional Oil Stove Ceremony', si: 'තෙල් වළං ලිප තැබීම', date: '2026-09-11T09:32:00', dirEn: 'North', dirSi: 'උතුර' },
   { en: 'Traditional Dining Table Ritual', si: 'කෑම මේසය ඉදුල් කිරීම', date: '2026-09-13T11:52:00', dirEn: 'South', dirSi: 'දකුණ' },
@@ -20,7 +20,19 @@ const events = [
   { en: 'Couple Arrives Home — Second Day', si: 'දෙවන දිනයේ නිවසට පැමිණීම', date: '2026-09-19T18:22:00', dirEn: 'North', dirSi: 'උතුර' },
 ];
 
-const HERO_TARGET = new Date('2026-09-16T09:24:00').getTime();
+const DEFAULT_SETTINGS = {
+  groomName: 'Chathura',
+  brideName: 'Lakmini',
+  groomNameSi: 'චතුර',
+  brideNameSi: 'ලක්මිණි',
+  taglineEn: 'Two families, one auspicious hour, a lifetime that begins on the poruwa.',
+  taglineSi: 'සියලු නෑ මිතුරන් සමඟ අප දෙදෙනාගේ විවාහ මංගල්‍යයට සහභාගී වන ලෙස කාරුණිකව ආරාධනා කරමු.',
+  heroDate1Label: 'Poruwa Ceremony',
+  heroDate1Value: 'September 16, 2026 · 9:24 AM',
+  heroDate2Label: 'Homecoming',
+  heroDate2Value: 'September 19, 2026',
+  countdownTarget: '2026-09-16T09:24:00',
+};
 
 function two(n) {
   return String(n).padStart(2, '0');
@@ -66,25 +78,24 @@ function CornerFlourish({ flip }) {
   );
 }
 
-function IntroScreen({ onEnter, leaving }) {
+function IntroScreen({ onEnter, leaving, settings }) {
+  const initials = `${(settings.groomName || 'C')[0]} & ${(settings.brideName || 'L')[0]}`;
   return (
     <div className={`intro-overlay ${leaving ? 'leaving' : ''}`}>
       <div className="intro-card">
         <div className="intro-corner tl"><CornerFlourish /></div>
         <div className="intro-corner tr"><CornerFlourish flip /></div>
 
-        <div className="intro-monogram">C&nbsp;&amp;&nbsp;L</div>
+        <div className="intro-monogram">{initials}</div>
 
         <p className="intro-eyebrow-si">ශ්‍රී සුබ මංගලම්</p>
         <span className="intro-badge">● Wedding Invitation</span>
 
-        <h1 className="intro-names">Chathura<br />&amp; Lakmini</h1>
+        <h1 className="intro-names">{settings.groomName}<br />&amp; {settings.brideName}</h1>
 
         <div className="intro-divider" />
 
-        <p className="intro-tagline">
-          දෙදෙනෙකුගේ හදවත් එක්වන, ආශිර්වාද හා ආලෝකයෙන් පිරි මොහොතකට ඔබ සැමට ආරාධනා කරමු.
-        </p>
+        <p className="intro-tagline">{settings.taglineSi}</p>
 
         <button className="intro-cta" onClick={onEnter}>
           You&apos;re Invited <span aria-hidden="true">→</span>
@@ -196,7 +207,7 @@ function WishesWall() {
     try {
       const res = await fetch('/api/wishes');
       const json = await res.json();
-      setWishes(json.slice().reverse());
+      setWishes(json);
     } catch (e) {
       // ignore — wall just stays empty
     } finally {
@@ -276,7 +287,7 @@ function WishesWall() {
             <textarea
               id="w-msg"
               required
-              placeholder="Write your wish for Chathura & Lakmini... / ඔබේ සුබ පැතුම මෙහි ලියන්න"
+              placeholder="Write your wish for the couple... / ඔබේ සුබ පැතුම මෙහි ලියන්න"
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
             />
@@ -302,9 +313,9 @@ function WishesWall() {
             />
           </div>
           <button type="submit" className="btn">Post Your Wish <span className="si">පළ කරන්න</span></button>
-          <p className="wish-privacy-note">Your name, wish, and photo will be shown publicly on this page for all guests to see.</p>
+          <p className="wish-privacy-note">Your wish will be reviewed and then shown publicly on this page for all guests to see.</p>
           {status === 'sending' && <div className="form-msg">Posting...</div>}
-          {status === 'ok' && <div className="form-msg ok">Thank you! Your wish is now on the wall. / ස්තුතියි!</div>}
+          {status === 'ok' && <div className="form-msg ok">Thank you! Your wish will appear once reviewed. / ස්තුතියි!</div>}
           {status === 'err' && <div className="form-msg err">Something went wrong. Please try again.</div>}
         </form>
       </div>
@@ -315,8 +326,8 @@ function WishesWall() {
         <p className="empty-note">No wishes yet — be the first to leave one! / පළමු සුබ පැතුම ඔබෙන්ම වේවා</p>
       ) : (
         <div className="wish-grid">
-          {wishes.map((w, i) => (
-            <WishCard key={i} wish={w} />
+          {wishes.map((w) => (
+            <WishCard key={w.id} wish={w} />
           ))}
         </div>
       )}
@@ -330,10 +341,30 @@ export default function Home() {
   const [status, setStatus] = useState(null);
   const [introOpen, setIntroOpen] = useState(true);
   const [introLeaving, setIntroLeaving] = useState(false);
+  const [events, setEvents] = useState(DEFAULT_EVENTS);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/schedule')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length) setEvents(data);
+      })
+      .catch(() => {});
+
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && Object.keys(data).length) {
+          setSettings((prev) => ({ ...prev, ...data }));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -354,7 +385,8 @@ export default function Home() {
     setTimeout(() => setIntroOpen(false), 550);
   }
 
-  const heroDiff = Math.max(0, HERO_TARGET - now);
+  const heroTarget = new Date(settings.countdownTarget).getTime();
+  const heroDiff = Math.max(0, heroTarget - now);
   const hd = Math.floor(heroDiff / 86400000);
   const hh = Math.floor((heroDiff / 3600000) % 24);
   const hm = Math.floor((heroDiff / 60000) % 60);
@@ -379,7 +411,7 @@ export default function Home() {
 
   return (
     <>
-      {introOpen && <IntroScreen onEnter={handleEnter} leaving={introLeaving} />}
+      {introOpen && <IntroScreen onEnter={handleEnter} leaving={introLeaving} settings={settings} />}
 
       <div className="hero">
         <div className="lamp-wrap">
@@ -391,17 +423,17 @@ export default function Home() {
           <span className="si">ඔබ ආදරයෙන් ආරාධනා කරනු ලැබේ</span>
         </div>
 
-        <h1 className="names-en">Chathura<span className="amp">&amp;</span>Lakmini</h1>
-        <p className="names-si">චතුර <span style={{ color: 'var(--rose)' }}>&amp;</span> ලක්මිණි</p>
+        <h1 className="names-en">{settings.groomName}<span className="amp">&amp;</span>{settings.brideName}</h1>
+        <p className="names-si">{settings.groomNameSi} <span style={{ color: 'var(--rose)' }}>&amp;</span> {settings.brideNameSi}</p>
 
         <div className="tagline">
-          <span className="en">&quot;Two families, one auspicious hour, a lifetime that begins on the poruwa.&quot;</span>
-          <span className="si">සියලු නෑ මිතුරන් සමඟ අප දෙදෙනාගේ විවාහ මංගල්‍යයට සහභාගී වන ලෙස කාරුණිකව ආරාධනා කරමු.</span>
+          <span className="en">&quot;{settings.taglineEn}&quot;</span>
+          <span className="si">{settings.taglineSi}</span>
         </div>
 
         <div className="hero-dates">
-          <div className="date-chip">Poruwa Ceremony · <b>September 16, 2026 · 9:24 AM</b></div>
-          <div className="date-chip">Homecoming · <b>September 19, 2026</b></div>
+          <div className="date-chip">{settings.heroDate1Label} · <b>{settings.heroDate1Value}</b></div>
+          <div className="date-chip">{settings.heroDate2Label} · <b>{settings.heroDate2Value}</b></div>
         </div>
 
         <div className="main-cd">
@@ -427,7 +459,7 @@ export default function Home() {
         </div>
         <div className="timeline">
           {events.map((ev, i) => (
-            <EventCard key={i} ev={ev} idx={i} now={now} />
+            <EventCard key={ev.id || i} ev={ev} idx={i} now={now} />
           ))}
         </div>
       </section>
@@ -500,8 +532,8 @@ export default function Home() {
       <WishesWall />
 
       <footer>
-        WITH LOVE, CHATHURA &amp; LAKMINI
-        <span className="si">ආදරයෙන්, චතුර සහ ලක්මිණි</span>
+        WITH LOVE, {settings.groomName?.toUpperCase()} &amp; {settings.brideName?.toUpperCase()}
+        <span className="si">ආදරයෙන්, {settings.groomNameSi} සහ {settings.brideNameSi}</span>
         <div style={{ marginTop: '14px' }}>
           <a href="/admin">Couple&apos;s Dashboard</a>
         </div>
