@@ -470,6 +470,108 @@ table.rsvp-table td{ color:var(--ink); }
   50%{ opacity:0.4; transform:scale(1.5); }
 }
 
+/* ---------- MODERN WISH FORM ---------- */
+.wish-card-form{
+  background:linear-gradient(165deg, rgba(255,253,249,0.95), rgba(250,242,227,0.92));
+  border:1px solid rgba(184,134,63,0.22);
+  border-radius:22px;
+  padding:40px 34px;
+  box-shadow:0 20px 50px rgba(184,134,63,0.12), inset 0 1px 0 rgba(255,255,255,0.6);
+  margin-bottom:44px;
+}
+.wish-field{ margin-bottom:24px; }
+.wish-field-label{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--gold-bright);
+  letter-spacing:0.02em;
+  margin-bottom:9px;
+}
+.wish-field-label span{
+  font-weight:400;
+  font-size:11.5px;
+  color:var(--muted);
+}
+.wish-field input[type="text"],
+.wish-field textarea{
+  width:100%;
+  background:rgba(255,255,255,0.65);
+  border:none;
+  border-radius:16px;
+  padding:15px 18px;
+  font-family:'Poppins',sans-serif;
+  font-size:14.5px;
+  color:var(--ink);
+  box-shadow:inset 0 0 0 1.5px rgba(184,134,63,0.18);
+  transition:box-shadow 0.25s ease, background 0.25s ease;
+}
+.wish-field textarea{ min-height:96px; resize:vertical; }
+.wish-field input:focus,
+.wish-field textarea:focus{
+  outline:none;
+  background:#fffefb;
+  box-shadow:0 0 0 4px rgba(184,134,63,0.14), inset 0 0 0 1.5px var(--gold-bright);
+}
+
+.photo-drop-modern{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:30px 16px;
+  border-radius:18px;
+  background:rgba(184,134,63,0.05);
+  border:1.5px dashed rgba(184,134,63,0.32);
+  cursor:pointer;
+  text-align:center;
+  transition:background 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+}
+.photo-drop-modern:hover{
+  background:rgba(184,134,63,0.1);
+  border-color:var(--gold-bright);
+}
+.photo-drop-modern.drag-active{
+  background:rgba(184,134,63,0.16);
+  border-color:var(--gold-bright);
+  transform:scale(1.015);
+}
+.photo-drop-icon{
+  width:46px; height:46px;
+  border-radius:50%;
+  background:linear-gradient(180deg, var(--gold-glow), var(--gold-bright));
+  display:flex; align-items:center; justify-content:center;
+  font-size:19px;
+  box-shadow:0 8px 18px rgba(184,134,63,0.32);
+  margin-bottom:4px;
+}
+.photo-drop-text{ font-size:13.5px; color:var(--gold-bright); font-weight:600; }
+.photo-drop-subtext{ font-size:11px; color:var(--muted); }
+
+.btn-pill{
+  width:100%;
+  padding:16px;
+  border:none;
+  border-radius:999px;
+  background:linear-gradient(135deg, var(--gold-glow), var(--gold-bright));
+  color:#fffaf0;
+  font-weight:600;
+  font-size:15px;
+  letter-spacing:0.03em;
+  cursor:pointer;
+  box-shadow:0 12px 28px rgba(184,134,63,0.32);
+  transition:transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  position:relative;
+  overflow:hidden;
+}
+.btn-pill:hover{ transform:translateY(-2px); box-shadow:0 16px 34px rgba(184,134,63,0.4); filter:brightness(1.03); }
+.btn-pill:active{ transform:translateY(0); }
+.btn-pill:disabled{ opacity:0.6; cursor:not-allowed; transform:none; }
+.btn-pill:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:3px; }
+
 /* ---------- WISHES WALL ---------- */
 .photo-drop{
   display:flex;

@@ -469,10 +469,10 @@ function WishesWall() {
         )}
       </div>
 
-      <Reveal className="rsvp-card wish-form-card" delay={0}>
+      <Reveal className="wish-card-form" delay={0}>
         <form onSubmit={handleSubmit}>
-          <div className="field">
-            <label htmlFor="w-name">Your Name</label>
+          <div className="wish-field">
+            <label className="wish-field-label" htmlFor="w-name">👤 Your Name</label>
             <input
               id="w-name"
               type="text"
@@ -482,8 +482,8 @@ function WishesWall() {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </div>
-          <div className="field">
-            <label htmlFor="w-msg">Your Wish</label>
+          <div className="wish-field">
+            <label className="wish-field-label" htmlFor="w-msg">💬 Your Wish</label>
             <textarea
               id="w-msg"
               required
@@ -492,8 +492,8 @@ function WishesWall() {
               onChange={(e) => setForm({ ...form, message: e.target.value })}
             />
           </div>
-          <div className="field">
-            <label htmlFor="w-media">Photos / Videos (optional, up to {MAX_MEDIA_ITEMS})</label>
+          <div className="wish-field">
+            <label className="wish-field-label" htmlFor="w-media">🎁 Photos / Videos <span>(optional, up to {MAX_MEDIA_ITEMS})</span></label>
 
             {mediaItems.length > 0 && (
               <div className="media-preview-grid">
@@ -508,13 +508,15 @@ function WishesWall() {
 
             {mediaItems.length < MAX_MEDIA_ITEMS && (
               <label
-                className={`photo-drop ${dragActive ? 'drag-active' : ''}`}
+                className={`photo-drop-modern ${dragActive ? 'drag-active' : ''}`}
                 htmlFor="w-media"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <span>{uploading ? 'Uploading...' : dragActive ? 'Drop to upload' : '📷🎬 Choose or drop photos/videos'}</span>
+                <span className="photo-drop-icon">{uploading ? '⏳' : '📷'}</span>
+                <span className="photo-drop-text">{uploading ? 'Uploading...' : dragActive ? 'Drop to upload' : 'Choose or drop files'}</span>
+                <span className="photo-drop-subtext">Photos &amp; short videos welcome</span>
               </label>
             )}
             <input
@@ -528,7 +530,7 @@ function WishesWall() {
             />
             {uploadError && <p className="form-msg err">{uploadError}</p>}
           </div>
-          <button type="submit" className="btn btn-glow" disabled={uploading}>Post Your Wish</button>
+          <button type="submit" className="btn-pill btn-glow" disabled={uploading}>Post Your Wish ✨</button>
           <p className="wish-privacy-note">Your wish will be reviewed and then shown publicly on this page for all guests to see.</p>
           {status === 'sending' && <div className="form-msg">Posting...</div>}
           {status === 'ok' && <div className="form-msg ok">Thank you! Your wish will appear once reviewed.</div>}
