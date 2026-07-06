@@ -16,10 +16,8 @@ export async function GET() {
   const mapped = data.map((e) => ({
     id: e.id,
     en: e.event_en,
-    si: e.event_si,
     date: e.event_date,
-    dirEn: e.dir_en,
-    dirSi: e.dir_si,
+    direction: e.dir_en,
     note: e.note,
     sortOrder: e.sort_order,
   }));
@@ -32,15 +30,13 @@ export async function POST(request) {
       return Response.json({ ok: false, error: 'Invalid passcode.' }, { status: 401 });
     }
     const body = await request.json();
-    if (!body.en || !body.si) {
-      return Response.json({ ok: false, error: 'Event name (English and Sinhala) required.' }, { status: 400 });
+    if (!body.en) {
+      return Response.json({ ok: false, error: 'Event name is required.' }, { status: 400 });
     }
     const { error } = await supabaseAdmin.from('schedule').insert({
       event_en: body.en,
-      event_si: body.si,
       event_date: body.date || null,
-      dir_en: body.dirEn || null,
-      dir_si: body.dirSi || null,
+      dir_en: body.direction || null,
       note: body.note || null,
       sort_order: body.sortOrder ?? 0,
     });
@@ -63,10 +59,8 @@ export async function PATCH(request) {
       .from('schedule')
       .update({
         event_en: body.en,
-        event_si: body.si,
         event_date: body.date || null,
-        dir_en: body.dirEn || null,
-        dir_si: body.dirSi || null,
+        dir_en: body.direction || null,
         note: body.note || null,
         sort_order: body.sortOrder ?? 0,
       })

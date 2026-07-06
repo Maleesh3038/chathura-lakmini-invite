@@ -22,7 +22,7 @@ export async function GET(request) {
     id: w.id,
     name: w.name,
     message: w.message,
-    photo: w.photo_url,
+    media: Array.isArray(w.media) && w.media.length ? w.media : (w.photo_url ? [{ url: w.photo_url, type: 'image' }] : []),
     approved: w.approved,
     submittedAt: w.submitted_at,
   }));
@@ -35,36 +35,12 @@ export async function POST(request) {
     if (!body.name || !body.message) {
       return Response.json({ ok: false, error: 'Name and message are required.' }, { status: 400 });
     }
-    if (body.photo && body.photo.length > 3_000_000) {
-      return Response.json({ ok: false, error: 'Photo is too large.' }, { status: 400 });
-    }
-
-    let photoUrl = null;
-    if (body.photo) {
-      const matches = body.photo.match(/^data:(image\/\w+);base64,(.+)$/);
-      if (matches) {
-        const mimeType = matches[1];
-        const base64Data = matches[2];
-        const buffer = Buffer.from(base64Data, 'base64');
-        const ext = mimeType.split('/')[1];
-        const fileName = `wish-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
-        const { error: uploadError } = await supabaseAdmin.storage
-          .from('wish-photos')
-          .upload(fileName, buffer, { contentType: mimeType });
-        if (uploadError) throw uploadError;
-
-        const { data: publicUrlData } = supabaseAdmin.storage
-          .from('wish-photos')
-          .getPublicUrl(fileName);
-        photoUrl = publicUrlData.publicUrl;
-      }
-    }
+    const media = Array.isArray(body.media) ? body.media.slice(0, 10) : [];
 
     const { error } = await supabaseAdmin.from('wishes').insert({
       name: String(body.name).slice(0, 80),
       message: String(body.message).slice(0, 600),
-      photo_url: photoUrl,
+      media,
       approved: false,
     });
     if (error) throw error;
