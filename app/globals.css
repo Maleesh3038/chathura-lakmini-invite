@@ -410,6 +410,66 @@ table.rsvp-table td{ color:var(--ink); }
   .intro-overlay{ transition:none; }
 }
 
+/* ---------- SCROLL REVEAL ---------- */
+.reveal{
+  opacity:0;
+  transform:translateY(28px);
+  transition:opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+  will-change:opacity, transform;
+}
+.reveal.in-view{
+  opacity:1;
+  transform:translateY(0);
+}
+@media (prefers-reduced-motion: reduce){
+  .reveal{ transition:none; opacity:1; transform:none; }
+}
+
+/* ---------- GLOW BUTTON ---------- */
+.btn-glow{
+  position:relative;
+  overflow:hidden;
+}
+.btn-glow::after{
+  content:'';
+  position:absolute;
+  top:0; left:-60%;
+  width:40%; height:100%;
+  background:linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent);
+  transform:skewX(-20deg);
+  animation:btnShine 3.2s ease-in-out infinite;
+}
+@keyframes btnShine{
+  0%{ left:-60%; }
+  50%{ left:130%; }
+  100%{ left:130%; }
+}
+
+/* ---------- WISH COUNT BADGE ---------- */
+.wish-count-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-size:12px;
+  font-weight:500;
+  color:var(--gold-bright);
+  background:rgba(184,134,63,0.08);
+  border:1px solid var(--line);
+  padding:6px 16px;
+  border-radius:20px;
+  margin-top:14px;
+}
+.wish-count-dot{
+  width:7px; height:7px;
+  border-radius:50%;
+  background:#5f8f5a;
+  animation:pulseDot 1.6s ease-in-out infinite;
+}
+@keyframes pulseDot{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%{ opacity:0.4; transform:scale(1.5); }
+}
+
 /* ---------- WISHES WALL ---------- */
 .photo-drop{
   display:flex;
@@ -423,9 +483,15 @@ table.rsvp-table td{ color:var(--ink); }
   font-size:13.5px;
   cursor:pointer;
   background:rgba(184,134,63,0.04);
-  transition:border-color 0.15s ease, color 0.15s ease;
+  transition:border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 .photo-drop:hover{ border-color:var(--gold); color:var(--gold-bright); }
+.photo-drop.drag-active{
+  border-color:var(--gold-bright);
+  background:rgba(184,134,63,0.14);
+  color:var(--gold-bright);
+  transform:scale(1.015);
+}
 .wish-privacy-note{
   text-align:center;
   font-size:12px;
@@ -464,20 +530,32 @@ table.rsvp-table td{ color:var(--ink); }
   display:flex; align-items:center; justify-content:center;
 }
 
-/* wish wall grid + cards */
+/* wish wall masonry grid + glassmorphism cards */
 .wish-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
-  gap:20px;
+  column-count:1;
+  column-gap:20px;
 }
+@media (min-width:640px){ .wish-grid{ column-count:2; } }
+@media (min-width:960px){ .wish-grid{ column-count:3; } }
+
 .wish-card{
-  background:var(--bg-panel);
-  border:1px solid var(--line);
-  border-radius:6px;
+  background:rgba(255,253,249,0.7);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(184,134,63,0.25);
+  border-radius:10px;
   padding:22px 20px 18px;
-  box-shadow:0 2px 14px rgba(184,134,63,0.06);
-  display:flex;
-  flex-direction:column;
+  box-shadow:0 4px 20px rgba(184,134,63,0.08);
+  display:inline-block;
+  width:100%;
+  break-inside:avoid;
+  margin-bottom:20px;
+  transition:transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.wish-card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 20px 44px rgba(184,134,63,0.20);
+  border-color:rgba(184,134,63,0.45);
 }
 .wish-media-grid{
   display:grid;
@@ -485,9 +563,9 @@ table.rsvp-table td{ color:var(--ink); }
   gap:3px;
   margin:-22px -20px 14px;
   overflow:hidden;
-  border-radius:6px 6px 0 0;
+  border-radius:10px 10px 0 0;
 }
-.wish-media-cell{ position:relative; aspect-ratio:1; }
+.wish-media-cell{ position:relative; aspect-ratio:1; overflow:hidden; }
 .media-thumb{
   width:100%; height:100%;
   border:none; padding:0; margin:0;
@@ -495,9 +573,14 @@ table.rsvp-table td{ color:var(--ink); }
   position:relative;
   display:block;
   background:#000;
+  overflow:hidden;
 }
 .media-thumb img, .media-thumb video{
   width:100%; height:100%; object-fit:cover; display:block;
+  transition:transform 0.5s ease;
+}
+.media-thumb:hover img, .media-thumb:hover video{
+  transform:scale(1.09);
 }
 .media-play-icon{
   position:absolute; inset:0;
@@ -528,7 +611,6 @@ table.rsvp-table td{ color:var(--ink); }
   font-size:14.5px;
   color:var(--ink);
   line-height:1.65;
-  flex:1;
   margin:0 0 16px;
 }
 .wish-foot{
@@ -540,6 +622,38 @@ table.rsvp-table td{ color:var(--ink); }
 }
 .wish-name{ font-size:13px; color:var(--gold-bright); font-weight:500; }
 .wish-date{ font-size:11px; color:var(--muted); }
+
+/* ---------- THANK YOU SECTION ---------- */
+#thank-you{ padding-top:10px; }
+.thank-you-card{
+  max-width:620px;
+  margin:0 auto;
+  text-align:center;
+  background:linear-gradient(180deg, rgba(255,253,249,0.92), rgba(246,236,221,0.92));
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:52px 36px;
+  box-shadow:0 16px 50px rgba(184,134,63,0.14);
+}
+.thank-you-mark{
+  font-family:'Cormorant Garamond',serif;
+  font-size:36px;
+  color:var(--gold);
+  margin-bottom:8px;
+}
+.thank-you-message{
+  font-size:15.5px;
+  color:var(--ink);
+  line-height:1.85;
+  max-width:480px;
+  margin:16px auto 22px;
+}
+.thank-you-sign{
+  font-family:'Cormorant Garamond',serif;
+  font-style:italic;
+  font-size:21px;
+  color:var(--gold-bright);
+}
 
 /* ---------- LIGHTBOX ---------- */
 .lightbox-overlay{

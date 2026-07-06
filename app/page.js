@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabaseClient } from '@/lib/supabaseClient';
 
 // Fallback data — shown until /api/schedule and /api/settings load, or if tables are empty.
@@ -30,6 +30,8 @@ const DEFAULT_SETTINGS = {
   heroDate2Label: 'Homecoming',
   heroDate2Value: 'September 19, 2026',
   countdownTarget: '2026-09-16T09:24:00',
+  thankYouTitle: 'To Our Wonderful Guests',
+  thankYouMessage: 'From the bottom of our hearts, thank you for being part of our story. Your love, laughter, and support mean the world to us as we begin this new chapter together.',
 };
 
 const MAX_MEDIA_ITEMS = 6;
@@ -46,6 +48,60 @@ function fmtDate(d) {
 
 function fmtWishDate(d) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ---------- Scroll-reveal + count-up hooks ----------
+
+function useInView(threshold = 0.15) {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          obs.unobserve(el);
+        }
+      },
+      { threshold }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return [ref, inView];
+}
+
+function useCountUp(target, duration = 800) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!target) {
+      setValue(0);
+      return;
+    }
+    let start = null;
+    let raf;
+    function step(ts) {
+      if (start === null) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      setValue(Math.floor(progress * target));
+      if (progress < 1) raf = requestAnimationFrame(step);
+      else setValue(target);
+    }
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return value;
+}
+
+function Reveal({ children, delay = 0, className = '' }) {
+  const [ref, inView] = useInView(0.12);
+  return (
+    <div ref={ref} className={`reveal ${inView ? 'in-view' : ''} ${className}`} style={{ transitionDelay: `${delay}ms` }}>
+      {children}
+    </div>
+  );
 }
 
 function LampIcon() {
@@ -134,7 +190,7 @@ function EventCard({ ev, idx, now }) {
   }
 
   return (
-    <div className={`event-card ${isDone ? 'done' : ''}`}>
+    <Reveal delay={Math.min(idx, 8) * 50} className={`event-card ${isDone ? 'done' : ''}`}>
       <div className="event-index">{two(idx + 1)}</div>
       <div className="event-body">
         <h3 className="ev-title-en">{ev.en}</h3>
@@ -145,7 +201,7 @@ function EventCard({ ev, idx, now }) {
         {body}
         {ev.note && <p className="note-line">{ev.note}</p>}
       </div>
-    </div>
+    </Reveal>
   );
 }
 
@@ -254,10 +310,15 @@ function MediaThumb({ item, onClick }) {
   );
 }
 
-function WishCard({ wish, onOpenMedia }) {
+function WishCard({ wish, index, onOpenMedia }) {
+  const [ref, inView] = useInView(0.08);
   const media = wish.media || [];
   return (
-    <div className="wish-card">
+    <div
+      ref={ref}
+      className={`wish-card reveal ${inView ? 'in-view' : ''}`}
+      style={{ transitionDelay: `${Math.min(index, 10) * 60}ms` }}
+    >
       {media.length > 0 && (
         <div className="wish-media-grid">
           {media.slice(0, 4).map((m, i) => (
@@ -290,7 +351,10 @@ function WishesWall() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [status, setStatus] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
   const [lightbox, setLightbox] = useState({ items: null, index: null });
+
+  const wishCount = useCountUp(wishes.length);
 
   async function loadWishes() {
     try {
@@ -308,18 +372,14 @@ function WishesWall() {
     loadWishes();
   }, []);
 
-  async function handleFilesSelected(e) {
-    const files = Array.from(e.target.files || []);
-    e.target.value = '';
+  async function processFiles(files) {
     if (!files.length) return;
-
     setUploadError('');
     const remaining = MAX_MEDIA_ITEMS - mediaItems.length;
     if (remaining <= 0) {
       setUploadError(`You can attach up to ${MAX_MEDIA_ITEMS} files.`);
       return;
     }
-
     setUploading(true);
     for (const file of files.slice(0, remaining)) {
       try {
@@ -330,6 +390,28 @@ function WishesWall() {
       }
     }
     setUploading(false);
+  }
+
+  function handleFilesSelected(e) {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    processFiles(files);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    setDragActive(false);
+    if (uploading) return;
+    const files = Array.from(e.dataTransfer.files || []);
+    processFiles(files);
+  }
+  function handleDragOver(e) {
+    e.preventDefault();
+    setDragActive(true);
+  }
+  function handleDragLeave(e) {
+    e.preventDefault();
+    setDragActive(false);
   }
 
   function removeMediaItem(idx) {
@@ -379,9 +461,15 @@ function WishesWall() {
         <div className="sec-eyebrow">From Our Loved Ones</div>
         <h2 className="sec-title-en">Guest Wishes</h2>
         <p className="sec-sub">Share a note, a photo, or a short video for the couple.</p>
+        {!loading && wishes.length > 0 && (
+          <div className="wish-count-badge">
+            <span className="wish-count-dot" />
+            {wishCount} {wishCount === 1 ? 'wish' : 'wishes'} and counting
+          </div>
+        )}
       </div>
 
-      <div className="rsvp-card" style={{ marginBottom: 44 }}>
+      <Reveal className="rsvp-card wish-form-card" delay={0}>
         <form onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="w-name">Your Name</label>
@@ -419,8 +507,14 @@ function WishesWall() {
             )}
 
             {mediaItems.length < MAX_MEDIA_ITEMS && (
-              <label className="photo-drop" htmlFor="w-media">
-                <span>{uploading ? 'Uploading...' : '📷🎬 Choose photos or videos'}</span>
+              <label
+                className={`photo-drop ${dragActive ? 'drag-active' : ''}`}
+                htmlFor="w-media"
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <span>{uploading ? 'Uploading...' : dragActive ? 'Drop to upload' : '📷🎬 Choose or drop photos/videos'}</span>
               </label>
             )}
             <input
@@ -434,13 +528,13 @@ function WishesWall() {
             />
             {uploadError && <p className="form-msg err">{uploadError}</p>}
           </div>
-          <button type="submit" className="btn" disabled={uploading}>Post Your Wish</button>
+          <button type="submit" className="btn btn-glow" disabled={uploading}>Post Your Wish</button>
           <p className="wish-privacy-note">Your wish will be reviewed and then shown publicly on this page for all guests to see.</p>
           {status === 'sending' && <div className="form-msg">Posting...</div>}
           {status === 'ok' && <div className="form-msg ok">Thank you! Your wish will appear once reviewed.</div>}
           {status === 'err' && <div className="form-msg err">Something went wrong. Please try again.</div>}
         </form>
-      </div>
+      </Reveal>
 
       {loading ? (
         <p className="empty-note">Loading wishes...</p>
@@ -448,13 +542,26 @@ function WishesWall() {
         <p className="empty-note">No wishes yet — be the first to leave one!</p>
       ) : (
         <div className="wish-grid">
-          {wishes.map((w) => (
-            <WishCard key={w.id} wish={w} onOpenMedia={openLightbox} />
+          {wishes.map((w, i) => (
+            <WishCard key={w.id} wish={w} index={i} onOpenMedia={openLightbox} />
           ))}
         </div>
       )}
 
       <Lightbox items={lightbox.items} index={lightbox.index} onClose={closeLightbox} onPrev={prevLightbox} onNext={nextLightbox} />
+    </section>
+  );
+}
+
+function ThankYouSection({ settings }) {
+  return (
+    <section id="thank-you">
+      <Reveal className="thank-you-card">
+        <div className="thank-you-mark">❦</div>
+        <h2 className="sec-title-en">{settings.thankYouTitle}</h2>
+        <p className="thank-you-message">{settings.thankYouMessage}</p>
+        <div className="thank-you-sign">— {settings.groomName} &amp; {settings.brideName}</div>
+      </Reveal>
     </section>
   );
 }
@@ -564,12 +671,8 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="scroll-cue">⌄ SHARE A WISH ⌄</div>
+        <div className="scroll-cue">⌄ SCROLL TO EXPLORE ⌄</div>
       </div>
-
-      <div className="lattice" />
-
-      <WishesWall />
 
       <div className="lattice" />
 
@@ -593,7 +696,7 @@ export default function Home() {
           <h2 className="sec-title-en">RSVP</h2>
         </div>
 
-        <div className="rsvp-card">
+        <Reveal className="rsvp-card">
           <form onSubmit={handleSubmit}>
             <div className="field">
               <label htmlFor="r-name">Full Name</label>
@@ -639,13 +742,21 @@ export default function Home() {
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn">Send RSVP</button>
+            <button type="submit" className="btn btn-glow">Send RSVP</button>
             {status === 'sending' && <div className="form-msg">Sending...</div>}
             {status === 'ok' && <div className="form-msg ok">Thank you! Your RSVP has been received.</div>}
             {status === 'err' && <div className="form-msg err">Something went wrong. Please try again.</div>}
           </form>
-        </div>
+        </Reveal>
       </section>
+
+      <div className="lattice" />
+
+      <WishesWall />
+
+      <div className="lattice" />
+
+      <ThankYouSection settings={settings} />
 
       <footer>
         WITH LOVE, {settings.groomName?.toUpperCase()} &amp; {settings.brideName?.toUpperCase()}

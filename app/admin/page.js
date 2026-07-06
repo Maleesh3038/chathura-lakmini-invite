@@ -308,6 +308,8 @@ function SettingsTab({ passcode }) {
         heroDate2Label: data.heroDate2Label || '',
         heroDate2Value: data.heroDate2Value || '',
         countdownTarget: data.countdownTarget ? data.countdownTarget.slice(0, 16) : '',
+        thankYouTitle: data.thankYouTitle || '',
+        thankYouMessage: data.thankYouMessage || '',
       }));
   }, []);
 
@@ -347,6 +349,10 @@ function SettingsTab({ passcode }) {
       <input value={form.heroDate2Value} onChange={(e) => setForm({ ...form, heroDate2Value: e.target.value })} />
       <label>Main Countdown Target (date &amp; time)</label>
       <input type="datetime-local" value={form.countdownTarget} onChange={(e) => setForm({ ...form, countdownTarget: e.target.value })} />
+      <label>Thank You Note — Title</label>
+      <input value={form.thankYouTitle} onChange={(e) => setForm({ ...form, thankYouTitle: e.target.value })} />
+      <label>Thank You Note — Message</label>
+      <textarea value={form.thankYouMessage} onChange={(e) => setForm({ ...form, thankYouMessage: e.target.value })} />
       <button type="submit" className="btn" style={{ marginTop: 16 }}>Save Changes</button>
       {status === 'saving' && <p className="form-msg">Saving...</p>}
       {status === 'ok' && <p className="form-msg ok">Saved!</p>}
