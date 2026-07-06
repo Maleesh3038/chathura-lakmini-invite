@@ -1,38 +1,39 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 // Fallback data — shown until /api/schedule and /api/settings load, or if tables are empty.
 const DEFAULT_EVENTS = [
-  { en: 'Invitation to the Auspicious Ceremony', si: 'නැකතට ආරාධනා කිරීම', date: '2026-07-23T10:52:00', dirEn: 'East', dirSi: 'නැගෙනහිර' },
-  { en: 'Traditional Oil Stove Ceremony', si: 'තෙල් වළං ලිප තැබීම', date: '2026-09-11T09:32:00', dirEn: 'North', dirSi: 'උතුර' },
-  { en: 'Traditional Dining Table Ritual', si: 'කෑම මේසය ඉදුල් කිරීම', date: '2026-09-13T11:52:00', dirEn: 'South', dirSi: 'දකුණ' },
-  { en: 'Groom Leaves the House', si: 'මනාලයා නිවසින් පිටත්වීම', date: '2026-09-15T17:26:00', dirEn: 'North', dirSi: 'උතුර' },
-  { en: 'Bride Leaves the House', si: 'මනාලිය නිවසින් පිටත්වීම', date: '2026-09-15T23:47:00', dirEn: 'North', dirSi: 'උතුර' },
-  { en: 'Wearing the Forehead Bandage', si: 'තැලූල තැබීම', date: '2026-09-16T04:02:00', dirEn: 'North', dirSi: 'උතුර' },
-  { en: 'Bride Arrives at the Reception Hall', si: 'මනාලිය උත්සව ශාලාවට පැමිණීම', date: null },
-  { en: 'Groom Arrives at the Reception Hall', si: 'මනාලයා උත්සව ශාලාවට පැමිණීම', date: null },
-  { en: 'Marriage Registration', si: 'විවාහ ලියාපදිංචිය', date: '2026-09-16T09:02:00', dirEn: 'North', dirSi: 'උතුර' },
-  { en: 'Poruwa Ceremony — Start', si: 'පෝරුවට නැගීම', date: '2026-09-16T09:24:00', dirEn: 'North', dirSi: 'උතුර' },
-  { en: 'Poruwa Ceremony — End', si: 'පෝරුවෙන් බැසීම', date: '2026-09-16T09:58:00', dirEn: 'North', dirSi: 'උතුර' },
-  { en: "Couple's First Meal Together", si: 'කෑම මේසය ඉදුල් කිරීම', date: '2026-09-16T11:52:00', dirEn: 'North', dirSi: 'උතුර' },
-  { en: 'Departure from the Reception Hall', si: 'උත්සව ශාලාවෙන් පිටත්වීම', date: '2026-09-16T15:27:00', dirEn: 'North', dirSi: 'උතුර', note: 'Alt. times: 3:42 PM / 4:07 PM' },
-  { en: 'Couple Arrives Home — Second Day', si: 'දෙවන දිනයේ නිවසට පැමිණීම', date: '2026-09-19T18:22:00', dirEn: 'North', dirSi: 'උතුර' },
+  { en: 'Invitation to the Auspicious Ceremony', date: '2026-07-23T10:52:00', direction: 'East' },
+  { en: 'Traditional Oil Stove Ceremony', date: '2026-09-11T09:32:00', direction: 'North' },
+  { en: 'Traditional Dining Table Ritual', date: '2026-09-13T11:52:00', direction: 'South' },
+  { en: 'Groom Leaves the House', date: '2026-09-15T17:26:00', direction: 'North' },
+  { en: 'Bride Leaves the House', date: '2026-09-15T23:47:00', direction: 'North' },
+  { en: 'Wearing the Forehead Bandage', date: '2026-09-16T04:02:00', direction: 'North' },
+  { en: 'Bride Arrives at the Reception Hall', date: null },
+  { en: 'Groom Arrives at the Reception Hall', date: null },
+  { en: 'Marriage Registration', date: '2026-09-16T09:02:00', direction: 'North' },
+  { en: 'Poruwa Ceremony — Start', date: '2026-09-16T09:24:00', direction: 'North' },
+  { en: 'Poruwa Ceremony — End', date: '2026-09-16T09:58:00', direction: 'North' },
+  { en: "Couple's First Meal Together", date: '2026-09-16T11:52:00', direction: 'North' },
+  { en: 'Departure from the Reception Hall', date: '2026-09-16T15:27:00', direction: 'North', note: 'Alt. times: 3:42 PM / 4:07 PM' },
+  { en: 'Couple Arrives Home — Second Day', date: '2026-09-19T18:22:00', direction: 'North' },
 ];
 
 const DEFAULT_SETTINGS = {
   groomName: 'Chathura',
   brideName: 'Lakmini',
-  groomNameSi: 'චතුර',
-  brideNameSi: 'ලක්මිණි',
   taglineEn: 'Two families, one auspicious hour, a lifetime that begins on the poruwa.',
-  taglineSi: 'සියලු නෑ මිතුරන් සමඟ අප දෙදෙනාගේ විවාහ මංගල්‍යයට සහභාගී වන ලෙස කාරුණිකව ආරාධනා කරමු.',
   heroDate1Label: 'Poruwa Ceremony',
   heroDate1Value: 'September 16, 2026 · 9:24 AM',
   heroDate2Label: 'Homecoming',
   heroDate2Value: 'September 19, 2026',
   countdownTarget: '2026-09-16T09:24:00',
 };
+
+const MAX_MEDIA_ITEMS = 6;
+const MAX_VIDEO_BYTES = 30 * 1024 * 1024; // 30MB
 
 function two(n) {
   return String(n).padStart(2, '0');
@@ -41,6 +42,10 @@ function two(n) {
 function fmtDate(d) {
   const dt = new Date(d);
   return dt.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+function fmtWishDate(d) {
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function LampIcon() {
@@ -65,12 +70,7 @@ function LampIcon() {
 
 function CornerFlourish({ flip }) {
   return (
-    <svg
-      viewBox="0 0 60 60"
-      width="34"
-      height="34"
-      style={{ transform: flip ? 'scaleX(-1)' : 'none' }}
-    >
+    <svg viewBox="0 0 60 60" width="34" height="34" style={{ transform: flip ? 'scaleX(-1)' : 'none' }}>
       <path d="M2 2 C 20 2, 22 20, 40 20 C 22 20, 20 38, 20 58" fill="none" stroke="#b8863f" strokeWidth="1.2" opacity="0.6" />
       <circle cx="40" cy="20" r="2.2" fill="#e7bd6a" />
       <circle cx="20" cy="58" r="1.6" fill="#e7bd6a" opacity="0.7" />
@@ -88,14 +88,13 @@ function IntroScreen({ onEnter, leaving, settings }) {
 
         <div className="intro-monogram">{initials}</div>
 
-        <p className="intro-eyebrow-si">ශ්‍රී සුබ මංගලම්</p>
         <span className="intro-badge">● Wedding Invitation</span>
 
         <h1 className="intro-names">{settings.groomName}<br />&amp; {settings.brideName}</h1>
 
         <div className="intro-divider" />
 
-        <p className="intro-tagline">{settings.taglineSi}</p>
+        <p className="intro-tagline">{settings.taglineEn}</p>
 
         <button className="intro-cta" onClick={onEnter}>
           You&apos;re Invited <span aria-hidden="true">→</span>
@@ -115,9 +114,9 @@ function EventCard({ ev, idx, now }) {
 
   let body;
   if (!ev.date) {
-    body = <span className="tbd">Time to be announced · වේලාව පසුව දැනුම් දෙනු ලැබේ</span>;
+    body = <span className="tbd">Time to be announced</span>;
   } else if (isDone) {
-    body = <span className="done-tag">Completed · සිදු විය</span>;
+    body = <span className="done-tag">Completed</span>;
   } else {
     const diff = new Date(ev.date).getTime() - now;
     const d = Math.floor(diff / 86400000);
@@ -139,10 +138,9 @@ function EventCard({ ev, idx, now }) {
       <div className="event-index">{two(idx + 1)}</div>
       <div className="event-body">
         <h3 className="ev-title-en">{ev.en}</h3>
-        <p className="ev-title-si">{ev.si}</p>
         <div className="ev-meta">
           {ev.date && <span>🕐 <b>{fmtDate(ev.date)}</b></span>}
-          {ev.dirEn && <span>⌖ {ev.dirEn} <span className="si">/ {ev.dirSi}</span></span>}
+          {ev.direction && <span>⌖ {ev.direction}</span>}
         </div>
         {body}
         {ev.note && <p className="note-line">{ev.note}</p>}
@@ -151,7 +149,9 @@ function EventCard({ ev, idx, now }) {
   );
 }
 
-function resizeImageToBase64(file, maxWidth = 700, quality = 0.72) {
+// ---------- Media upload helpers ----------
+
+function resizeImageToBlob(file, maxWidth = 1000, quality = 0.78) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -163,7 +163,10 @@ function resizeImageToBase64(file, maxWidth = 700, quality = 0.72) {
         canvas.height = Math.round(img.height * scale);
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Could not process image'));
+        }, 'image/jpeg', quality);
       };
       img.onerror = reject;
       img.src = e.target.result;
@@ -173,16 +176,100 @@ function resizeImageToBase64(file, maxWidth = 700, quality = 0.72) {
   });
 }
 
-function fmtWishDate(d) {
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+async function uploadMediaFile(file) {
+  const isVideo = file.type.startsWith('video/');
+  const isImage = file.type.startsWith('image/');
+  if (!isVideo && !isImage) throw new Error('Unsupported file type');
+
+  let toUpload = file;
+  let ext = 'jpg';
+  let contentType = 'image/jpeg';
+
+  if (isImage) {
+    toUpload = await resizeImageToBlob(file);
+  } else {
+    if (file.size > MAX_VIDEO_BYTES) {
+      throw new Error('Video is too large (max 30MB).');
+    }
+    ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+    contentType = file.type;
+  }
+
+  const fileName = `wish-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabaseClient.storage.from('wish-photos').upload(fileName, toUpload, { contentType });
+  if (error) throw error;
+
+  const { data } = supabaseClient.storage.from('wish-photos').getPublicUrl(fileName);
+  return { url: data.publicUrl, type: isVideo ? 'video' : 'image' };
 }
 
-function WishCard({ wish }) {
+// ---------- Lightbox ----------
+
+function Lightbox({ items, index, onClose, onPrev, onNext }) {
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') onPrev();
+      if (e.key === 'ArrowRight') onNext();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose, onPrev, onNext]);
+
+  if (index === null || !items || !items[index]) return null;
+  const item = items[index];
+
+  return (
+    <div className="lightbox-overlay" onClick={onClose}>
+      <button className="lightbox-close" onClick={onClose} aria-label="Close">✕</button>
+      {items.length > 1 && (
+        <button className="lightbox-nav prev" onClick={(e) => { e.stopPropagation(); onPrev(); }} aria-label="Previous">‹</button>
+      )}
+      <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+        {item.type === 'video' ? (
+          <video src={item.url} controls autoPlay className="lightbox-media" />
+        ) : (
+          <img src={item.url} alt="" className="lightbox-media" />
+        )}
+      </div>
+      {items.length > 1 && (
+        <button className="lightbox-nav next" onClick={(e) => { e.stopPropagation(); onNext(); }} aria-label="Next">›</button>
+      )}
+    </div>
+  );
+}
+
+function MediaThumb({ item, onClick }) {
+  return (
+    <button type="button" className="media-thumb" onClick={onClick}>
+      {item.type === 'video' ? (
+        <>
+          <video src={item.url} muted playsInline />
+          <span className="media-play-icon">▶</span>
+        </>
+      ) : (
+        <img src={item.url} alt="" />
+      )}
+    </button>
+  );
+}
+
+function WishCard({ wish, onOpenMedia }) {
+  const media = wish.media || [];
   return (
     <div className="wish-card">
-      {wish.photo && (
-        <div className="wish-photo-wrap">
-          <img className="wish-photo" src={wish.photo} alt={`Photo from ${wish.name}`} />
+      {media.length > 0 && (
+        <div className="wish-media-grid">
+          {media.slice(0, 4).map((m, i) => (
+            <div key={i} className="wish-media-cell">
+              <MediaThumb item={m} onClick={() => onOpenMedia(media, i)} />
+              {i === 3 && media.length > 4 && (
+                <button type="button" className="media-more" onClick={() => onOpenMedia(media, 3)}>
+                  +{media.length - 4}
+                </button>
+              )}
+            </div>
+          ))}
         </div>
       )}
       <div className="wish-quote-mark">&ldquo;</div>
@@ -199,9 +286,11 @@ function WishesWall() {
   const [wishes, setWishes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: '', message: '' });
-  const [photoData, setPhotoData] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
+  const [mediaItems, setMediaItems] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const [status, setStatus] = useState(null);
+  const [lightbox, setLightbox] = useState({ items: null, index: null });
 
   async function loadWishes() {
     try {
@@ -219,22 +308,45 @@ function WishesWall() {
     loadWishes();
   }, []);
 
-  async function handlePhotoChange(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) return;
-    try {
-      const dataUrl = await resizeImageToBase64(file);
-      setPhotoData(dataUrl);
-      setPhotoPreview(dataUrl);
-    } catch (e) {
-      // ignore bad image
+  async function handleFilesSelected(e) {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (!files.length) return;
+
+    setUploadError('');
+    const remaining = MAX_MEDIA_ITEMS - mediaItems.length;
+    if (remaining <= 0) {
+      setUploadError(`You can attach up to ${MAX_MEDIA_ITEMS} files.`);
+      return;
     }
+
+    setUploading(true);
+    for (const file of files.slice(0, remaining)) {
+      try {
+        const result = await uploadMediaFile(file);
+        setMediaItems((prev) => [...prev, result]);
+      } catch (err) {
+        setUploadError(err.message || 'Upload failed.');
+      }
+    }
+    setUploading(false);
   }
 
-  function removePhoto() {
-    setPhotoData(null);
-    setPhotoPreview(null);
+  function removeMediaItem(idx) {
+    setMediaItems((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function openLightbox(items, index) {
+    setLightbox({ items, index });
+  }
+  function closeLightbox() {
+    setLightbox({ items: null, index: null });
+  }
+  function prevLightbox() {
+    setLightbox((prev) => ({ ...prev, index: (prev.index - 1 + prev.items.length) % prev.items.length }));
+  }
+  function nextLightbox() {
+    setLightbox((prev) => ({ ...prev, index: (prev.index + 1) % prev.items.length }));
   }
 
   async function handleSubmit(e) {
@@ -247,14 +359,14 @@ function WishesWall() {
         body: JSON.stringify({
           name: form.name,
           message: form.message,
-          photo: photoData,
+          media: mediaItems,
           submittedAt: new Date().toISOString(),
         }),
       });
       if (!res.ok) throw new Error('failed');
       setStatus('ok');
       setForm({ name: '', message: '' });
-      removePhoto();
+      setMediaItems([]);
       loadWishes();
     } catch (err) {
       setStatus('err');
@@ -266,13 +378,13 @@ function WishesWall() {
       <div className="sec-head">
         <div className="sec-eyebrow">From Our Loved Ones</div>
         <h2 className="sec-title-en">Guest Wishes</h2>
-        <p className="sec-title-si">ඔබේ සුබ පැතුම් අපිත් එක්ක බෙදාගන්න</p>
+        <p className="sec-sub">Share a note, a photo, or a short video for the couple.</p>
       </div>
 
       <div className="rsvp-card" style={{ marginBottom: 44 }}>
         <form onSubmit={handleSubmit}>
           <div className="field">
-            <label htmlFor="w-name">Your Name <span className="si">ඔබේ නම</span></label>
+            <label htmlFor="w-name">Your Name</label>
             <input
               id="w-name"
               type="text"
@@ -283,39 +395,49 @@ function WishesWall() {
             />
           </div>
           <div className="field">
-            <label htmlFor="w-msg">Your Wish <span className="si">ඔබේ සුබ පැතුම</span></label>
+            <label htmlFor="w-msg">Your Wish</label>
             <textarea
               id="w-msg"
               required
-              placeholder="Write your wish for the couple... / ඔබේ සුබ පැතුම මෙහි ලියන්න"
+              placeholder="Write your wish for the couple..."
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
             />
           </div>
           <div className="field">
-            <label htmlFor="w-photo">Add a Photo <span className="si">(optional) — කැමති නම් ෆොටෝ එකක් දාන්න</span></label>
-            {!photoPreview ? (
-              <label className="photo-drop" htmlFor="w-photo">
-                <span>📷 Choose a photo</span>
-              </label>
-            ) : (
-              <div className="photo-preview-wrap">
-                <img src={photoPreview} alt="Preview" className="photo-preview" />
-                <button type="button" className="photo-remove" onClick={removePhoto}>Remove ✕</button>
+            <label htmlFor="w-media">Photos / Videos (optional, up to {MAX_MEDIA_ITEMS})</label>
+
+            {mediaItems.length > 0 && (
+              <div className="media-preview-grid">
+                {mediaItems.map((m, i) => (
+                  <div key={i} className="media-preview-item">
+                    {m.type === 'video' ? <video src={m.url} muted playsInline /> : <img src={m.url} alt="" />}
+                    <button type="button" className="media-preview-remove" onClick={() => removeMediaItem(i)}>✕</button>
+                  </div>
+                ))}
               </div>
             )}
+
+            {mediaItems.length < MAX_MEDIA_ITEMS && (
+              <label className="photo-drop" htmlFor="w-media">
+                <span>{uploading ? 'Uploading...' : '📷🎬 Choose photos or videos'}</span>
+              </label>
+            )}
             <input
-              id="w-photo"
+              id="w-media"
               type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
+              accept="image/*,video/*"
+              multiple
+              onChange={handleFilesSelected}
               style={{ display: 'none' }}
+              disabled={uploading}
             />
+            {uploadError && <p className="form-msg err">{uploadError}</p>}
           </div>
-          <button type="submit" className="btn">Post Your Wish <span className="si">පළ කරන්න</span></button>
+          <button type="submit" className="btn" disabled={uploading}>Post Your Wish</button>
           <p className="wish-privacy-note">Your wish will be reviewed and then shown publicly on this page for all guests to see.</p>
           {status === 'sending' && <div className="form-msg">Posting...</div>}
-          {status === 'ok' && <div className="form-msg ok">Thank you! Your wish will appear once reviewed. / ස්තුතියි!</div>}
+          {status === 'ok' && <div className="form-msg ok">Thank you! Your wish will appear once reviewed.</div>}
           {status === 'err' && <div className="form-msg err">Something went wrong. Please try again.</div>}
         </form>
       </div>
@@ -323,14 +445,16 @@ function WishesWall() {
       {loading ? (
         <p className="empty-note">Loading wishes...</p>
       ) : wishes.length === 0 ? (
-        <p className="empty-note">No wishes yet — be the first to leave one! / පළමු සුබ පැතුම ඔබෙන්ම වේවා</p>
+        <p className="empty-note">No wishes yet — be the first to leave one!</p>
       ) : (
         <div className="wish-grid">
           {wishes.map((w) => (
-            <WishCard key={w.id} wish={w} />
+            <WishCard key={w.id} wish={w} onOpenMedia={openLightbox} />
           ))}
         </div>
       )}
+
+      <Lightbox items={lightbox.items} index={lightbox.index} onClose={closeLightbox} onPrev={prevLightbox} onNext={nextLightbox} />
     </section>
   );
 }
@@ -374,7 +498,6 @@ export default function Home() {
 
   function handleEnter() {
     setIntroLeaving(true);
-    // Optional background music — add your own file at public/song.mp3 to enable.
     try {
       const audio = new Audio('/song.mp3');
       audio.volume = 0.5;
@@ -418,17 +541,12 @@ export default function Home() {
           <LampIcon />
         </div>
 
-        <div className="eyebrow">
-          You are lovingly invited
-          <span className="si">ඔබ ආදරයෙන් ආරාධනා කරනු ලැබේ</span>
-        </div>
+        <div className="eyebrow">You are lovingly invited</div>
 
         <h1 className="names-en">{settings.groomName}<span className="amp">&amp;</span>{settings.brideName}</h1>
-        <p className="names-si">{settings.groomNameSi} <span style={{ color: 'var(--rose)' }}>&amp;</span> {settings.brideNameSi}</p>
 
         <div className="tagline">
           <span className="en">&quot;{settings.taglineEn}&quot;</span>
-          <span className="si">{settings.taglineSi}</span>
         </div>
 
         <div className="hero-dates">
@@ -437,17 +555,21 @@ export default function Home() {
         </div>
 
         <div className="main-cd">
-          <div className="main-cd-label">Counting down to the Poruwa <span className="si">පෝරුවට නැගීමට තව</span></div>
+          <div className="main-cd-label">Counting down to the Poruwa</div>
           <div className="cd-row">
-            <div className="cd-box"><span className="cd-num">{two(hd)}</span><span className="cd-label">Days<span className="si">දවස්</span></span></div>
-            <div className="cd-box"><span className="cd-num">{two(hh)}</span><span className="cd-label">Hrs<span className="si">පැය</span></span></div>
-            <div className="cd-box"><span className="cd-num">{two(hm)}</span><span className="cd-label">Min<span className="si">මිනි</span></span></div>
-            <div className="cd-box"><span className="cd-num">{two(hs)}</span><span className="cd-label">Sec<span className="si">තත්</span></span></div>
+            <div className="cd-box"><span className="cd-num">{two(hd)}</span><span className="cd-label">Days</span></div>
+            <div className="cd-box"><span className="cd-num">{two(hh)}</span><span className="cd-label">Hrs</span></div>
+            <div className="cd-box"><span className="cd-num">{two(hm)}</span><span className="cd-label">Min</span></div>
+            <div className="cd-box"><span className="cd-num">{two(hs)}</span><span className="cd-label">Sec</span></div>
           </div>
         </div>
 
-        <div className="scroll-cue">⌄ THE FULL SCHEDULE ⌄</div>
+        <div className="scroll-cue">⌄ SHARE A WISH ⌄</div>
       </div>
+
+      <div className="lattice" />
+
+      <WishesWall />
 
       <div className="lattice" />
 
@@ -455,7 +577,6 @@ export default function Home() {
         <div className="sec-head">
           <div className="sec-eyebrow">Auspicious Times</div>
           <h2 className="sec-title-en">Wedding Schedule</h2>
-          <p className="sec-title-si">මංගල උත්සව කාලසටහන — නැකැත් වේලාවන්</p>
         </div>
         <div className="timeline">
           {events.map((ev, i) => (
@@ -470,13 +591,12 @@ export default function Home() {
         <div className="sec-head">
           <div className="sec-eyebrow">Kindly Respond</div>
           <h2 className="sec-title-en">RSVP</h2>
-          <p className="sec-title-si">ඔබගේ පැමිණීම තහවුරු කරන්න</p>
         </div>
 
         <div className="rsvp-card">
           <form onSubmit={handleSubmit}>
             <div className="field">
-              <label htmlFor="r-name">Full Name <span className="si">සම්පූර්ණ නම</span></label>
+              <label htmlFor="r-name">Full Name</label>
               <input
                 id="r-name"
                 type="text"
@@ -487,20 +607,20 @@ export default function Home() {
               />
             </div>
             <div className="field">
-              <label htmlFor="r-attend">Will you attend? <span className="si">ඔබ පැමිණේද?</span></label>
+              <label htmlFor="r-attend">Will you attend?</label>
               <select
                 id="r-attend"
                 required
                 value={form.attending}
                 onChange={(e) => setForm({ ...form, attending: e.target.value })}
               >
-                <option value="" disabled>Select / තෝරන්න</option>
-                <option value="Yes">Joyfully Yes / ඔව්, සතුටිනි</option>
-                <option value="No">Sadly No / කණගාටුයි, නොහැක</option>
+                <option value="" disabled>Select</option>
+                <option value="Yes">Joyfully Yes</option>
+                <option value="No">Sadly No</option>
               </select>
             </div>
             <div className="field">
-              <label htmlFor="r-guests">Number of Guests <span className="si">ඇතුළත් වන අමුත්තන් ගණන</span></label>
+              <label htmlFor="r-guests">Number of Guests</label>
               <input
                 id="r-guests"
                 type="number"
@@ -511,29 +631,24 @@ export default function Home() {
               />
             </div>
             <div className="field">
-              <label htmlFor="r-msg">Message for the couple <span className="si">යුවලට සුබ පැතුමක්</span> (optional)</label>
+              <label htmlFor="r-msg">Message for the couple (optional)</label>
               <textarea
                 id="r-msg"
-                placeholder="Write your wishes here / ඔබේ සුබ පැතුම මෙහි ලියන්න"
+                placeholder="Write your wishes here"
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn">Send RSVP <span className="si">යවන්න</span></button>
+            <button type="submit" className="btn">Send RSVP</button>
             {status === 'sending' && <div className="form-msg">Sending...</div>}
-            {status === 'ok' && <div className="form-msg ok">Thank you! Your RSVP has been received. / ස්තුතියි!</div>}
+            {status === 'ok' && <div className="form-msg ok">Thank you! Your RSVP has been received.</div>}
             {status === 'err' && <div className="form-msg err">Something went wrong. Please try again.</div>}
           </form>
         </div>
       </section>
 
-      <div className="lattice" />
-
-      <WishesWall />
-
       <footer>
         WITH LOVE, {settings.groomName?.toUpperCase()} &amp; {settings.brideName?.toUpperCase()}
-        <span className="si">ආදරයෙන්, {settings.groomNameSi} සහ {settings.brideNameSi}</span>
         <div style={{ marginTop: '14px' }}>
           <a href="/admin">Couple&apos;s Dashboard</a>
         </div>

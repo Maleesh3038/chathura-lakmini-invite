@@ -60,9 +60,33 @@ function RsvpTab() {
   );
 }
 
+function AdminLightbox({ items, index, onClose, onPrev, onNext }) {
+  if (index === null || !items || !items[index]) return null;
+  const item = items[index];
+  return (
+    <div className="lightbox-overlay" onClick={onClose}>
+      <button className="lightbox-close" onClick={onClose}>✕</button>
+      {items.length > 1 && (
+        <button className="lightbox-nav prev" onClick={(e) => { e.stopPropagation(); onPrev(); }}>‹</button>
+      )}
+      <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+        {item.type === 'video' ? (
+          <video src={item.url} controls autoPlay className="lightbox-media" />
+        ) : (
+          <img src={item.url} alt="" className="lightbox-media" />
+        )}
+      </div>
+      {items.length > 1 && (
+        <button className="lightbox-nav next" onClick={(e) => { e.stopPropagation(); onNext(); }}>›</button>
+      )}
+    </div>
+  );
+}
+
 function WishesTab({ passcode }) {
   const [wishes, setWishes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lightbox, setLightbox] = useState({ items: null, index: null });
 
   async function load() {
     setLoading(true);
@@ -100,6 +124,11 @@ function WishesTab({ passcode }) {
     load();
   }
 
+  function openLightbox(items, index) { setLightbox({ items, index }); }
+  function closeLightbox() { setLightbox({ items: null, index: null }); }
+  function prevLightbox() { setLightbox((prev) => ({ ...prev, index: (prev.index - 1 + prev.items.length) % prev.items.length })); }
+  function nextLightbox() { setLightbox((prev) => ({ ...prev, index: (prev.index + 1) % prev.items.length })); }
+
   if (loading) return <p className="empty-note">Loading...</p>;
   if (wishes.length === 0) return <p className="empty-note">No wishes yet.</p>;
 
@@ -107,7 +136,16 @@ function WishesTab({ passcode }) {
     <div className="admin-list">
       {wishes.map((w) => (
         <div key={w.id} className="admin-item">
-          {w.photo && <img src={w.photo} className="admin-item-photo" alt="" />}
+          {(w.media || []).length > 0 && (
+            <div className="admin-media-row">
+              {w.media.map((m, i) => (
+                <button key={i} type="button" className="admin-media-thumb" onClick={() => openLightbox(w.media, i)}>
+                  {m.type === 'video' ? <video src={m.url} muted playsInline /> : <img src={m.url} alt="" />}
+                  {m.type === 'video' && <span className="media-play-icon">▶</span>}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="admin-item-body">
             <div className="admin-item-head">
               <strong>{w.name}</strong>
@@ -126,12 +164,14 @@ function WishesTab({ passcode }) {
           </div>
         </div>
       ))}
+
+      <AdminLightbox items={lightbox.items} index={lightbox.index} onClose={closeLightbox} onPrev={prevLightbox} onNext={nextLightbox} />
     </div>
   );
 }
 
 function emptyEventForm() {
-  return { en: '', si: '', date: '', dirEn: '', dirSi: '', note: '', sortOrder: 0 };
+  return { en: '', date: '', direction: '', note: '', sortOrder: 0 };
 }
 
 function ScheduleTab({ passcode }) {
@@ -161,10 +201,8 @@ function ScheduleTab({ passcode }) {
     setEditingId(ev.id);
     setEditForm({
       en: ev.en || '',
-      si: ev.si || '',
       date: ev.date ? ev.date.slice(0, 16) : '',
-      dirEn: ev.dirEn || '',
-      dirSi: ev.dirSi || '',
+      direction: ev.direction || '',
       note: ev.note || '',
       sortOrder: ev.sortOrder ?? 0,
     });
@@ -211,11 +249,9 @@ function ScheduleTab({ passcode }) {
           <div key={ev.id} className="admin-item">
             {editingId === ev.id ? (
               <div className="admin-edit-form">
-                <input value={editForm.en} onChange={(e) => setEditForm({ ...editForm, en: e.target.value })} placeholder="Event (English)" />
-                <input value={editForm.si} onChange={(e) => setEditForm({ ...editForm, si: e.target.value })} placeholder="Event (Sinhala)" />
+                <input value={editForm.en} onChange={(e) => setEditForm({ ...editForm, en: e.target.value })} placeholder="Event Name" />
                 <input type="datetime-local" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} />
-                <input value={editForm.dirEn} onChange={(e) => setEditForm({ ...editForm, dirEn: e.target.value })} placeholder="Direction (English)" />
-                <input value={editForm.dirSi} onChange={(e) => setEditForm({ ...editForm, dirSi: e.target.value })} placeholder="Direction (Sinhala)" />
+                <input value={editForm.direction} onChange={(e) => setEditForm({ ...editForm, direction: e.target.value })} placeholder="Direction (e.g. North)" />
                 <input value={editForm.note} onChange={(e) => setEditForm({ ...editForm, note: e.target.value })} placeholder="Note (optional)" />
                 <div className="admin-item-actions">
                   <button className="btn-small btn-approve" onClick={() => saveEdit(ev.id)}>Save</button>
@@ -226,7 +262,6 @@ function ScheduleTab({ passcode }) {
               <>
                 <div className="admin-item-body">
                   <strong>{ev.en}</strong>
-                  <p className="si">{ev.si}</p>
                   <span className="admin-item-meta">{ev.date ? new Date(ev.date).toLocaleString() : 'No date set'}</span>
                 </div>
                 <div className="admin-item-actions">
@@ -241,11 +276,9 @@ function ScheduleTab({ passcode }) {
 
       {showAdd ? (
         <form className="admin-edit-form" onSubmit={addEvent} style={{ marginTop: 20 }}>
-          <input required value={newForm.en} onChange={(e) => setNewForm({ ...newForm, en: e.target.value })} placeholder="Event (English)" />
-          <input required value={newForm.si} onChange={(e) => setNewForm({ ...newForm, si: e.target.value })} placeholder="Event (Sinhala)" />
+          <input required value={newForm.en} onChange={(e) => setNewForm({ ...newForm, en: e.target.value })} placeholder="Event Name" />
           <input type="datetime-local" value={newForm.date} onChange={(e) => setNewForm({ ...newForm, date: e.target.value })} />
-          <input value={newForm.dirEn} onChange={(e) => setNewForm({ ...newForm, dirEn: e.target.value })} placeholder="Direction (English)" />
-          <input value={newForm.dirSi} onChange={(e) => setNewForm({ ...newForm, dirSi: e.target.value })} placeholder="Direction (Sinhala)" />
+          <input value={newForm.direction} onChange={(e) => setNewForm({ ...newForm, direction: e.target.value })} placeholder="Direction (e.g. North)" />
           <input value={newForm.note} onChange={(e) => setNewForm({ ...newForm, note: e.target.value })} placeholder="Note (optional)" />
           <div className="admin-item-actions">
             <button type="submit" className="btn-small btn-approve">Add Event</button>
@@ -269,10 +302,7 @@ function SettingsTab({ passcode }) {
       .then((data) => setForm({
         groomName: data.groomName || '',
         brideName: data.brideName || '',
-        groomNameSi: data.groomNameSi || '',
-        brideNameSi: data.brideNameSi || '',
         taglineEn: data.taglineEn || '',
-        taglineSi: data.taglineSi || '',
         heroDate1Label: data.heroDate1Label || '',
         heroDate1Value: data.heroDate1Value || '',
         heroDate2Label: data.heroDate2Label || '',
@@ -301,18 +331,12 @@ function SettingsTab({ passcode }) {
 
   return (
     <form className="admin-edit-form" onSubmit={save} style={{ maxWidth: 460 }}>
-      <label>Groom&apos;s Name (English)</label>
+      <label>Groom&apos;s Name</label>
       <input value={form.groomName} onChange={(e) => setForm({ ...form, groomName: e.target.value })} />
-      <label>Bride&apos;s Name (English)</label>
+      <label>Bride&apos;s Name</label>
       <input value={form.brideName} onChange={(e) => setForm({ ...form, brideName: e.target.value })} />
-      <label>Groom&apos;s Name (Sinhala)</label>
-      <input value={form.groomNameSi} onChange={(e) => setForm({ ...form, groomNameSi: e.target.value })} />
-      <label>Bride&apos;s Name (Sinhala)</label>
-      <input value={form.brideNameSi} onChange={(e) => setForm({ ...form, brideNameSi: e.target.value })} />
-      <label>Tagline (English)</label>
+      <label>Tagline</label>
       <textarea value={form.taglineEn} onChange={(e) => setForm({ ...form, taglineEn: e.target.value })} />
-      <label>Tagline (Sinhala)</label>
-      <textarea value={form.taglineSi} onChange={(e) => setForm({ ...form, taglineSi: e.target.value })} />
       <label>Hero Date Chip 1 — Label</label>
       <input value={form.heroDate1Label} onChange={(e) => setForm({ ...form, heroDate1Label: e.target.value })} />
       <label>Hero Date Chip 1 — Value</label>
