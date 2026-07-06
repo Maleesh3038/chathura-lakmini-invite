@@ -41,12 +41,13 @@ function RsvpTab() {
       ) : (
         <table className="rsvp-table">
           <thead>
-            <tr><th>Name</th><th>Attending</th><th>Guests</th><th>Message</th><th>Date</th></tr>
+            <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Message</th><th>Date</th></tr>
           </thead>
           <tbody>
             {data.slice().reverse().map((r, i) => (
               <tr key={i}>
                 <td>{r.name || '—'}</td>
+                <td>{r.phone || '—'}</td>
                 <td>{r.attending || '—'}</td>
                 <td>{r.guests ?? '—'}</td>
                 <td>{r.message || '—'}</td>

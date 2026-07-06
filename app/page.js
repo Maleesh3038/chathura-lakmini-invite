@@ -568,7 +568,7 @@ function ThankYouSection({ settings }) {
 
 export default function Home() {
   const [now, setNow] = useState(() => Date.now());
-  const [form, setForm] = useState({ name: '', attending: '', guests: 1, message: '' });
+  const [form, setForm] = useState({ name: '', phone: '', attending: '', guests: 1, message: '' });
   const [status, setStatus] = useState(null);
   const [introOpen, setIntroOpen] = useState(true);
   const [introLeaving, setIntroLeaving] = useState(false);
@@ -633,7 +633,7 @@ export default function Home() {
       });
       if (!res.ok) throw new Error('failed');
       setStatus('ok');
-      setForm({ name: '', attending: '', guests: 1, message: '' });
+      setForm({ name: '', phone: '', attending: '', guests: 1, message: '' });
     } catch (err) {
       setStatus('err');
     }
@@ -707,6 +707,17 @@ export default function Home() {
                 placeholder="e.g. Nimal Perera"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="r-phone">Phone Number</label>
+              <input
+                id="r-phone"
+                type="tel"
+                required
+                placeholder="e.g. 0771234567"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
             </div>
             <div className="field">

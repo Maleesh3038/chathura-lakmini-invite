@@ -10,6 +10,7 @@ export async function GET() {
 
   const mapped = data.map((r) => ({
     name: r.name,
+    phone: r.phone,
     attending: r.attending,
     guests: r.guests,
     message: r.message,
@@ -21,15 +22,26 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    if (!body.name || !body.attending) {
-      return Response.json({ ok: false, error: 'Name and attending status required.' }, { status: 400 });
+    if (!body.name || !body.attending || !body.phone) {
+      return Response.json({ ok: false, error: 'Name, phone number, and attending status are required.' }, { status: 400 });
     }
-    const { error } = await supabaseAdmin.from('rsvps').insert({
-      name: String(body.name).slice(0, 80),
-      attending: body.attending,
-      guests: body.guests || 1,
-      message: body.message ? String(body.message).slice(0, 600) : null,
-    });
+
+    const phone = String(body.phone).replace(/\s+/g, '');
+
+    const { error } = await supabaseAdmin
+      .from('rsvps')
+      .upsert(
+        {
+          phone,
+          name: String(body.name).slice(0, 80),
+          attending: body.attending,
+          guests: body.guests || 1,
+          message: body.message ? String(body.message).slice(0, 600) : null,
+          submitted_at: new Date().toISOString(),
+        },
+        { onConflict: 'phone' }
+      );
+
     if (error) throw error;
     return Response.json({ ok: true });
   } catch (e) {
