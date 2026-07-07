@@ -604,7 +604,7 @@ function LocationSection({ settings }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Open in Google Maps ↗
+          Open in Google Maps
         </a>
       </Reveal>
     </section>
@@ -616,4 +616,227 @@ function ThankYouSection({ settings }) {
     <section id="thank-you">
       <Reveal className="thank-you-card">
         <div className="thank-you-mark">❦</div>
-        <h2
+        <h2 className="sec-title-en">{settings.thankYouTitle}</h2>
+        <p className="thank-you-message">{settings.thankYouMessage}</p>
+        <div className="thank-you-sign">— {settings.groomName} &amp; {settings.brideName}</div>
+      </Reveal>
+    </section>
+  );
+}
+
+export default function Home() {
+  const [now, setNow] = useState(() => Date.now());
+  const [form, setForm] = useState({ name: '', phone: '', attending: '', guests: 1, message: '' });
+  const [status, setStatus] = useState(null);
+  const [introOpen, setIntroOpen] = useState(true);
+  const [introLeaving, setIntroLeaving] = useState(false);
+  const [events, setEvents] = useState(DEFAULT_EVENTS);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/schedule')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length) setEvents(data);
+      })
+      .catch(() => {});
+
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && Object.keys(data).length) {
+          setSettings((prev) => ({ ...prev, ...data }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = introOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [introOpen]);
+
+  function handleEnter() {
+    setIntroLeaving(true);
+    try {
+      const audio = new Audio('/song.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    } catch (e) {
+      // no audio file yet — silently ignore
+    }
+    setTimeout(() => setIntroOpen(false), 550);
+  }
+
+  const heroTarget = new Date(settings.countdownTarget).getTime();
+  const heroDiff = Math.max(0, heroTarget - now);
+  const hd = Math.floor(heroDiff / 86400000);
+  const hh = Math.floor((heroDiff / 3600000) % 24);
+  const hm = Math.floor((heroDiff / 60000) % 60);
+  const hs = Math.floor((heroDiff / 1000) % 60);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setStatus('sending');
+    try {
+      const res = await fetch('/api/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, submittedAt: new Date().toISOString() }),
+      });
+      if (!res.ok) throw new Error('failed');
+      setStatus('ok');
+      setForm({ name: '', phone: '', attending: '', guests: 1, message: '' });
+    } catch (err) {
+      setStatus('err');
+    }
+  }
+
+  return (
+    <>
+      {introOpen && <IntroScreen onEnter={handleEnter} leaving={introLeaving} settings={settings} />}
+
+      <div className="hero">
+        <div className="lamp-wrap">
+          <LampIcon />
+        </div>
+
+        <div className="eyebrow">You are lovingly invited</div>
+
+        <h1 className="names-en">{settings.groomName}<span className="amp">&amp;</span>{settings.brideName}</h1>
+
+        <div className="tagline">
+          <span className="en">&quot;{settings.taglineEn}&quot;</span>
+        </div>
+
+        <div className="hero-dates">
+          <div className="date-chip">{settings.heroDate1Label} · <b>{settings.heroDate1Value}</b></div>
+          <div className="date-chip">{settings.heroDate2Label} · <b>{settings.heroDate2Value}</b></div>
+        </div>
+
+        <div className="main-cd">
+          <div className="main-cd-label">Counting down to the Poruwa</div>
+          <div className="cd-row">
+            <div className="cd-box"><span className="cd-num">{two(hd)}</span><span className="cd-label">Days</span></div>
+            <div className="cd-box"><span className="cd-num">{two(hh)}</span><span className="cd-label">Hrs</span></div>
+            <div className="cd-box"><span className="cd-num">{two(hm)}</span><span className="cd-label">Min</span></div>
+            <div className="cd-box"><span className="cd-num">{two(hs)}</span><span className="cd-label">Sec</span></div>
+          </div>
+        </div>
+
+        <div className="scroll-cue">⌄ SCROLL TO EXPLORE ⌄</div>
+      </div>
+
+      <div className="lattice" />
+
+      <section id="schedule">
+        <div className="sec-head">
+          <div className="sec-eyebrow">Auspicious Times</div>
+          <h2 className="sec-title-en">Wedding Schedule</h2>
+        </div>
+        <div className="timeline">
+          {events.map((ev, i) => (
+            <EventCard key={ev.id || i} ev={ev} idx={i} now={now} />
+          ))}
+        </div>
+      </section>
+
+      <div className="lattice" />
+
+      <LocationSection settings={settings} />
+
+      <div className="lattice" />
+
+      <section id="rsvp">
+        <div className="sec-head">
+          <div className="sec-eyebrow">Kindly Respond</div>
+          <h2 className="sec-title-en">RSVP</h2>
+        </div>
+
+        <Reveal className="rsvp-card">
+          <form onSubmit={handleSubmit}>
+            <div className="field">
+              <label htmlFor="r-name">Full Name</label>
+              <input
+                id="r-name"
+                type="text"
+                required
+                placeholder="e.g. Nimal Perera"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="r-phone">Phone Number</label>
+              <input
+                id="r-phone"
+                type="tel"
+                required
+                placeholder="e.g. 0771234567"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="r-attend">Will you attend?</label>
+              <select
+                id="r-attend"
+                required
+                value={form.attending}
+                onChange={(e) => setForm({ ...form, attending: e.target.value })}
+              >
+                <option value="" disabled>Select</option>
+                <option value="Yes">Joyfully Yes</option>
+                <option value="No">Sadly No</option>
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="r-guests">Number of Guests</label>
+              <input
+                id="r-guests"
+                type="number"
+                min="1"
+                max="10"
+                value={form.guests}
+                onChange={(e) => setForm({ ...form, guests: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="r-msg">Message for the couple (optional)</label>
+              <textarea
+                id="r-msg"
+                placeholder="Write your wishes here"
+                value={form.message}
+                onChange={(e) => setForm({ ...form, message: e.target.value })}
+              />
+            </div>
+            <button type="submit" className="btn btn-glow">Send RSVP</button>
+            {status === 'sending' && <div className="form-msg">Sending...</div>}
+            {status === 'ok' && <div className="form-msg ok">Thank you! Your RSVP has been received.</div>}
+            {status === 'err' && <div className="form-msg err">Something went wrong. Please try again.</div>}
+          </form>
+        </Reveal>
+      </section>
+
+      <div className="lattice" />
+
+      <WishesWall />
+
+      <div className="lattice" />
+
+      <ThankYouSection settings={settings} />
+
+      <footer>
+        WITH LOVE, {settings.groomName?.toUpperCase()} &amp; {settings.brideName?.toUpperCase()}
+        <div style={{ marginTop: '14px' }}>
+          <a href="/admin">Couple&apos;s Dashboard</a>
+        </div>
+      </footer>
+    </>
+  );
+}
