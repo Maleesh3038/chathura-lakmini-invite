@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 // Change this to something only you and your partner know.
 // This must match the ADMIN_PASSCODE environment variable on the server
@@ -386,16 +387,28 @@ function MusicUploadSection({ passcode }) {
     setError('');
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append('song', file);
+      if (file.size > 15 * 1024 * 1024) {
+        throw new Error('File is too large (max 15MB).');
+      }
+      const ext = (file.name.split('.').pop() || 'mp3').toLowerCase();
+      const fileName = `site-song-${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabaseClient.storage
+        .from('wish-photos')
+        .upload(fileName, file, { contentType: file.type || 'audio/mpeg' });
+      if (uploadError) throw uploadError;
+
+      const { data } = supabaseClient.storage.from('wish-photos').getPublicUrl(fileName);
+      const newSongUrl = data.publicUrl;
+
       const res = await fetch('/api/settings/song', {
         method: 'POST',
-        headers: { 'x-admin-passcode': passcode },
-        body: fd,
+        headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
+        body: JSON.stringify({ songUrl: newSongUrl }),
       });
       const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json.error || 'Upload failed');
-      setSongUrl(json.songUrl);
+      if (!res.ok || !json.ok) throw new Error(json.error || 'Could not save song.');
+      setSongUrl(newSongUrl);
     } catch (err) {
       setError(err.message);
     } finally {

@@ -17,36 +17,19 @@ export async function POST(request) {
     if (!isValidPasscode(passcode)) {
       return Response.json({ ok: false, error: 'Invalid passcode.' }, { status: 401 });
     }
-
-    const formData = await request.formData();
-    const file = formData.get('song');
-    if (!file) {
-      return Response.json({ ok: false, error: 'No file provided.' }, { status: 400 });
+    const body = await request.json();
+    if (!body.songUrl) {
+      return Response.json({ ok: false, error: 'Missing songUrl.' }, { status: 400 });
     }
-    if (file.size > 15 * 1024 * 1024) {
-      return Response.json({ ok: false, error: 'File is too large (max 15MB).' }, { status: 400 });
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const ext = (file.name.split('.').pop() || 'mp3').toLowerCase();
-    const fileName = `site-song-${Date.now()}.${ext}`;
-
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from('wish-photos')
-      .upload(fileName, buffer, { contentType: file.type || 'audio/mpeg', upsert: true });
-    if (uploadError) throw uploadError;
-
-    const { data: publicUrlData } = supabaseAdmin.storage.from('wish-photos').getPublicUrl(fileName);
-    const songUrl = publicUrlData.publicUrl;
 
     const content = await getSettingsContent();
-    const { error: updateError } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('settings')
-      .update({ content: { ...content, songUrl } })
+      .update({ content: { ...content, songUrl: body.songUrl } })
       .eq('id', 1);
-    if (updateError) throw updateError;
+    if (error) throw error;
 
-    return Response.json({ ok: true, songUrl });
+    return Response.json({ ok: true, songUrl: body.songUrl });
   } catch (e) {
     return Response.json({ ok: false, error: e.message }, { status: 500 });
   }
@@ -61,11 +44,11 @@ export async function DELETE(request) {
 
     const content = await getSettingsContent();
     delete content.songUrl;
-    const { error: updateError } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('settings')
       .update({ content })
       .eq('id', 1);
-    if (updateError) throw updateError;
+    if (error) throw error;
 
     return Response.json({ ok: true });
   } catch (e) {
