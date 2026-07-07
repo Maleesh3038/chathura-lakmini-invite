@@ -7,16 +7,53 @@ import { useEffect, useState } from 'react';
 // (falls back to this same value if that env var isn't set).
 const PASSCODE = 'poruwa2026';
 
-function RsvpTab() {
+function emptyGuestForm() {
+  return { name: '', phone: '', attending: 'Yes', guests: 1, message: '' };
+}
+
+function RsvpTab({ passcode }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [guestForm, setGuestForm] = useState(emptyGuestForm());
+  const [addStatus, setAddStatus] = useState(null);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/rsvp');
+      const json = await res.json();
+      setData(json);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    fetch('/api/rsvp')
-      .then((r) => r.json())
-      .then(setData)
-      .finally(() => setLoading(false));
+    load();
   }, []);
+
+  async function addGuest(e) {
+    e.preventDefault();
+    setAddStatus('saving');
+    try {
+      const res = await fetch('/api/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
+        body: JSON.stringify({ ...guestForm, source: 'manual' }),
+      });
+      if (!res.ok) throw new Error('failed');
+      setAddStatus('ok');
+      setGuestForm(emptyGuestForm());
+      load();
+      setTimeout(() => {
+        setShowAdd(false);
+        setAddStatus(null);
+      }, 800);
+    } catch (err) {
+      setAddStatus('err');
+    }
+  }
 
   const total = data.length;
   const yes = data.filter((r) => r.attending === 'Yes').length;
@@ -24,6 +61,7 @@ function RsvpTab() {
   const guests = data
     .filter((r) => r.attending === 'Yes')
     .reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
+  const manualCount = data.filter((r) => r.source === 'manual').length;
 
   return (
     <div>
@@ -32,7 +70,29 @@ function RsvpTab() {
         <div className="stat"><span className="stat-num">{yes}</span><span className="stat-lab">Attending</span></div>
         <div className="stat"><span className="stat-num">{no}</span><span className="stat-lab">Declined</span></div>
         <div className="stat"><span className="stat-num">{guests}</span><span className="stat-lab">Total Guests</span></div>
+        <div className="stat"><span className="stat-num">{manualCount}</span><span className="stat-lab">Manually Added</span></div>
       </div>
+
+      {showAdd ? (
+        <form className="admin-edit-form" onSubmit={addGuest} style={{ marginBottom: 20 }}>
+          <input required value={guestForm.name} onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })} placeholder="Guest Name" />
+          <input value={guestForm.phone} onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })} placeholder="Phone (optional)" />
+          <select value={guestForm.attending} onChange={(e) => setGuestForm({ ...guestForm, attending: e.target.value })}>
+            <option value="Yes">Attending</option>
+            <option value="No">Declined</option>
+          </select>
+          <input type="number" min="1" max="20" value={guestForm.guests} onChange={(e) => setGuestForm({ ...guestForm, guests: e.target.value })} placeholder="Number of Guests" />
+          <input value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Note (optional)" />
+          <div className="admin-item-actions">
+            <button type="submit" className="btn-small btn-approve">Add Guest</button>
+            <button type="button" className="btn-small" onClick={() => setShowAdd(false)}>Cancel</button>
+          </div>
+          {addStatus === 'ok' && <p className="form-msg ok">Guest added!</p>}
+          {addStatus === 'err' && <p className="form-msg err">Something went wrong.</p>}
+        </form>
+      ) : (
+        <button className="btn" style={{ marginBottom: 20 }} onClick={() => setShowAdd(true)}>+ Add Guest Manually</button>
+      )}
 
       {loading ? (
         <p className="empty-note">Loading...</p>
@@ -41,7 +101,7 @@ function RsvpTab() {
       ) : (
         <table className="rsvp-table">
           <thead>
-            <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Message</th><th>Date</th></tr>
+            <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Source</th><th>Message</th><th>Date</th></tr>
           </thead>
           <tbody>
             {data.slice().reverse().map((r, i) => (
@@ -50,6 +110,11 @@ function RsvpTab() {
                 <td>{r.phone || '—'}</td>
                 <td>{r.attending || '—'}</td>
                 <td>{r.guests ?? '—'}</td>
+                <td>
+                  <span className={`badge ${r.source === 'manual' ? 'badge-pending' : 'badge-approved'}`}>
+                    {r.source === 'manual' ? 'Manual' : 'Link'}
+                  </span>
+                </td>
                 <td>{r.message || '—'}</td>
                 <td>{r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : '—'}</td>
               </tr>
@@ -293,6 +358,89 @@ function ScheduleTab({ passcode }) {
   );
 }
 
+function MusicUploadSection({ passcode }) {
+  const [songUrl, setSongUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+
+  async function load() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/settings');
+      const data = await res.json();
+      setSongUrl(data.songUrl || null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setError('');
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('song', file);
+      const res = await fetch('/api/settings/song', {
+        method: 'POST',
+        headers: { 'x-admin-passcode': passcode },
+        body: fd,
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || 'Upload failed');
+      setSongUrl(json.songUrl);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleRemove() {
+    if (!confirm('Remove the background song?')) return;
+    await fetch('/api/settings/song', {
+      method: 'DELETE',
+      headers: { 'x-admin-passcode': passcode },
+    });
+    setSongUrl(null);
+  }
+
+  return (
+    <div className="admin-edit-form" style={{ maxWidth: 460, marginBottom: 28 }}>
+      <label>Background Music</label>
+      {loading ? (
+        <p className="empty-note">Loading...</p>
+      ) : songUrl ? (
+        <div>
+          <audio controls src={songUrl} style={{ width: '100%', marginBottom: 10 }} />
+          <div className="admin-item-actions">
+            <label className="btn-small" style={{ cursor: 'pointer' }}>
+              Replace Song
+              <input type="file" accept="audio/*" onChange={handleFile} style={{ display: 'none' }} />
+            </label>
+            <button type="button" className="btn-small btn-delete" onClick={handleRemove}>Remove</button>
+          </div>
+        </div>
+      ) : (
+        <label className="photo-drop-modern" style={{ cursor: 'pointer' }}>
+          <span className="photo-drop-icon">🎵</span>
+          <span className="photo-drop-text">{uploading ? 'Uploading...' : 'Choose a song'}</span>
+          <span className="photo-drop-subtext">MP3 file, up to 15MB — plays when guests tap &quot;You&apos;re Invited&quot;</span>
+          <input type="file" accept="audio/*" onChange={handleFile} style={{ display: 'none' }} disabled={uploading} />
+        </label>
+      )}
+      {error && <p className="form-msg err">{error}</p>}
+    </div>
+  );
+}
+
 function SettingsTab({ passcode }) {
   const [form, setForm] = useState(null);
   const [status, setStatus] = useState(null);
@@ -338,42 +486,45 @@ function SettingsTab({ passcode }) {
   if (!form) return <p className="empty-note">Loading...</p>;
 
   return (
-    <form className="admin-edit-form" onSubmit={save} style={{ maxWidth: 460 }}>
-      <label>Groom&apos;s Name</label>
-      <input value={form.groomName} onChange={(e) => setForm({ ...form, groomName: e.target.value })} />
-      <label>Bride&apos;s Name</label>
-      <input value={form.brideName} onChange={(e) => setForm({ ...form, brideName: e.target.value })} />
-      <label>Tagline</label>
-      <textarea value={form.taglineEn} onChange={(e) => setForm({ ...form, taglineEn: e.target.value })} />
-      <label>Hero Date Chip 1 — Label</label>
-      <input value={form.heroDate1Label} onChange={(e) => setForm({ ...form, heroDate1Label: e.target.value })} />
-      <label>Hero Date Chip 1 — Value</label>
-      <input value={form.heroDate1Value} onChange={(e) => setForm({ ...form, heroDate1Value: e.target.value })} />
-      <label>Hero Date Chip 2 — Label</label>
-      <input value={form.heroDate2Label} onChange={(e) => setForm({ ...form, heroDate2Label: e.target.value })} />
-      <label>Hero Date Chip 2 — Value</label>
-      <input value={form.heroDate2Value} onChange={(e) => setForm({ ...form, heroDate2Value: e.target.value })} />
-      <label>Main Countdown Target (date &amp; time)</label>
-      <input type="datetime-local" value={form.countdownTarget} onChange={(e) => setForm({ ...form, countdownTarget: e.target.value })} />
-      <label>Thank You Note — Title</label>
-      <input value={form.thankYouTitle} onChange={(e) => setForm({ ...form, thankYouTitle: e.target.value })} />
-      <label>Thank You Note — Message</label>
-      <textarea value={form.thankYouMessage} onChange={(e) => setForm({ ...form, thankYouMessage: e.target.value })} />
-      <label>Venue Name</label>
-      <input value={form.venueName} onChange={(e) => setForm({ ...form, venueName: e.target.value })} />
-      <label>Venue Address</label>
-      <input value={form.venueAddress} onChange={(e) => setForm({ ...form, venueAddress: e.target.value })} />
-      <label>Google Maps Link (for the &quot;Open in Google Maps&quot; button)</label>
-      <input value={form.venueMapUrl} onChange={(e) => setForm({ ...form, venueMapUrl: e.target.value })} />
-      <label>Venue Latitude (for map preview — copy from the Google Maps URL)</label>
-      <input value={form.venueLat} onChange={(e) => setForm({ ...form, venueLat: e.target.value })} />
-      <label>Venue Longitude (for map preview — copy from the Google Maps URL)</label>
-      <input value={form.venueLng} onChange={(e) => setForm({ ...form, venueLng: e.target.value })} />
-      <button type="submit" className="btn" style={{ marginTop: 16 }}>Save Changes</button>
-      {status === 'saving' && <p className="form-msg">Saving...</p>}
-      {status === 'ok' && <p className="form-msg ok">Saved!</p>}
-      {status === 'err' && <p className="form-msg err">Something went wrong.</p>}
-    </form>
+    <>
+      <MusicUploadSection passcode={passcode} />
+      <form className="admin-edit-form" onSubmit={save} style={{ maxWidth: 460 }}>
+        <label>Groom&apos;s Name</label>
+        <input value={form.groomName} onChange={(e) => setForm({ ...form, groomName: e.target.value })} />
+        <label>Bride&apos;s Name</label>
+        <input value={form.brideName} onChange={(e) => setForm({ ...form, brideName: e.target.value })} />
+        <label>Tagline</label>
+        <textarea value={form.taglineEn} onChange={(e) => setForm({ ...form, taglineEn: e.target.value })} />
+        <label>Hero Date Chip 1 — Label</label>
+        <input value={form.heroDate1Label} onChange={(e) => setForm({ ...form, heroDate1Label: e.target.value })} />
+        <label>Hero Date Chip 1 — Value</label>
+        <input value={form.heroDate1Value} onChange={(e) => setForm({ ...form, heroDate1Value: e.target.value })} />
+        <label>Hero Date Chip 2 — Label</label>
+        <input value={form.heroDate2Label} onChange={(e) => setForm({ ...form, heroDate2Label: e.target.value })} />
+        <label>Hero Date Chip 2 — Value</label>
+        <input value={form.heroDate2Value} onChange={(e) => setForm({ ...form, heroDate2Value: e.target.value })} />
+        <label>Main Countdown Target (date &amp; time)</label>
+        <input type="datetime-local" value={form.countdownTarget} onChange={(e) => setForm({ ...form, countdownTarget: e.target.value })} />
+        <label>Thank You Note — Title</label>
+        <input value={form.thankYouTitle} onChange={(e) => setForm({ ...form, thankYouTitle: e.target.value })} />
+        <label>Thank You Note — Message</label>
+        <textarea value={form.thankYouMessage} onChange={(e) => setForm({ ...form, thankYouMessage: e.target.value })} />
+        <label>Venue Name</label>
+        <input value={form.venueName} onChange={(e) => setForm({ ...form, venueName: e.target.value })} />
+        <label>Venue Address</label>
+        <input value={form.venueAddress} onChange={(e) => setForm({ ...form, venueAddress: e.target.value })} />
+        <label>Google Maps Link (for the &quot;Open in Google Maps&quot; button)</label>
+        <input value={form.venueMapUrl} onChange={(e) => setForm({ ...form, venueMapUrl: e.target.value })} />
+        <label>Venue Latitude (for map preview — copy from the Google Maps URL)</label>
+        <input value={form.venueLat} onChange={(e) => setForm({ ...form, venueLat: e.target.value })} />
+        <label>Venue Longitude (for map preview — copy from the Google Maps URL)</label>
+        <input value={form.venueLng} onChange={(e) => setForm({ ...form, venueLng: e.target.value })} />
+        <button type="submit" className="btn" style={{ marginTop: 16 }}>Save Changes</button>
+        {status === 'saving' && <p className="form-msg">Saving...</p>}
+        {status === 'ok' && <p className="form-msg ok">Saved!</p>}
+        {status === 'err' && <p className="form-msg err">Something went wrong.</p>}
+      </form>
+    </>
   );
 }
 
@@ -428,7 +579,7 @@ export default function AdminPage() {
       </div>
 
       <div style={{ marginTop: 24 }}>
-        {tab === 'rsvps' && <RsvpTab />}
+        {tab === 'rsvps' && <RsvpTab passcode={pin} />}
         {tab === 'wishes' && <WishesTab passcode={pin} />}
         {tab === 'schedule' && <ScheduleTab passcode={pin} />}
         {tab === 'settings' && <SettingsTab passcode={pin} />}

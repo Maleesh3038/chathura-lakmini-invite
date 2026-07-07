@@ -37,6 +37,7 @@ const DEFAULT_SETTINGS = {
   venueMapUrl: 'https://www.google.com/maps/place/Asliya+Golden+Cassandra/@7.4339716,80.3397686,1127m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3ae33ba4acb686e9:0x4133679c8fdf897c!8m2!3d7.4339663!4d80.3423435!16s%2Fg%2F11tp4l0xrq?entry=ttu&g_ep=EgoyMDI2MDYyOS4wIKXMDSoASAFQAw%3D%3D',
   venueLat: '7.4339663',
   venueLng: '80.3423435',
+  songUrl: null,
 };
 
 const MAX_MEDIA_ITEMS = 6;
@@ -161,7 +162,7 @@ function IntroScreen({ onEnter, leaving, settings }) {
           You&apos;re Invited <span aria-hidden="true">→</span>
         </button>
 
-        <p className="intro-hint">🔊 Tap to begin — with music</p>
+        <p className="intro-hint">{settings.songUrl ? '🔊 Tap to begin — with music' : 'Tap to begin'}</p>
 
         <div className="intro-corner bl"><CornerFlourish flip /></div>
         <div className="intro-corner br"><CornerFlourish /></div>
@@ -741,12 +742,14 @@ export default function Home() {
 
   function handleEnter() {
     setIntroLeaving(true);
-    try {
-      const audio = new Audio('/song.mp3');
-      audio.volume = 0.5;
-      audio.play().catch(() => {});
-    } catch (e) {
-      // no audio file yet — silently ignore
+    if (settings.songUrl) {
+      try {
+        const audio = new Audio(settings.songUrl);
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+      } catch (e) {
+        // ignore
+      }
     }
     setTimeout(() => setIntroOpen(false), 550);
   }
