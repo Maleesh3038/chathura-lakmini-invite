@@ -19,9 +19,19 @@ export async function PUT(request) {
       return Response.json({ ok: false, error: 'Invalid passcode.' }, { status: 401 });
     }
     const body = await request.json();
+
+    const { data: existing, error: fetchError } = await supabaseAdmin
+      .from('settings')
+      .select('content')
+      .eq('id', 1)
+      .single();
+    if (fetchError) throw fetchError;
+
+    const merged = { ...(existing?.content || {}), ...body };
+
     const { error } = await supabaseAdmin
       .from('settings')
-      .update({ content: body })
+      .update({ content: merged })
       .eq('id', 1);
     if (error) throw error;
     return Response.json({ ok: true });

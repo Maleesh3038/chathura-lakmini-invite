@@ -457,6 +457,7 @@ function MusicUploadSection({ passcode }) {
 function SettingsTab({ passcode }) {
   const [form, setForm] = useState(null);
   const [status, setStatus] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     fetch('/api/settings')
@@ -483,16 +484,21 @@ function SettingsTab({ passcode }) {
   async function save(e) {
     e.preventDefault();
     setStatus('saving');
+    setErrorMsg('');
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error('failed');
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.ok === false) {
+        throw new Error(json.error || `Request failed (${res.status})`);
+      }
       setStatus('ok');
-    } catch (e) {
+    } catch (err) {
       setStatus('err');
+      setErrorMsg(err.message);
     }
   }
 
@@ -535,7 +541,7 @@ function SettingsTab({ passcode }) {
         <button type="submit" className="btn" style={{ marginTop: 16 }}>Save Changes</button>
         {status === 'saving' && <p className="form-msg">Saving...</p>}
         {status === 'ok' && <p className="form-msg ok">Saved!</p>}
-        {status === 'err' && <p className="form-msg err">Something went wrong.</p>}
+        {status === 'err' && <p className="form-msg err">{errorMsg || 'Something went wrong.'}</p>}
       </form>
     </>
   );
