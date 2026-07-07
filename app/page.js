@@ -598,14 +598,7 @@ function LocationSection({ settings }) {
           </div>
         )}
 
-        
-          className="btn-pill venue-cta"
-          href={settings.venueMapUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Open in Google Maps
-        </a>
+        <a className="btn-pill venue-cta" href={settings.venueMapUrl} target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
       </Reveal>
     </section>
   );
