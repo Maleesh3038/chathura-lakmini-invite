@@ -311,6 +311,11 @@ function SettingsTab({ passcode }) {
         countdownTarget: data.countdownTarget ? data.countdownTarget.slice(0, 16) : '',
         thankYouTitle: data.thankYouTitle || '',
         thankYouMessage: data.thankYouMessage || '',
+        venueName: data.venueName || '',
+        venueAddress: data.venueAddress || '',
+        venueMapUrl: data.venueMapUrl || '',
+        venueLat: data.venueLat || '',
+        venueLng: data.venueLng || '',
       }));
   }, []);
 
@@ -354,6 +359,16 @@ function SettingsTab({ passcode }) {
       <input value={form.thankYouTitle} onChange={(e) => setForm({ ...form, thankYouTitle: e.target.value })} />
       <label>Thank You Note — Message</label>
       <textarea value={form.thankYouMessage} onChange={(e) => setForm({ ...form, thankYouMessage: e.target.value })} />
+      <label>Venue Name</label>
+      <input value={form.venueName} onChange={(e) => setForm({ ...form, venueName: e.target.value })} />
+      <label>Venue Address</label>
+      <input value={form.venueAddress} onChange={(e) => setForm({ ...form, venueAddress: e.target.value })} />
+      <label>Google Maps Link (for the &quot;Open in Google Maps&quot; button)</label>
+      <input value={form.venueMapUrl} onChange={(e) => setForm({ ...form, venueMapUrl: e.target.value })} />
+      <label>Venue Latitude (for map preview — copy from the Google Maps URL)</label>
+      <input value={form.venueLat} onChange={(e) => setForm({ ...form, venueLat: e.target.value })} />
+      <label>Venue Longitude (for map preview — copy from the Google Maps URL)</label>
+      <input value={form.venueLng} onChange={(e) => setForm({ ...form, venueLng: e.target.value })} />
       <button type="submit" className="btn" style={{ marginTop: 16 }}>Save Changes</button>
       {status === 'saving' && <p className="form-msg">Saving...</p>}
       {status === 'ok' && <p className="form-msg ok">Saved!</p>}
