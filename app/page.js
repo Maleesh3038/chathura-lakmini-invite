@@ -604,6 +604,91 @@ function LocationSection({ settings }) {
   );
 }
 
+function toICSDate(dateObj) {
+  return dateObj.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
+function getEventTimes(settings) {
+  const start = new Date(`${settings.countdownTarget}+05:30`);
+  const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
+  return { start, end };
+}
+
+function buildGoogleCalendarUrl(settings) {
+  const { start, end } = getEventTimes(settings);
+  const dates = `${toICSDate(start)}/${toICSDate(end)}`;
+  const text = encodeURIComponent(`${settings.groomName} & ${settings.brideName}'s Wedding`);
+  const details = encodeURIComponent(settings.taglineEn || '');
+  const location = encodeURIComponent(`${settings.venueName}, ${settings.venueAddress}`);
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}&location=${location}`;
+}
+
+function buildICS(settings) {
+  const { start, end } = getEventTimes(settings);
+  const uid = `wedding-${Date.now()}@inviteglow`;
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Wedding Invitation//EN',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${toICSDate(new Date())}`,
+    `DTSTART:${toICSDate(start)}`,
+    `DTEND:${toICSDate(end)}`,
+    `SUMMARY:${settings.groomName} & ${settings.brideName}'s Wedding`,
+    `DESCRIPTION:${(settings.taglineEn || '').replace(/\n/g, '\\n')}`,
+    `LOCATION:${settings.venueName}, ${settings.venueAddress}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ];
+  return lines.join('\r\n');
+}
+
+function downloadICS(settings) {
+  const ics = buildICS(settings);
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'wedding-invite.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function AddToCalendarSection({ settings }) {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <Reveal className="calendar-card">
+      <button type="button" className="calendar-header" onClick={() => setOpen(!open)}>
+        <span className="calendar-icon">📅</span>
+        <span className="calendar-header-text">
+          <span className="calendar-title">Add to Calendar</span>
+          <span className="calendar-subtitle">Save the date to your calendar</span>
+        </span>
+        <span className="calendar-chevron">{open ? '⌃' : '⌄'}</span>
+      </button>
+
+      {open && (
+        <div className="calendar-options">
+          <a className="calendar-option" href={buildGoogleCalendarUrl(settings)} target="_blank" rel="noopener noreferrer">
+            <span className="calendar-option-icon">📆</span>
+            <span className="calendar-option-label">Google Calendar</span>
+            <span className="calendar-option-arrow">›</span>
+          </a>
+          <button type="button" className="calendar-option" onClick={() => downloadICS(settings)}>
+            <span className="calendar-option-icon">🍎</span>
+            <span className="calendar-option-label">Apple Calendar / Outlook</span>
+            <span className="calendar-option-arrow">›</span>
+          </button>
+        </div>
+      )}
+    </Reveal>
+  );
+}
+
 function ThankYouSection({ settings }) {
   return (
     <section id="thank-you">
@@ -742,6 +827,8 @@ export default function Home() {
       <div className="lattice" />
 
       <LocationSection settings={settings} />
+
+      <AddToCalendarSection settings={settings} />
 
       <div className="lattice" />
 
