@@ -193,12 +193,15 @@ function EventCard({ ev, idx, now }) {
     <Reveal delay={Math.min(idx, 8) * 50} className={`event-card ${isDone ? 'done' : ''}`}>
       <div className="event-index">{two(idx + 1)}</div>
       <div className="event-body">
+        <div className="event-corner"><CornerFlourish flip /></div>
         <h3 className="ev-title-en">{ev.en}</h3>
-        <div className="ev-meta">
-          {ev.date && <span>🕐 <b>{fmtDate(ev.date)}</b></span>}
-          {ev.direction && <span>⌖ {ev.direction}</span>}
+        <div className="ev-row">
+          <div className="ev-meta">
+            {ev.date && <span>🕐 {fmtDate(ev.date)}</span>}
+            {ev.direction && <span>⌖ {ev.direction}</span>}
+          </div>
+          {body}
         </div>
-        {body}
         {ev.note && <p className="note-line">{ev.note}</p>}
       </div>
     </Reveal>

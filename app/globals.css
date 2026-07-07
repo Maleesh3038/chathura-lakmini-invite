@@ -165,16 +165,18 @@ section{ padding:70px 20px; max-width:900px; margin:0 auto; }
   left:29px;
   top:8px;
   bottom:8px;
-  width:1px;
-  background:linear-gradient(180deg, transparent, var(--line) 8%, var(--line) 92%, transparent);
+  width:2px;
+  background-image:repeating-linear-gradient(180deg, var(--gold) 0 5px, transparent 5px 12px);
+  opacity:0.55;
 }
 .event-card{
   position:relative;
   display:flex;
   gap:22px;
-  padding:22px 0;
+  padding:16px 0;
 }
 .event-index{
+  position:relative;
   flex:0 0 58px;
   height:58px;
   border-radius:50%;
@@ -186,37 +188,72 @@ section{ padding:70px 20px; max-width:900px; margin:0 auto; }
   font-size:20px;
   color:var(--gold-bright);
   background:var(--bg-deep);
-  position:relative;
   z-index:2;
+  box-shadow:0 0 0 4px var(--bg-deep), 0 0 0 5px rgba(184,134,63,0.32);
 }
-.event-card.done .event-index{ border-color:var(--muted); color:var(--muted); opacity:0.6;}
+.event-card.done .event-index{ border-color:var(--muted); color:var(--muted); opacity:0.6; box-shadow:none; }
 .event-body{
+  position:relative;
+  overflow:hidden;
   flex:1;
-  background:var(--bg-panel);
+  background:
+    repeating-linear-gradient(45deg, rgba(184,134,63,0.04) 0 2px, transparent 2px 18px),
+    repeating-linear-gradient(-45deg, rgba(184,134,63,0.04) 0 2px, transparent 2px 18px),
+    var(--bg-panel);
   border:1px solid var(--line);
-  border-radius:4px;
-  padding:18px 22px;
-  box-shadow:0 2px 14px rgba(184,134,63,0.06);
+  border-radius:10px;
+  padding:18px 20px 16px;
+  box-shadow:0 4px 18px rgba(184,134,63,0.07);
+}
+.event-body::before{
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0;
+  height:3px;
+  background:linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+}
+.event-corner{
+  position:absolute;
+  top:10px; right:12px;
+  opacity:0.3;
+  pointer-events:none;
 }
 .event-card.done .event-body{ opacity:0.6; }
-.ev-title-en{ font-family:'Cormorant Garamond',serif; font-size:21px; color:var(--gold-bright); margin:0 0 12px; font-weight:600;}
-.ev-meta{ display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--muted); margin-bottom:14px;}
-.ev-meta span{ display:inline-flex; align-items:center; gap:6px;}
-.ev-meta b{ color:var(--ink); font-weight:500;}
-.tbd{ font-size:13px; color:var(--gold); font-style:italic;}
-.mini-cd{ display:flex; gap:8px; flex-wrap:wrap;}
+.ev-title-en{ font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--gold-bright); margin:0 0 10px; font-weight:600; padding-right:30px;}
+.ev-row{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.ev-meta{ display:flex; gap:8px; flex-wrap:wrap; }
+.ev-meta span{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-size:12px;
+  color:var(--gold-bright);
+  background:rgba(184,134,63,0.08);
+  border:1px solid var(--line);
+  padding:5px 12px;
+  border-radius:20px;
+  font-weight:500;
+}
+.tbd{ font-size:12.5px; color:var(--gold); font-style:italic;}
+.mini-cd{ display:flex; gap:6px; flex-wrap:wrap; flex:0 0 auto; }
 .mini-box{
-  min-width:52px;
+  min-width:44px;
   text-align:center;
-  padding:6px 4px;
+  padding:5px 3px;
   background:rgba(231,189,106,0.10);
   border:1px solid var(--line);
-  border-radius:3px;
+  border-radius:6px;
 }
-.mini-num{ display:block; font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--gold-bright); font-weight:600;}
-.mini-lab{ display:block; font-size:9px; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted); margin-top:2px; font-weight:500;}
+.mini-num{ display:block; font-family:'Cormorant Garamond',serif; font-size:16px; color:var(--gold-bright); font-weight:600;}
+.mini-lab{ display:block; font-size:8px; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted); margin-top:1px; font-weight:500;}
 .done-tag{ display:inline-block; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); border:1px solid var(--muted); padding:4px 10px; border-radius:2px;}
-.note-line{ font-size:13px; color:var(--muted); margin-top:8px; font-style:italic;}
+.note-line{ font-size:12.5px; color:var(--muted); margin-top:10px; font-style:italic;}
 
 /* ---------- RSVP / CARDS ---------- */
 .rsvp-card{
