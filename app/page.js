@@ -38,6 +38,14 @@ const DEFAULT_SETTINGS = {
   venueLat: '7.4339663',
   venueLng: '80.3423435',
   songUrl: null,
+  themeGold: '#b8863f',
+  themeGoldBright: '#a2701f',
+  themeGoldGlow: '#e7bd6a',
+  themeRose: '#b9695f',
+  themeBgDeep: '#faf4e9',
+  themeInk: '#3d2f22',
+  themeHeadingFont: 'Cormorant Garamond',
+  themeBodyFont: 'Poppins',
 };
 
 const MAX_MEDIA_ITEMS = 6;
@@ -739,6 +747,33 @@ export default function Home() {
     document.body.style.overflow = introOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [introOpen]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--gold', settings.themeGold);
+    root.style.setProperty('--gold-bright', settings.themeGoldBright);
+    root.style.setProperty('--gold-glow', settings.themeGoldGlow);
+    root.style.setProperty('--rose', settings.themeRose);
+    root.style.setProperty('--bg-deep', settings.themeBgDeep);
+    root.style.setProperty('--ink', settings.themeInk);
+  }, [settings.themeGold, settings.themeGoldBright, settings.themeGoldGlow, settings.themeRose, settings.themeBgDeep, settings.themeInk]);
+
+  useEffect(() => {
+    const heading = settings.themeHeadingFont || 'Cormorant Garamond';
+    const body = settings.themeBodyFont || 'Poppins';
+    const linkId = 'dynamic-theme-fonts';
+    let link = document.getElementById(linkId);
+    const href = `https://fonts.googleapis.com/css2?family=${heading.replace(/ /g, '+')}:wght@400;500;600;700&family=${body.replace(/ /g, '+')}:wght@300;400;500;600&display=swap`;
+    if (!link) {
+      link = document.createElement('link');
+      link.id = linkId;
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+    link.href = href;
+    document.documentElement.style.setProperty('--font-heading', `'${heading}', serif`);
+    document.documentElement.style.setProperty('--font-body', `'${body}', sans-serif`);
+  }, [settings.themeHeadingFont, settings.themeBodyFont]);
 
   function handleEnter() {
     setIntroLeaving(true);

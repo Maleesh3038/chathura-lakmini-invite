@@ -6,7 +6,6 @@ import { supabaseClient } from '@/lib/supabaseClient';
 export const dynamic = 'force-dynamic';
 
 // Change this to something only you and your partner know.
-// Change this to something only you and your partner know.
 // This must match the ADMIN_PASSCODE environment variable on the server
 // (falls back to this same value if that env var isn't set).
 const PASSCODE = 'poruwa2026';
@@ -59,6 +58,16 @@ function RsvpTab({ passcode }) {
     }
   }
 
+  async function removeGuest(id) {
+    if (!confirm('Delete this guest entry permanently?')) return;
+    await fetch('/api/rsvp', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
+      body: JSON.stringify({ id }),
+    });
+    load();
+  }
+
   const total = data.length;
   const yes = data.filter((r) => r.attending === 'Yes').length;
   const no = data.filter((r) => r.attending === 'No').length;
@@ -105,7 +114,7 @@ function RsvpTab({ passcode }) {
       ) : (
         <table className="rsvp-table">
           <thead>
-            <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Source</th><th>Message</th><th>Date</th></tr>
+            <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {data.slice().reverse().map((r, i) => (
@@ -121,6 +130,7 @@ function RsvpTab({ passcode }) {
                 </td>
                 <td>{r.message || '—'}</td>
                 <td>{r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : '—'}</td>
+                <td><button className="btn-small btn-delete" onClick={() => removeGuest(r.id)}>Delete</button></td>
               </tr>
             ))}
           </tbody>
@@ -457,6 +467,95 @@ function MusicUploadSection({ passcode }) {
   );
 }
 
+const HEADING_FONTS = ['Cormorant Garamond', 'Playfair Display', 'Marcellus', 'EB Garamond', 'Cinzel', 'Prata'];
+const BODY_FONTS = ['Poppins', 'Lato', 'Inter', 'Nunito Sans', 'Work Sans', 'Mulish'];
+
+function ThemeSection({ passcode }) {
+  const [theme, setTheme] = useState(null);
+  const [status, setStatus] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => setTheme({
+        themeGold: data.themeGold || '#b8863f',
+        themeGoldBright: data.themeGoldBright || '#a2701f',
+        themeGoldGlow: data.themeGoldGlow || '#e7bd6a',
+        themeRose: data.themeRose || '#b9695f',
+        themeBgDeep: data.themeBgDeep || '#faf4e9',
+        themeInk: data.themeInk || '#3d2f22',
+        themeHeadingFont: data.themeHeadingFont || 'Cormorant Garamond',
+        themeBodyFont: data.themeBodyFont || 'Poppins',
+      }));
+  }, []);
+
+  async function save(e) {
+    e.preventDefault();
+    setStatus('saving');
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
+        body: JSON.stringify(theme),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.ok === false) throw new Error(json.error || 'Failed');
+      setStatus('ok');
+    } catch (err) {
+      setStatus('err');
+    }
+  }
+
+  if (!theme) return <p className="empty-note">Loading...</p>;
+
+  return (
+    <form className="admin-edit-form" onSubmit={save} style={{ maxWidth: 460, marginBottom: 28 }}>
+      <label>Site Colors &amp; Fonts</label>
+      <div className="theme-color-grid">
+        <div className="theme-color-item">
+          <span>Gold</span>
+          <input type="color" value={theme.themeGold} onChange={(e) => setTheme({ ...theme, themeGold: e.target.value })} />
+        </div>
+        <div className="theme-color-item">
+          <span>Gold Bright</span>
+          <input type="color" value={theme.themeGoldBright} onChange={(e) => setTheme({ ...theme, themeGoldBright: e.target.value })} />
+        </div>
+        <div className="theme-color-item">
+          <span>Gold Glow</span>
+          <input type="color" value={theme.themeGoldGlow} onChange={(e) => setTheme({ ...theme, themeGoldGlow: e.target.value })} />
+        </div>
+        <div className="theme-color-item">
+          <span>Accent</span>
+          <input type="color" value={theme.themeRose} onChange={(e) => setTheme({ ...theme, themeRose: e.target.value })} />
+        </div>
+        <div className="theme-color-item">
+          <span>Background</span>
+          <input type="color" value={theme.themeBgDeep} onChange={(e) => setTheme({ ...theme, themeBgDeep: e.target.value })} />
+        </div>
+        <div className="theme-color-item">
+          <span>Text</span>
+          <input type="color" value={theme.themeInk} onChange={(e) => setTheme({ ...theme, themeInk: e.target.value })} />
+        </div>
+      </div>
+
+      <label>Heading Font</label>
+      <select value={theme.themeHeadingFont} onChange={(e) => setTheme({ ...theme, themeHeadingFont: e.target.value })}>
+        {HEADING_FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
+      </select>
+
+      <label>Body Font</label>
+      <select value={theme.themeBodyFont} onChange={(e) => setTheme({ ...theme, themeBodyFont: e.target.value })}>
+        {BODY_FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
+      </select>
+
+      <button type="submit" className="btn" style={{ marginTop: 16 }}>Save Theme</button>
+      {status === 'saving' && <p className="form-msg">Saving...</p>}
+      {status === 'ok' && <p className="form-msg ok">Saved! Refresh the main site to see it.</p>}
+      {status === 'err' && <p className="form-msg err">Something went wrong.</p>}
+    </form>
+  );
+}
+
 function SettingsTab({ passcode }) {
   const [form, setForm] = useState(null);
   const [status, setStatus] = useState(null);
@@ -510,6 +609,7 @@ function SettingsTab({ passcode }) {
   return (
     <>
       <MusicUploadSection passcode={passcode} />
+      <ThemeSection passcode={passcode} />
       <form className="admin-edit-form" onSubmit={save} style={{ maxWidth: 460 }}>
         <label>Groom&apos;s Name</label>
         <input value={form.groomName} onChange={(e) => setForm({ ...form, groomName: e.target.value })} />
