@@ -79,6 +79,7 @@ body{
   margin:0;
   line-height:1.05;
 }
+
 .amp{
   font-family:'Playfair Display', serif;
   font-style:italic;
@@ -94,6 +95,7 @@ body{
   flex-wrap:wrap;
   justify-content:center;
 }
+
 .date-chip{
   border:1px solid var(--line);
   padding:10px 18px;
@@ -153,6 +155,7 @@ section{ padding:70px 20px; max-width:900px; margin:0 auto; }
 .sec-eyebrow{ font-size:11px; letter-spacing:0.3em; text-transform:uppercase; color:var(--gold); font-weight:500;}
 .sec-title-en{ font-family:'Cormorant Garamond',serif; font-size:clamp(28px,5vw,42px); color:var(--gold-bright); margin:8px 0 0;}
 .sec-sub{ font-size:14.5px; color:var(--muted); margin-top:8px; max-width:460px; margin-left:auto; margin-right:auto; line-height:1.7;}
+
 
 /* ---------- TIMELINE ---------- */
 .timeline{ position:relative; }
