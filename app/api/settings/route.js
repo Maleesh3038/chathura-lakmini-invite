@@ -12,7 +12,7 @@ export async function GET() {
   return Response.json(data?.content || {});
 }
 
-export async function PUT(request) {
+export async function POST(request) {
   try {
     const passcode = request.headers.get('x-admin-passcode') || '';
     if (!isValidPasscode(passcode)) {
