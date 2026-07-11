@@ -18,6 +18,7 @@ export async function GET() {
     message: r.message,
     source: r.source || 'link',
     submittedAt: r.submitted_at,
+    tableNumber: r.table_number || null,
   }));
   return Response.json(mapped);
 }
@@ -53,6 +54,26 @@ export async function POST(request) {
     } else {
       ({ error } = await supabaseAdmin.from('rsvps').insert(payload));
     }
+    if (error) throw error;
+    return Response.json({ ok: true });
+  } catch (e) {
+    return Response.json({ ok: false, error: e.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    const passcode = request.headers.get('x-admin-passcode') || '';
+    if (!isValidPasscode(passcode)) {
+      return Response.json({ ok: false, error: 'Invalid passcode.' }, { status: 401 });
+    }
+    const body = await request.json();
+    if (!body.id) return Response.json({ ok: false, error: 'Missing id.' }, { status: 400 });
+
+    const { error } = await supabaseAdmin
+      .from('rsvps')
+      .update({ table_number: body.tableNumber ? String(body.tableNumber).slice(0, 20) : null })
+      .eq('id', body.id);
     if (error) throw error;
     return Response.json({ ok: true });
   } catch (e) {
