@@ -1045,7 +1045,7 @@ table.rsvp-table td{ color:var(--ink); }
 }
 .calendar-option:last-child{ border-bottom:none; }
 .calendar-option:hover{ background:rgba(184,134,63,0.06); }
-.calendar-option-icon{ font-size:18px; flex:0 0 auto; }
+.calendar-option-icon{ font-size:18px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; width:20px; color:var(--ink); }
 .calendar-option-label{ flex:1; font-weight:500; }
 .calendar-option-arrow{ color:var(--muted); font-size:16px; }
 
