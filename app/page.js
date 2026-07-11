@@ -972,15 +972,6 @@ export default function Home() {
       {introOpen && <IntroScreen onEnter={handleEnter} leaving={introLeaving} settings={settings} />}
 
       <div className="hero">
-        <div className="hero-illustration-wrap">
-          <img
-            src="/images/couple-illustration.png"
-            alt={`${settings.groomName} and ${settings.brideName} illustration`}
-            className="hero-illustration"
-            onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
-          />
-        </div>
-
         <div className="lamp-wrap">
           <LampIcon />
         </div>
@@ -1008,6 +999,15 @@ export default function Home() {
       </div>
 
       <div className="lattice" />
+
+      <div className="hero-illustration-wrap">
+        <img
+          src="/images/couple-illustration.png"
+          alt={`${settings.groomName} and ${settings.brideName} illustration`}
+          className="hero-illustration"
+          onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+        />
+      </div>
 
       <SaveTheDateSection settings={settings} />
 
