@@ -159,39 +159,86 @@ function CornerFlourish({ flip }) {
   );
 }
 
+function FallingPetals() {
+  const [petals, setPetals] = useState([]);
+
+  useEffect(() => {
+    const count = 16;
+    const arr = Array.from({ length: count }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      size: 8 + Math.random() * 9,
+      duration: 11 + Math.random() * 9,
+      delay: Math.random() * 16,
+      drift: Math.round((Math.random() - 0.5) * 90),
+      rotate: Math.round(Math.random() * 360),
+    }));
+    setPetals(arr);
+  }, []);
+
+  return (
+    <div className="petals-overlay" aria-hidden="true">
+      {petals.map((p) => (
+        <span
+          key={p.id}
+          className="petal"
+          style={{
+            left: `${p.left}%`,
+            width: p.size,
+            height: p.size * 0.82,
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`,
+            '--drift': `${p.drift}px`,
+            '--rot': `${p.rotate}deg`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function IntroScreen({ onEnter, leaving, settings }) {
   const groomInitial = (settings.groomName || 'C')[0];
   const brideInitial = (settings.brideName || 'L')[0];
   return (
     <div className={`intro-overlay ${leaving ? 'leaving' : ''}`}>
       <div className="intro-card">
-        <div className="intro-corner tl"><CornerFlourish /></div>
-        <div className="intro-corner tr"><CornerFlourish flip /></div>
-
-        <div className="intro-monogram">
-          {groomInitial}<span className="monogram-amp">&amp;</span>{brideInitial}
+        <div className="intro-bg-illustration" aria-hidden="true">
+          <img
+            src="/images/couple-illustration.png"
+            alt=""
+            onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+          />
         </div>
+        <div className="intro-content">
+          <div className="intro-corner tl"><CornerFlourish /></div>
+          <div className="intro-corner tr"><CornerFlourish flip /></div>
 
-        <span className="intro-badge">● Wedding Invitation</span>
+          <div className="intro-monogram">
+            {groomInitial}<span className="monogram-amp">&amp;</span>{brideInitial}
+          </div>
 
-        <h1 className="intro-names">
-          {settings.groomName}
-          <span className="intro-amp">&amp;</span>
-          {settings.brideName}
-        </h1>
+          <span className="intro-badge">● Wedding Invitation</span>
 
-        <div className="intro-divider" />
+          <h1 className="intro-names">
+            {settings.groomName}
+            <span className="intro-amp">&amp;</span>
+            {settings.brideName}
+          </h1>
 
-        <p className="intro-tagline">{settings.taglineEn}</p>
+          <div className="intro-divider" />
 
-        <button className="intro-cta" onClick={onEnter}>
-          You&apos;re Invited <span aria-hidden="true">→</span>
-        </button>
+          <p className="intro-tagline">{settings.taglineEn}</p>
 
-        <p className="intro-hint">{settings.songUrl ? '🔊 Tap to begin — with music' : 'Tap to begin'}</p>
+          <button className="intro-cta" onClick={onEnter}>
+            You&apos;re Invited <span aria-hidden="true">→</span>
+          </button>
 
-        <div className="intro-corner bl"><CornerFlourish flip /></div>
-        <div className="intro-corner br"><CornerFlourish /></div>
+          <p className="intro-hint">{settings.songUrl ? '🔊 Tap to begin — with music' : 'Tap to begin'}</p>
+
+          <div className="intro-corner bl"><CornerFlourish flip /></div>
+          <div className="intro-corner br"><CornerFlourish /></div>
+        </div>
       </div>
     </div>
   );
@@ -969,6 +1016,8 @@ export default function Home() {
 
   return (
     <>
+      <FallingPetals />
+
       {introOpen && <IntroScreen onEnter={handleEnter} leaving={introLeaving} settings={settings} />}
 
       <div className="hero">
