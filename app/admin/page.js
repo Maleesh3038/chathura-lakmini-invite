@@ -652,6 +652,7 @@ function SettingsTab({ passcode }) {
         heroDate2Label: data.heroDate2Label || '',
         heroDate2Value: data.heroDate2Value || '',
         countdownTarget: data.countdownTarget ? data.countdownTarget.slice(0, 10) : '',
+        ceremonyTime: data.ceremonyTime || '',
         thankYouTitle: data.thankYouTitle || '',
         thankYouMessage: data.thankYouMessage || '',
         venueName: data.venueName || '',
@@ -707,6 +708,8 @@ function SettingsTab({ passcode }) {
         <input value={form.heroDate2Value} onChange={(e) => setForm({ ...form, heroDate2Value: e.target.value })} />
         <label>Main Countdown Target (date)</label>
         <input type="date" value={form.countdownTarget} onChange={(e) => setForm({ ...form, countdownTarget: e.target.value })} />
+        <label>Ceremony Time (shown in the Save the Date card)</label>
+        <input value={form.ceremonyTime} onChange={(e) => setForm({ ...form, ceremonyTime: e.target.value })} placeholder="e.g. 9:24 AM Onwards" />
         <label>Thank You Note — Title</label>
         <input value={form.thankYouTitle} onChange={(e) => setForm({ ...form, thankYouTitle: e.target.value })} />
         <label>Thank You Note — Message</label>
