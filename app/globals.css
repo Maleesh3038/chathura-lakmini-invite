@@ -1038,6 +1038,7 @@ table.rsvp-table td{ color:var(--ink); }
   border-bottom:1px solid var(--line);
   cursor:pointer;
   text-decoration:none;
+  text-align:left;
   color:var(--ink);
   font-size:14px;
   font-family:var(--font-body);
