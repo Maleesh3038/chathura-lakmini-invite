@@ -47,6 +47,18 @@ body{
   padding:60px 20px 40px;
   position:relative;
 }
+.hero-illustration-wrap{
+  width:100%;
+  max-width:340px;
+  margin:0 auto 8px;
+  -webkit-mask-image:linear-gradient(to bottom, #000 78%, transparent 100%);
+  mask-image:linear-gradient(to bottom, #000 78%, transparent 100%);
+}
+.hero-illustration{
+  width:100%;
+  height:auto;
+  display:block;
+}
 .lamp-wrap{
   position:relative;
   width:150px;
