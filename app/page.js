@@ -33,6 +33,7 @@ const DEFAULT_SETTINGS = {
   thankYouTitle: 'To Our Wonderful Guests',
   thankYouMessage: 'From the bottom of our hearts, thank you for being part of our story. Your love, laughter, and support mean the world to us as we begin this new chapter together.',
   venueName: 'Asliya Golden Cassandra',
+  venueHallName: 'Lotus Ballroom',
   venueAddress: 'Atupitiya Road, Dambokka',
   venueMapUrl: 'https://www.google.com/maps/place/Asliya+Golden+Cassandra/@7.4339716,80.3397686,1127m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3ae33ba4acb686e9:0x4133679c8fdf897c!8m2!3d7.4339663!4d80.3423435!16s%2Fg%2F11tp4l0xrq?entry=ttu&g_ep=EgoyMDI2MDYyOS4wIKXMDSoASAFQAw%3D%3D',
   venueLat: '7.4339663',
@@ -160,7 +161,11 @@ function IntroScreen({ onEnter, leaving, settings }) {
 
         <span className="intro-badge">● Wedding Invitation</span>
 
-        <h1 className="intro-names">{settings.groomName}<br />&amp; {settings.brideName}</h1>
+        <h1 className="intro-names">
+          {settings.groomName}
+          <span className="intro-amp">&amp;</span>
+          {settings.brideName}
+        </h1>
 
         <div className="intro-divider" />
 
@@ -337,9 +342,9 @@ function WishCard({ wish, index, onOpenMedia }) {
       style={{ transitionDelay: `${Math.min(index, 10) * 60}ms` }}
     >
       {media.length > 0 && (
-        <div className="wish-media-grid">
+        <div className={`wish-media-grid ${media.length === 1 ? 'single' : ''}`}>
           {media.slice(0, 4).map((m, i) => (
-            <div key={i} className="wish-media-cell">
+            <div key={i} className={`wish-media-cell ${media.length === 1 ? 'single-cell' : ''}`}>
               <MediaThumb item={m} onClick={() => onOpenMedia(media, i)} />
               {i === 3 && media.length > 4 && (
                 <button type="button" className="media-more" onClick={() => onOpenMedia(media, 3)}>
@@ -588,6 +593,7 @@ function LocationSection({ settings }) {
         <div className="venue-info">
           <div className="venue-pin">📍</div>
           <div>
+            {settings.venueHallName && <p className="venue-hall">{settings.venueHallName}</p>}
             <h3 className="venue-name">{settings.venueName}</h3>
             <p className="venue-address">{settings.venueAddress}</p>
           </div>
@@ -618,7 +624,9 @@ function toICSDate(dateObj) {
 }
 
 function getEventTimes(settings) {
-  const start = new Date(`${settings.countdownTarget}+05:30`);
+  const raw = settings.countdownTarget || '';
+  const withTime = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T09:00:00` : raw;
+  const start = new Date(`${withTime}+05:30`);
   const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
   return { start, end };
 }
@@ -657,13 +665,93 @@ function downloadICS(settings) {
   const ics = buildICS(settings);
   const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'wedding-invite.ics';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+
+  // iOS Safari doesn't reliably honor the `download` attribute for .ics files —
+  // it needs a direct navigation so it can offer the "Add to Calendar" sheet.
+  const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  if (isIOS) {
+    window.location.href = url;
+  } else {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wedding-invite.ics';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+function TableLookupSection() {
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState('idle'); // idle | loading | done | error
+  const [results, setResults] = useState([]);
+
+  async function handleSearch(e) {
+    e.preventDefault();
+    if (!query.trim()) return;
+    setStatus('loading');
+    try {
+      const res = await fetch('/api/rsvp/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query.trim() }),
+      });
+      if (!res.ok) throw new Error('failed');
+      const json = await res.json();
+      setResults(json.results || []);
+      setStatus('done');
+    } catch (err) {
+      setStatus('error');
+    }
+  }
+
+  return (
+    <section id="find-table">
+      <div className="sec-head">
+        <div className="sec-eyebrow">Seating</div>
+        <h2 className="sec-title-en">Find Your Table</h2>
+        <p className="sec-sub">Search your name or phone number to see your table number.</p>
+      </div>
+
+      <Reveal className="rsvp-card">
+        <form onSubmit={handleSearch}>
+          <div className="field">
+            <label htmlFor="t-query">Name or Phone Number</label>
+            <input
+              id="t-query"
+              type="text"
+              required
+              placeholder="e.g. Nimal Perera or 0771234567"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <button type="submit" className="btn btn-glow" disabled={status === 'loading'}>
+            {status === 'loading' ? 'Searching...' : 'Search'}
+          </button>
+
+          {status === 'done' && results.length === 0 && (
+            <div className="form-msg err">No matching guest found. Please check the spelling or try your phone number.</div>
+          )}
+          {status === 'done' && results.length > 0 && (
+            <div className="table-results">
+              {results.map((r, i) => (
+                <div key={i} className="table-result-item">
+                  <span className="table-result-name">{r.name}</span>
+                  <span className="table-result-num">
+                    {r.tableNumber ? `Table ${r.tableNumber}` : 'Table not assigned yet'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          {status === 'error' && <div className="form-msg err">Something went wrong. Please try again.</div>}
+        </form>
+      </Reveal>
+    </section>
+  );
 }
 
 function AddToCalendarSection({ settings }) {
@@ -789,7 +877,11 @@ export default function Home() {
     setTimeout(() => setIntroOpen(false), 550);
   }
 
-  const heroTarget = new Date(settings.countdownTarget).getTime();
+  // countdownTarget may be stored as a plain date ('YYYY-MM-DD') or a full
+  // date-time. If it's date-only, treat it as midnight in Sri Lanka (+05:30).
+  const rawTarget = settings.countdownTarget || '';
+  const heroTargetStr = /^\d{4}-\d{2}-\d{2}$/.test(rawTarget) ? `${rawTarget}T00:00:00+05:30` : rawTarget;
+  const heroTarget = new Date(heroTargetStr).getTime();
   const heroDiff = Math.max(0, heroTarget - now);
   const hd = Math.floor(heroDiff / 86400000);
   const hh = Math.floor((heroDiff / 3600000) % 24);
@@ -822,6 +914,8 @@ export default function Home() {
           <LampIcon />
         </div>
 
+        <a href="#wishes" className="hero-wishes-jump">💌 Guest Wishes</a>
+
         <div className="eyebrow">You are lovingly invited</div>
 
         <h1 className="names-en">{settings.groomName}<span className="amp">&amp;</span>{settings.brideName}</h1>
@@ -830,13 +924,7 @@ export default function Home() {
           <span className="en">&quot;{settings.taglineEn}&quot;</span>
         </div>
 
-        <div className="hero-dates">
-          <div className="date-chip">{settings.heroDate1Label} · <b>{settings.heroDate1Value}</b></div>
-          <div className="date-chip">{settings.heroDate2Label} · <b>{settings.heroDate2Value}</b></div>
-        </div>
-
         <div className="main-cd">
-          <div className="main-cd-label">Counting down to the Poruwa</div>
           <div className="cd-row">
             <div className="cd-box"><span className="cd-num">{two(hd)}</span><span className="cd-label">Days</span></div>
             <div className="cd-box"><span className="cd-num">{two(hh)}</span><span className="cd-label">Hrs</span></div>
@@ -865,6 +953,8 @@ export default function Home() {
       <div className="lattice" />
 
       <LocationSection settings={settings} />
+
+      <TableLookupSection />
 
       <AddToCalendarSection settings={settings} />
 
@@ -951,9 +1041,6 @@ export default function Home() {
 
       <footer>
         WITH LOVE, {settings.groomName?.toUpperCase()} &amp; {settings.brideName?.toUpperCase()}
-        <div style={{ marginTop: '14px' }}>
-          <a href="/admin">Couple&apos;s Dashboard</a>
-        </div>
       </footer>
     </>
   );
