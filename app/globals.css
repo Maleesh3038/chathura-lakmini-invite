@@ -105,6 +105,13 @@ body{
   padding:0 18px;
   font-weight:400;
 }
+.amp-inline{
+  font-family:'Playfair Display', serif;
+  font-style:italic;
+  color:var(--rose);
+  padding:0 4px;
+  font-weight:400;
+}
 .tagline{
   max-width:520px;
   margin:26px auto 0;
@@ -449,11 +456,13 @@ table.rsvp-table td{ color:var(--ink); }
   align-items:center;
 }
 .intro-amp{
+  font-family:'Playfair Display', serif;
+  font-style:italic;
   color:var(--rose);
   font-size:0.6em;
   line-height:1;
   margin:4px 0;
-  opacity:0.85;
+  opacity:0.9;
 }
 .intro-divider{ width:56px; height:1px; background:var(--gold); margin:20px auto; opacity:0.5; }
 .intro-tagline{
