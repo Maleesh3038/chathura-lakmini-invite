@@ -1049,7 +1049,9 @@ export default function Home({ searchParams }) {
 
       {showGreeting && <GuestGreeting name={guestName} leaving={greetingLeaving} />}
 
-      {!showGreeting && introOpen && <IntroScreen onEnter={handleEnter} leaving={introLeaving} settings={settings} />}
+      {introOpen && (!guestNameParam || greetingLeaving) && (
+        <IntroScreen onEnter={handleEnter} leaving={introLeaving} settings={settings} />
+      )}
 
       <div className="hero">
         <div className="lamp-wrap">
