@@ -70,19 +70,31 @@ function RsvpTab({ passcode }) {
     load();
   }
 
+  const [tableError, setTableError] = useState('');
+
   function startEditTable(r) {
     setEditingTableId(r.id);
     setTableValue(r.tableNumber || '');
+    setTableError('');
   }
 
   async function saveTable(id) {
-    await fetch('/api/rsvp', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
-      body: JSON.stringify({ id, tableNumber: tableValue }),
-    });
-    setEditingTableId(null);
-    load();
+    setTableError('');
+    try {
+      const res = await fetch('/api/rsvp', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
+        body: JSON.stringify({ id, tableNumber: tableValue }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.ok === false) {
+        throw new Error(json.error || `Save failed (${res.status}). Did you run MIGRATION.sql in Supabase?`);
+      }
+      setEditingTableId(null);
+      load();
+    } catch (err) {
+      setTableError(err.message);
+    }
   }
 
   function exportToExcel() {
@@ -170,15 +182,18 @@ function RsvpTab({ passcode }) {
                 <td>{r.guests ?? '—'}</td>
                 <td>
                   {editingTableId === r.id ? (
-                    <span style={{ display: 'flex', gap: 6 }}>
-                      <input
-                        value={tableValue}
-                        onChange={(e) => setTableValue(e.target.value)}
-                        placeholder="e.g. 12"
-                        style={{ width: 60, padding: '4px 6px', fontSize: 13 }}
-                      />
-                      <button className="btn-small btn-approve" onClick={() => saveTable(r.id)}>Save</button>
-                      <button className="btn-small" onClick={() => setEditingTableId(null)}>Cancel</button>
+                    <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <span style={{ display: 'flex', gap: 6 }}>
+                        <input
+                          value={tableValue}
+                          onChange={(e) => setTableValue(e.target.value)}
+                          placeholder="e.g. 12"
+                          style={{ width: 60, padding: '4px 6px', fontSize: 13 }}
+                        />
+                        <button className="btn-small btn-approve" onClick={() => saveTable(r.id)}>Save</button>
+                        <button className="btn-small" onClick={() => setEditingTableId(null)}>Cancel</button>
+                      </span>
+                      {tableError && <span style={{ fontSize: 11.5, color: '#b9695f' }}>{tableError}</span>}
                     </span>
                   ) : (
                     <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
