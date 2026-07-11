@@ -793,7 +793,7 @@ function ThankYouSection({ settings }) {
         <div className="thank-you-mark">❦</div>
         <h2 className="sec-title-en">{settings.thankYouTitle}</h2>
         <p className="thank-you-message">{settings.thankYouMessage}</p>
-        <div className="thank-you-sign">— {settings.groomName} &amp; {settings.brideName}</div>
+        <div className="thank-you-sign">— {settings.groomName} <span className="amp-inline">&amp;</span> {settings.brideName}</div>
       </Reveal>
     </section>
   );
@@ -1040,7 +1040,7 @@ export default function Home() {
       <ThankYouSection settings={settings} />
 
       <footer>
-        WITH LOVE, {settings.groomName?.toUpperCase()} &amp; {settings.brideName?.toUpperCase()}
+        WITH LOVE, {settings.groomName?.toUpperCase()} <span className="amp-inline">&amp;</span> {settings.brideName?.toUpperCase()}
       </footer>
     </>
   );
