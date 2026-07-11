@@ -473,6 +473,66 @@ table.rsvp-table td{ color:var(--ink); }
   transform:scale(1.03);
   pointer-events:none;
 }
+
+/* ---------- GUEST GREETING (personalized link) ---------- */
+.guest-greeting{
+  position:fixed;
+  inset:0;
+  z-index:1001;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:22px;
+  padding:24px;
+  text-align:center;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(231,189,106,0.22), transparent 55%),
+    radial-gradient(circle at 50% 80%, rgba(185,105,95,0.16), transparent 55%),
+    var(--bg-deep);
+  transition:opacity 0.6s ease, transform 0.6s ease;
+}
+.guest-greeting.leaving{
+  opacity:0;
+  transform:scale(1.04);
+  pointer-events:none;
+}
+.gg-circle{
+  width:180px;
+  height:180px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:radial-gradient(circle, rgba(231,189,106,0.28), rgba(231,189,106,0.06) 70%);
+}
+.gg-circle-bottom{
+  width:130px;
+  height:130px;
+  background:radial-gradient(circle, rgba(185,105,95,0.20), rgba(185,105,95,0.05) 70%);
+}
+.gg-flower{ font-size:44px; }
+.gg-text{
+  font-family:var(--font-heading);
+  font-style:italic;
+  font-size:clamp(26px,5vw,36px);
+  color:var(--ink);
+  max-width:90vw;
+}
+.gg-name{
+  font-family:'Parisienne', cursive;
+  font-style:normal;
+  color:var(--gold-bright);
+  font-size:1.15em;
+}
+.gg-divider{ width:56px; height:1px; background:var(--gold); opacity:0.5; }
+.gg-sub{
+  font-size:12px;
+  letter-spacing:0.3em;
+  text-transform:uppercase;
+  color:var(--rose);
+  font-weight:500;
+}
 .intro-card{
   position:relative;
   width:100%;
