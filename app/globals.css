@@ -493,6 +493,23 @@ table.rsvp-table td{ color:var(--ink); }
   background:radial-gradient(ellipse at center, rgba(231,189,106,0.35), transparent 72%);
   pointer-events:none;
 }
+.intro-bg-illustration{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+.intro-bg-illustration img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:top center;
+  opacity:0.16;
+  -webkit-mask-image:linear-gradient(to bottom, #000 40%, transparent 92%);
+  mask-image:linear-gradient(to bottom, #000 40%, transparent 92%);
+}
+.intro-content{ position:relative; z-index:1; }
 .intro-corner{ position:absolute; opacity:0.85; }
 .intro-corner.tl{ top:14px; left:14px; }
 .intro-corner.tr{ top:14px; right:14px; }
@@ -1235,4 +1252,32 @@ table.rsvp-table td{ color:var(--ink); }
   .event-index{ flex:0 0 44px; height:44px; font-size:16px; }
   .timeline::before{ left:22px; }
   .cd-box{ width:60px; }
+}
+
+/* ---------- FALLING PETALS ---------- */
+.petals-overlay{
+  position:fixed;
+  inset:0;
+  z-index:500;
+  overflow:hidden;
+  pointer-events:none;
+}
+.petal{
+  position:absolute;
+  top:-6%;
+  border-radius:50% 0 50% 50%;
+  background:linear-gradient(135deg, var(--gold-glow), var(--rose));
+  opacity:0;
+  animation-name:petal-fall;
+  animation-timing-function:linear;
+  animation-iteration-count:infinite;
+}
+@keyframes petal-fall{
+  0%{ transform:translate(0,0) rotate(var(--rot)); opacity:0; }
+  8%{ opacity:0.6; }
+  90%{ opacity:0.45; }
+  100%{ transform:translate(var(--drift), 112vh) rotate(calc(var(--rot) + 200deg)); opacity:0; }
+}
+@media (prefers-reduced-motion: reduce){
+  .petal{ animation:none; display:none; }
 }
