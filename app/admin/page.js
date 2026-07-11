@@ -20,6 +20,8 @@ function RsvpTab({ passcode }) {
   const [showAdd, setShowAdd] = useState(false);
   const [guestForm, setGuestForm] = useState(emptyGuestForm());
   const [addStatus, setAddStatus] = useState(null);
+  const [editingTableId, setEditingTableId] = useState(null);
+  const [tableValue, setTableValue] = useState('');
 
   async function load() {
     setLoading(true);
@@ -68,6 +70,46 @@ function RsvpTab({ passcode }) {
     load();
   }
 
+  function startEditTable(r) {
+    setEditingTableId(r.id);
+    setTableValue(r.tableNumber || '');
+  }
+
+  async function saveTable(id) {
+    await fetch('/api/rsvp', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
+      body: JSON.stringify({ id, tableNumber: tableValue }),
+    });
+    setEditingTableId(null);
+    load();
+  }
+
+  function exportToExcel() {
+    const headers = ['Name', 'Phone', 'Attending', 'Guests', 'Table', 'Source', 'Message', 'Date'];
+    const rows = data.map((r) => [
+      r.name || '',
+      r.phone || '',
+      r.attending || '',
+      r.guests ?? '',
+      r.tableNumber || '',
+      r.source === 'manual' ? 'Manual' : 'Link',
+      (r.message || '').replace(/\r?\n/g, ' '),
+      r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : '',
+    ]);
+    const escapeCell = (val) => `"${String(val).replace(/"/g, '""')}"`;
+    const csv = [headers, ...rows].map((row) => row.map(escapeCell).join(',')).join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wedding-rsvps.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   const total = data.length;
   const yes = data.filter((r) => r.attending === 'Yes').length;
   const no = data.filter((r) => r.attending === 'No').length;
@@ -86,7 +128,12 @@ function RsvpTab({ passcode }) {
         <div className="stat"><span className="stat-num">{manualCount}</span><span className="stat-lab">Manually Added</span></div>
       </div>
 
-      {showAdd ? (
+      <div className="admin-item-actions" style={{ marginBottom: 20 }}>
+        {!showAdd && <button className="btn" onClick={() => setShowAdd(true)}>+ Add Guest Manually</button>}
+        <button className="btn-small" onClick={exportToExcel} disabled={total === 0}>⬇ Export to Excel</button>
+      </div>
+
+      {showAdd && (
         <form className="admin-edit-form" onSubmit={addGuest} style={{ marginBottom: 20 }}>
           <input required value={guestForm.name} onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })} placeholder="Guest Name" />
           <input value={guestForm.phone} onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })} placeholder="Phone (optional)" />
@@ -103,8 +150,6 @@ function RsvpTab({ passcode }) {
           {addStatus === 'ok' && <p className="form-msg ok">Guest added!</p>}
           {addStatus === 'err' && <p className="form-msg err">Something went wrong.</p>}
         </form>
-      ) : (
-        <button className="btn" style={{ marginBottom: 20 }} onClick={() => setShowAdd(true)}>+ Add Guest Manually</button>
       )}
 
       {loading ? (
@@ -114,15 +159,34 @@ function RsvpTab({ passcode }) {
       ) : (
         <table className="rsvp-table">
           <thead>
-            <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
+            <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {data.slice().reverse().map((r, i) => (
-              <tr key={i}>
+            {data.slice().reverse().map((r) => (
+              <tr key={r.id}>
                 <td>{r.name || '—'}</td>
                 <td>{r.phone || '—'}</td>
                 <td>{r.attending || '—'}</td>
                 <td>{r.guests ?? '—'}</td>
+                <td>
+                  {editingTableId === r.id ? (
+                    <span style={{ display: 'flex', gap: 6 }}>
+                      <input
+                        value={tableValue}
+                        onChange={(e) => setTableValue(e.target.value)}
+                        placeholder="e.g. 12"
+                        style={{ width: 60, padding: '4px 6px', fontSize: 13 }}
+                      />
+                      <button className="btn-small btn-approve" onClick={() => saveTable(r.id)}>Save</button>
+                      <button className="btn-small" onClick={() => setEditingTableId(null)}>Cancel</button>
+                    </span>
+                  ) : (
+                    <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      {r.tableNumber || '—'}
+                      <button className="btn-small" onClick={() => startEditTable(r)}>Edit</button>
+                    </span>
+                  )}
+                </td>
                 <td>
                   <span className={`badge ${r.source === 'manual' ? 'badge-pending' : 'badge-approved'}`}>
                     {r.source === 'manual' ? 'Manual' : 'Link'}
@@ -254,6 +318,17 @@ function emptyEventForm() {
   return { en: '', date: '', direction: '', note: '', sortOrder: 0 };
 }
 
+// Schedule dates are stored as absolute UTC instants in Postgres. This
+// converts one back to a Sri Lanka (+05:30) wall-clock string suitable for
+// an <input type="datetime-local">, so the edit form shows the time the
+// couple actually meant instead of the raw UTC value.
+function toSriLankaDatetimeLocal(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const shifted = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+  return shifted.toISOString().slice(0, 16);
+}
+
 function ScheduleTab({ passcode }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -281,7 +356,7 @@ function ScheduleTab({ passcode }) {
     setEditingId(ev.id);
     setEditForm({
       en: ev.en || '',
-      date: ev.date ? ev.date.slice(0, 16) : '',
+      date: ev.date ? toSriLankaDatetimeLocal(ev.date) : '',
       direction: ev.direction || '',
       note: ev.note || '',
       sortOrder: ev.sortOrder ?? 0,
@@ -289,10 +364,14 @@ function ScheduleTab({ passcode }) {
   }
 
   async function saveEdit(id) {
+    // The <input type="datetime-local"> value has no timezone info. It's the
+    // couple's local time (Sri Lanka, +05:30), so we must attach that offset
+    // before saving — otherwise Postgres stores it as UTC and every displayed
+    // time on the public site ends up shifted 5.5 hours later than intended.
     await fetch('/api/schedule', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
-      body: JSON.stringify({ id, ...editForm, date: editForm.date || null }),
+      body: JSON.stringify({ id, ...editForm, date: editForm.date ? `${editForm.date}:00+05:30` : null }),
     });
     setEditingId(null);
     load();
@@ -313,7 +392,7 @@ function ScheduleTab({ passcode }) {
     await fetch('/api/schedule', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
-      body: JSON.stringify({ ...newForm, date: newForm.date || null, sortOrder: events.length }),
+      body: JSON.stringify({ ...newForm, date: newForm.date ? `${newForm.date}:00+05:30` : null, sortOrder: events.length }),
     });
     setNewForm(emptyEventForm());
     setShowAdd(false);
@@ -572,10 +651,11 @@ function SettingsTab({ passcode }) {
         heroDate1Value: data.heroDate1Value || '',
         heroDate2Label: data.heroDate2Label || '',
         heroDate2Value: data.heroDate2Value || '',
-        countdownTarget: data.countdownTarget ? data.countdownTarget.slice(0, 16) : '',
+        countdownTarget: data.countdownTarget ? data.countdownTarget.slice(0, 10) : '',
         thankYouTitle: data.thankYouTitle || '',
         thankYouMessage: data.thankYouMessage || '',
         venueName: data.venueName || '',
+        venueHallName: data.venueHallName || '',
         venueAddress: data.venueAddress || '',
         venueMapUrl: data.venueMapUrl || '',
         venueLat: data.venueLat || '',
@@ -625,14 +705,16 @@ function SettingsTab({ passcode }) {
         <input value={form.heroDate2Label} onChange={(e) => setForm({ ...form, heroDate2Label: e.target.value })} />
         <label>Hero Date Chip 2 — Value</label>
         <input value={form.heroDate2Value} onChange={(e) => setForm({ ...form, heroDate2Value: e.target.value })} />
-        <label>Main Countdown Target (date &amp; time)</label>
-        <input type="datetime-local" value={form.countdownTarget} onChange={(e) => setForm({ ...form, countdownTarget: e.target.value })} />
+        <label>Main Countdown Target (date)</label>
+        <input type="date" value={form.countdownTarget} onChange={(e) => setForm({ ...form, countdownTarget: e.target.value })} />
         <label>Thank You Note — Title</label>
         <input value={form.thankYouTitle} onChange={(e) => setForm({ ...form, thankYouTitle: e.target.value })} />
         <label>Thank You Note — Message</label>
         <textarea value={form.thankYouMessage} onChange={(e) => setForm({ ...form, thankYouMessage: e.target.value })} />
         <label>Venue Name</label>
         <input value={form.venueName} onChange={(e) => setForm({ ...form, venueName: e.target.value })} />
+        <label>Hall Name (e.g. Lotus Ballroom)</label>
+        <input value={form.venueHallName} onChange={(e) => setForm({ ...form, venueHallName: e.target.value })} />
         <label>Venue Address</label>
         <input value={form.venueAddress} onChange={(e) => setForm({ ...form, venueAddress: e.target.value })} />
         <label>Google Maps Link (for the &quot;Open in Google Maps&quot; button)</label>
