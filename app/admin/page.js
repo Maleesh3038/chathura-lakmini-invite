@@ -750,6 +750,115 @@ function SettingsTab({ passcode }) {
   );
 }
 
+const DEFAULT_WA_MESSAGE =
+  "💌 We're getting married! We would be so honoured to have you celebrate this special day with us. Your presence would mean the world to us 🌸 Open your invitation below 👇\n{link}";
+
+function GuestLinksTab() {
+  const [guestName, setGuestName] = useState('');
+  const [waMessage, setWaMessage] = useState(DEFAULT_WA_MESSAGE);
+  const [editingMessage, setEditingMessage] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [origin, setOrigin] = useState('');
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const trimmedName = guestName.trim();
+  const link = trimmedName ? `${origin}/?to=${encodeURIComponent(trimmedName)}` : '';
+  const finalMessage = link ? waMessage.replace('{link}', link) : waMessage;
+
+  async function copyLink() {
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function shareOnWhatsApp() {
+    if (!link) return;
+    window.open(`https://wa.me/?text=${encodeURIComponent(finalMessage)}`, '_blank');
+  }
+
+  return (
+    <div>
+      <div className="admin-edit-form" style={{ maxWidth: 520 }}>
+        <label>💌 Generate Guest Link</label>
+        <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '2px 0 10px' }}>
+          Type a guest&apos;s name to generate a personalized invitation link — their name
+          will show on a &quot;Dear [Name]&quot; welcome screen for a few seconds when they
+          open it, and auto-fill in the RSVP form.
+        </p>
+        <input
+          value={guestName}
+          onChange={(e) => setGuestName(e.target.value)}
+          placeholder="e.g. Amara &amp; Family"
+        />
+
+        {trimmedName && (
+          <>
+            <div
+              style={{
+                marginTop: 14,
+                padding: '10px 12px',
+                background: 'var(--bg-panel-2)',
+                border: '1px solid var(--line)',
+                borderRadius: 6,
+                fontSize: 13,
+                wordBreak: 'break-all',
+                color: 'var(--gold-bright)',
+              }}
+            >
+              {link}
+            </div>
+
+            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={{ marginTop: 0 }}>📱 WhatsApp Message</label>
+              <button type="button" className="btn-small" onClick={() => setEditingMessage(!editingMessage)}>
+                {editingMessage ? 'Done' : '✎ Edit'}
+              </button>
+            </div>
+            {editingMessage ? (
+              <textarea
+                value={waMessage}
+                onChange={(e) => setWaMessage(e.target.value)}
+                style={{ minHeight: 90 }}
+              />
+            ) : (
+              <div
+                style={{
+                  padding: '10px 12px',
+                  background: 'rgba(95,143,90,0.08)',
+                  border: '1px solid rgba(95,143,90,0.25)',
+                  borderRadius: 6,
+                  fontSize: 13,
+                  color: 'var(--ink)',
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {finalMessage}
+              </div>
+            )}
+
+            <div className="admin-item-actions" style={{ marginTop: 14 }}>
+              <button type="button" className="btn-small" onClick={copyLink}>
+                {copied ? '✓ Copied!' : '📋 Copy Link'}
+              </button>
+              <button type="button" className="btn-small btn-approve" onClick={shareOnWhatsApp}>
+                ↗ Share on WhatsApp
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState('');
@@ -798,6 +907,7 @@ export default function AdminPage() {
         <button className={`admin-tab ${tab === 'wishes' ? 'active' : ''}`} onClick={() => setTab('wishes')}>Guest Wishes</button>
         <button className={`admin-tab ${tab === 'schedule' ? 'active' : ''}`} onClick={() => setTab('schedule')}>Wedding Schedule</button>
         <button className={`admin-tab ${tab === 'settings' ? 'active' : ''}`} onClick={() => setTab('settings')}>Site Content</button>
+        <button className={`admin-tab ${tab === 'guestlinks' ? 'active' : ''}`} onClick={() => setTab('guestlinks')}>Guest Links</button>
       </div>
 
       <div style={{ marginTop: 24 }}>
@@ -805,6 +915,7 @@ export default function AdminPage() {
         {tab === 'wishes' && <WishesTab passcode={pin} />}
         {tab === 'schedule' && <ScheduleTab passcode={pin} />}
         {tab === 'settings' && <SettingsTab passcode={pin} />}
+        {tab === 'guestlinks' && <GuestLinksTab />}
       </div>
     </div>
   );
