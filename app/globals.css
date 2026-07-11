@@ -99,22 +99,22 @@ body{
   line-height:1.05;
 }
 .amp{
-  font-family:'Herr Von Muellerhoff', cursive;
+  font-family:'Parisienne', cursive;
   font-style:normal;
   color:var(--rose);
-  padding:0 20px;
+  padding:0 18px;
   font-weight:400;
-  font-size:1.15em;
+  font-size:1.05em;
 }
 .amp-inline{
-  font-family:'Herr Von Muellerhoff', cursive;
+  font-family:'Parisienne', cursive;
   font-style:normal;
   color:var(--rose);
-  padding:0 5px;
+  padding:0 4px;
   font-weight:400;
-  font-size:clamp(20px, 1.6em, 34px);
+  font-size:clamp(18px, 1.4em, 30px);
   line-height:1.4;
-  vertical-align:-0.15em;
+  vertical-align:-0.1em;
 }
 .tagline{
   max-width:520px;
@@ -435,6 +435,13 @@ table.rsvp-table td{ color:var(--ink); }
   color:var(--gold-bright);
   background:radial-gradient(circle, rgba(231,189,106,0.22), transparent 70%);
 }
+.monogram-amp{
+  font-family:'Parisienne', cursive;
+  font-style:normal;
+  color:var(--rose);
+  font-size:1.3em;
+  padding:0 3px;
+}
 .intro-badge{
   display:inline-block;
   border:1px solid var(--line);
@@ -460,13 +467,13 @@ table.rsvp-table td{ color:var(--ink); }
   align-items:center;
 }
 .intro-amp{
-  font-family:'Herr Von Muellerhoff', cursive;
+  font-family:'Parisienne', cursive;
   font-style:normal;
   color:var(--rose);
-  font-size:2em;
+  font-size:1.7em;
   line-height:1.5;
   display:block;
-  margin:6px 0;
+  margin:4px 0;
   opacity:0.95;
 }
 .intro-divider{ width:56px; height:1px; background:var(--gold); margin:20px auto; opacity:0.5; }
