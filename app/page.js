@@ -150,14 +150,17 @@ function CornerFlourish({ flip }) {
 }
 
 function IntroScreen({ onEnter, leaving, settings }) {
-  const initials = `${(settings.groomName || 'C')[0]} & ${(settings.brideName || 'L')[0]}`;
+  const groomInitial = (settings.groomName || 'C')[0];
+  const brideInitial = (settings.brideName || 'L')[0];
   return (
     <div className={`intro-overlay ${leaving ? 'leaving' : ''}`}>
       <div className="intro-card">
         <div className="intro-corner tl"><CornerFlourish /></div>
         <div className="intro-corner tr"><CornerFlourish flip /></div>
 
-        <div className="intro-monogram">{initials}</div>
+        <div className="intro-monogram">
+          {groomInitial}<span className="monogram-amp">&amp;</span>{brideInitial}
+        </div>
 
         <span className="intro-badge">● Wedding Invitation</span>
 
