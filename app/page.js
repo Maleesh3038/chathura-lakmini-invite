@@ -924,30 +924,27 @@ function ThankYouSection({ settings }) {
   );
 }
 
-export default function Home() {
+export default function Home({ searchParams }) {
+  const guestNameParam = (searchParams?.to || '').toString().trim() || null;
+
   const [now, setNow] = useState(() => Date.now());
-  const [form, setForm] = useState({ name: '', phone: '', attending: '', guests: 1, message: '' });
+  const [form, setForm] = useState({ name: guestNameParam || '', phone: '', attending: '', guests: 1, message: '' });
   const [status, setStatus] = useState(null);
   const [introOpen, setIntroOpen] = useState(true);
   const [introLeaving, setIntroLeaving] = useState(false);
   const [events, setEvents] = useState(DEFAULT_EVENTS);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [guestName, setGuestName] = useState(null);
-  const [showGreeting, setShowGreeting] = useState(false);
+  const [guestName] = useState(guestNameParam);
+  const [showGreeting, setShowGreeting] = useState(!!guestNameParam);
   const [greetingLeaving, setGreetingLeaving] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const name = (params.get('to') || '').trim();
-    if (name) {
-      setGuestName(name);
-      setForm((prev) => ({ ...prev, name }));
-      setShowGreeting(true);
+    if (guestNameParam) {
       const t1 = setTimeout(() => setGreetingLeaving(true), 5000);
       const t2 = setTimeout(() => setShowGreeting(false), 5550);
       return () => { clearTimeout(t1); clearTimeout(t2); };
     }
-  }, []);
+  }, [guestNameParam]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
