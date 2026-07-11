@@ -140,6 +140,15 @@ function LampIcon() {
   );
 }
 
+function AppleLogoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+      <path d="M12.7 5.3c-.5.6-1.3 1-2.1.9-.1-.8.3-1.7.8-2.3.5-.6 1.4-1 2.1-1 .1.9-.2 1.7-.8 2.4z" />
+      <path d="M16.7 8.9c-1.2-1.4-3-1.5-3.6-1.5-.7 0-2 .5-2.9.5-.9 0-1.9-.5-3.1-.5-1.6 0-4.1 1.3-4.1 5 0 3.3 2.4 7.5 4.2 7.5.9 0 1.3-.6 2.5-.6 1.2 0 1.5.6 2.5.6 1.8 0 3.3-2.9 4-4.5-2.2-1-2.5-3.9 0-5.5z" />
+    </svg>
+  );
+}
+
 function CornerFlourish({ flip }) {
   return (
     <svg viewBox="0 0 60 60" width="34" height="34" style={{ transform: flip ? 'scaleX(-1)' : 'none' }}>
@@ -829,7 +838,7 @@ function AddToCalendarSection({ settings }) {
             <span className="calendar-option-arrow">›</span>
           </a>
           <button type="button" className="calendar-option" onClick={() => downloadICS(settings)}>
-            <span className="calendar-option-icon">🍎</span>
+            <span className="calendar-option-icon"><AppleLogoIcon /></span>
             <span className="calendar-option-label">Apple Calendar / Outlook</span>
             <span className="calendar-option-arrow">›</span>
           </button>
