@@ -197,6 +197,22 @@ function FallingPetals() {
   );
 }
 
+function GuestGreeting({ name, leaving }) {
+  return (
+    <div className={`guest-greeting ${leaving ? 'leaving' : ''}`}>
+      <div className="gg-circle gg-circle-top">
+        <span className="gg-flower">🌸</span>
+      </div>
+      <div className="gg-text">
+        Dear <span className="gg-name">{name}</span>,
+      </div>
+      <div className="gg-divider" />
+      <div className="gg-sub">You&apos;re Invited</div>
+      <div className="gg-circle gg-circle-bottom" />
+    </div>
+  );
+}
+
 function IntroScreen({ onEnter, leaving, settings }) {
   const groomInitial = (settings.groomName || 'C')[0];
   const brideInitial = (settings.brideName || 'L')[0];
@@ -916,6 +932,22 @@ export default function Home() {
   const [introLeaving, setIntroLeaving] = useState(false);
   const [events, setEvents] = useState(DEFAULT_EVENTS);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [guestName, setGuestName] = useState(null);
+  const [showGreeting, setShowGreeting] = useState(false);
+  const [greetingLeaving, setGreetingLeaving] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const name = (params.get('to') || '').trim();
+    if (name) {
+      setGuestName(name);
+      setForm((prev) => ({ ...prev, name }));
+      setShowGreeting(true);
+      const t1 = setTimeout(() => setGreetingLeaving(true), 5000);
+      const t2 = setTimeout(() => setShowGreeting(false), 5550);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, []);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -1018,7 +1050,9 @@ export default function Home() {
     <>
       <FallingPetals />
 
-      {introOpen && <IntroScreen onEnter={handleEnter} leaving={introLeaving} settings={settings} />}
+      {showGreeting && <GuestGreeting name={guestName} leaving={greetingLeaving} />}
+
+      {!showGreeting && introOpen && <IntroScreen onEnter={handleEnter} leaving={introLeaving} settings={settings} />}
 
       <div className="hero">
         <div className="lamp-wrap">
