@@ -99,18 +99,21 @@ body{
   line-height:1.05;
 }
 .amp{
-  font-family:'Playfair Display', serif;
-  font-style:italic;
+  font-family:'Herr Von Muellerhoff', cursive;
+  font-style:normal;
   color:var(--rose);
-  padding:0 18px;
+  padding:0 20px;
   font-weight:400;
+  font-size:1.15em;
 }
 .amp-inline{
-  font-family:'Playfair Display', serif;
-  font-style:italic;
+  font-family:'Herr Von Muellerhoff', cursive;
+  font-style:normal;
   color:var(--rose);
-  padding:0 4px;
+  padding:0 5px;
   font-weight:400;
+  font-size:1.5em;
+  vertical-align:-0.08em;
 }
 .tagline{
   max-width:520px;
@@ -456,13 +459,13 @@ table.rsvp-table td{ color:var(--ink); }
   align-items:center;
 }
 .intro-amp{
-  font-family:'Playfair Display', serif;
-  font-style:italic;
+  font-family:'Herr Von Muellerhoff', cursive;
+  font-style:normal;
   color:var(--rose);
-  font-size:0.6em;
+  font-size:1.3em;
   line-height:1;
-  margin:4px 0;
-  opacity:0.9;
+  margin:2px 0;
+  opacity:0.95;
 }
 .intro-divider{ width:56px; height:1px; background:var(--gold); margin:20px auto; opacity:0.5; }
 .intro-tagline{
