@@ -23,6 +23,9 @@ function RsvpTab({ passcode }) {
   const [editingRowId, setEditingRowId] = useState(null);
   const [editRow, setEditRow] = useState({});
   const [editRowError, setEditRowError] = useState('');
+  const [filterAttending, setFilterAttending] = useState('all');
+  const [filterDrinks, setFilterDrinks] = useState('all');
+  const [filterSource, setFilterSource] = useState('all');
 
   async function load() {
     setLoading(true);
@@ -111,7 +114,7 @@ function RsvpTab({ passcode }) {
 
   function exportToExcel() {
     const headers = ['Name', 'Phone', 'Attending', 'Guests', 'Drinks', 'Table', 'Source', 'Message', 'Date'];
-    const rows = data.map((r) => [
+    const rows = filteredData.map((r) => [
       r.name || '',
       r.phone || '',
       r.attending || '',
@@ -142,6 +145,16 @@ function RsvpTab({ passcode }) {
     .filter((r) => r.attending === 'Yes')
     .reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
   const manualCount = data.filter((r) => r.source === 'manual').length;
+  const drinksYes = data.filter((r) => r.drinks === 'Yes').length;
+
+  const filteredData = data.filter((r) => {
+    if (filterAttending !== 'all' && r.attending !== filterAttending) return false;
+    if (filterDrinks === 'unset') {
+      if (r.drinks) return false;
+    } else if (filterDrinks !== 'all' && r.drinks !== filterDrinks) return false;
+    if (filterSource !== 'all' && (r.source || 'link') !== filterSource) return false;
+    return true;
+  });
 
   const inputStyle = { width: '100%', minWidth: 70, padding: '4px 6px', fontSize: 12.5 };
 
@@ -152,12 +165,44 @@ function RsvpTab({ passcode }) {
         <div className="stat"><span className="stat-num">{yes}</span><span className="stat-lab">Attending</span></div>
         <div className="stat"><span className="stat-num">{no}</span><span className="stat-lab">Declined</span></div>
         <div className="stat"><span className="stat-num">{guests}</span><span className="stat-lab">Total Guests</span></div>
+        <div className="stat"><span className="stat-num">{drinksYes}</span><span className="stat-lab">Drinks: Yes</span></div>
         <div className="stat"><span className="stat-num">{manualCount}</span><span className="stat-lab">Manually Added</span></div>
       </div>
 
-      <div className="admin-item-actions" style={{ marginBottom: 20 }}>
+      <div className="admin-item-actions" style={{ marginBottom: 14 }}>
         {!showAdd && <button className="btn" onClick={() => setShowAdd(true)}>+ Add Guest Manually</button>}
-        <button className="btn-small" onClick={exportToExcel} disabled={total === 0}>⬇ Export to Excel</button>
+        <button className="btn-small" onClick={exportToExcel} disabled={filteredData.length === 0}>⬇ Export to Excel</button>
+      </div>
+
+      <div className="admin-item-actions" style={{ marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+        <select value={filterAttending} onChange={(e) => setFilterAttending(e.target.value)} style={{ fontSize: 13 }}>
+          <option value="all">All — Attending</option>
+          <option value="Yes">Attending: Yes</option>
+          <option value="No">Attending: No</option>
+        </select>
+        <select value={filterDrinks} onChange={(e) => setFilterDrinks(e.target.value)} style={{ fontSize: 13 }}>
+          <option value="all">All — Drinks</option>
+          <option value="Yes">Drinks: Yes</option>
+          <option value="No">Drinks: No</option>
+          <option value="unset">Drinks: Not set</option>
+        </select>
+        <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} style={{ fontSize: 13 }}>
+          <option value="all">All — Source</option>
+          <option value="link">Source: Link</option>
+          <option value="manual">Source: Manual</option>
+        </select>
+        {(filterAttending !== 'all' || filterDrinks !== 'all' || filterSource !== 'all') && (
+          <button
+            type="button"
+            className="btn-small"
+            onClick={() => { setFilterAttending('all'); setFilterDrinks('all'); setFilterSource('all'); }}
+          >
+            ✕ Clear Filters
+          </button>
+        )}
+        <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>
+          Showing {filteredData.length} of {total}
+        </span>
       </div>
 
       {showAdd && (
@@ -188,13 +233,15 @@ function RsvpTab({ passcode }) {
         <p className="empty-note">Loading...</p>
       ) : total === 0 ? (
         <p className="empty-note">No RSVPs yet. Once guests respond, they&apos;ll show up here.</p>
+      ) : filteredData.length === 0 ? (
+        <p className="empty-note">No RSVPs match the current filters.</p>
       ) : (
         <table className="rsvp-table">
           <thead>
             <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {data.slice().reverse().map((r) => {
+            {filteredData.slice().reverse().map((r) => {
               const isEditing = editingRowId === r.id;
               return (
                 <tr key={r.id}>
