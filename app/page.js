@@ -930,7 +930,7 @@ export default function Home({ searchParams }) {
   const guestNameParam = (searchParams?.to || '').toString().trim() || null;
 
   const [now, setNow] = useState(() => Date.now());
-  const [form, setForm] = useState({ name: guestNameParam || '', phone: '', attending: '', guests: 1, message: '' });
+  const [form, setForm] = useState({ name: guestNameParam || '', phone: '', attending: '', guests: 1, drinks: '', message: '' });
   const [status, setStatus] = useState(null);
   const [introOpen, setIntroOpen] = useState(true);
   const [introLeaving, setIntroLeaving] = useState(false);
@@ -1044,7 +1044,7 @@ export default function Home({ searchParams }) {
       });
       if (!res.ok) throw new Error('failed');
       setStatus('ok');
-      setForm({ name: '', phone: '', attending: '', guests: 1, message: '' });
+      setForm({ name: '', phone: '', attending: '', guests: 1, drinks: '', message: '' });
     } catch (err) {
       setStatus('err');
     }
@@ -1176,6 +1176,18 @@ export default function Home({ searchParams }) {
                 value={form.guests}
                 onChange={(e) => setForm({ ...form, guests: e.target.value })}
               />
+            </div>
+            <div className="field">
+              <label htmlFor="r-drinks">Will you be having drinks?</label>
+              <select
+                id="r-drinks"
+                value={form.drinks}
+                onChange={(e) => setForm({ ...form, drinks: e.target.value })}
+              >
+                <option value="" disabled>Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
             </div>
             <div className="field">
               <label htmlFor="r-msg">Message for the couple (optional)</label>
