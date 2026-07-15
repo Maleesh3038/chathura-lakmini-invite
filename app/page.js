@@ -50,7 +50,6 @@ const DEFAULT_SETTINGS = {
   themeBodyFont: 'Poppins',
 };
 
-const MAX_MEDIA_ITEMS = 6;
 const MAX_VIDEO_BYTES = 30 * 1024 * 1024; // 30MB
 
 function two(n) {
@@ -473,13 +472,8 @@ function WishesWall() {
   async function processFiles(files) {
     if (!files.length) return;
     setUploadError('');
-    const remaining = MAX_MEDIA_ITEMS - mediaItems.length;
-    if (remaining <= 0) {
-      setUploadError(`You can attach up to ${MAX_MEDIA_ITEMS} files.`);
-      return;
-    }
     setUploading(true);
-    for (const file of files.slice(0, remaining)) {
+    for (const file of files) {
       try {
         const result = await uploadMediaFile(file);
         setMediaItems((prev) => [...prev, result]);
@@ -591,7 +585,7 @@ function WishesWall() {
             />
           </div>
           <div className="wish-field">
-            <label className="wish-field-label" htmlFor="w-media">🎁 Photos / Videos <span>(optional, up to {MAX_MEDIA_ITEMS})</span></label>
+            <label className="wish-field-label" htmlFor="w-media">🎁 Photos / Videos <span>(optional)</span></label>
 
             {mediaItems.length > 0 && (
               <div className="media-preview-grid">
@@ -604,19 +598,17 @@ function WishesWall() {
               </div>
             )}
 
-            {mediaItems.length < MAX_MEDIA_ITEMS && (
-              <label
-                className={`photo-drop-modern ${dragActive ? 'drag-active' : ''}`}
-                htmlFor="w-media"
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
-                <span className="photo-drop-icon">{uploading ? '⏳' : '📷'}</span>
-                <span className="photo-drop-text">{uploading ? 'Uploading...' : dragActive ? 'Drop to upload' : 'Choose or drop files'}</span>
-                <span className="photo-drop-subtext">Photos &amp; short videos welcome</span>
-              </label>
-            )}
+            <label
+              className={`photo-drop-modern ${dragActive ? 'drag-active' : ''}`}
+              htmlFor="w-media"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <span className="photo-drop-icon">{uploading ? '⏳' : '📷'}</span>
+              <span className="photo-drop-text">{uploading ? 'Uploading...' : dragActive ? 'Drop to upload' : 'Choose or drop files'}</span>
+              <span className="photo-drop-subtext">Photos &amp; short videos welcome</span>
+            </label>
             <input
               id="w-media"
               type="file"
