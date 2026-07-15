@@ -12,29 +12,18 @@ export async function POST(request) {
     }
 
     const cleanedPhone = query.replace(/\s+/g, '');
-    const isPhoneLike = /^[0-9+]{6,}$/.test(cleanedPhone);
+    const limit = body.suggest ? 6 : 5;
 
-    let results = [];
+    // Prefix match on either name or phone, so typing just the first
+    // letter/digit already surfaces matching guests as suggestions.
+    const { data, error } = await supabaseAdmin
+      .from('rsvps')
+      .select('name, table_number')
+      .or(`name.ilike.${query}%,phone.ilike.${cleanedPhone}%`)
+      .limit(limit);
+    if (error) throw error;
 
-    if (isPhoneLike) {
-      const { data, error } = await supabaseAdmin
-        .from('rsvps')
-        .select('name, table_number, phone')
-        .eq('phone', cleanedPhone)
-        .limit(5);
-      if (error) throw error;
-      results = data || [];
-    } else {
-      const { data, error } = await supabaseAdmin
-        .from('rsvps')
-        .select('name, table_number')
-        .ilike('name', `%${query}%`)
-        .limit(5);
-      if (error) throw error;
-      results = data || [];
-    }
-
-    const mapped = results.map((r) => ({
+    const mapped = (data || []).map((r) => ({
       name: r.name,
       tableNumber: r.table_number || null,
     }));
