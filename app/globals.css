@@ -1308,6 +1308,93 @@ table.rsvp-table td{ color:var(--ink); }
   .cd-box{ width:60px; }
 }
 
+/* ---------- ADMIN MODERN REDESIGN (scoped to .admin-shell only) ---------- */
+.admin-shell .rsvp-card{
+  border-radius:18px;
+  box-shadow:0 6px 28px rgba(184,134,63,0.10);
+}
+.admin-shell .stat{
+  border-radius:14px;
+  box-shadow:0 3px 14px rgba(184,134,63,0.07);
+  transition:transform 0.18s ease, box-shadow 0.18s ease;
+}
+.admin-shell .stat:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 22px rgba(184,134,63,0.12);
+}
+
+.admin-shell .admin-tabs{
+  display:inline-flex;
+  gap:4px;
+  border:none;
+  background:var(--bg-panel-2);
+  padding:5px;
+  border-radius:14px;
+  margin-bottom:8px;
+}
+.admin-shell .admin-tab{
+  border-bottom:none;
+  border-radius:10px;
+  padding:9px 16px;
+  margin-right:0;
+  transition:background 0.18s ease, color 0.18s ease;
+}
+.admin-shell .admin-tab:hover{ background:rgba(184,134,63,0.08); }
+.admin-shell .admin-tab.active{
+  background:var(--bg-panel);
+  color:var(--gold-bright);
+  box-shadow:0 2px 10px rgba(184,134,63,0.12);
+}
+
+.admin-shell .admin-item{
+  border-radius:16px;
+  box-shadow:0 3px 14px rgba(184,134,63,0.06);
+  transition:box-shadow 0.18s ease;
+}
+.admin-shell .admin-item:hover{ box-shadow:0 6px 20px rgba(184,134,63,0.10); }
+
+.admin-shell .btn{
+  border-radius:12px;
+}
+.admin-shell .btn-small{
+  border-radius:10px;
+  padding:8px 15px;
+  transition:transform 0.15s ease, box-shadow 0.15s ease;
+}
+.admin-shell .btn-small:hover{ transform:translateY(-1px); box-shadow:0 3px 10px rgba(184,134,63,0.15); }
+.admin-shell .btn-small:active{ transform:translateY(0); }
+
+.admin-shell .badge{ border-radius:16px; padding:4px 11px; }
+
+.admin-shell .admin-edit-form input,
+.admin-shell .admin-edit-form select,
+.admin-shell .admin-edit-form textarea,
+.admin-shell .field input,
+.admin-shell .field select,
+.admin-shell .field textarea,
+.admin-shell .pin-row input{
+  border-radius:10px;
+}
+
+.admin-shell .table-scroll{
+  border:1px solid var(--line);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 3px 14px rgba(184,134,63,0.06);
+}
+.admin-shell table.rsvp-table{ margin-top:0; }
+.admin-shell table.rsvp-table th{
+  background:var(--bg-panel-2);
+  padding:12px 14px;
+}
+.admin-shell table.rsvp-table td{ padding:11px 14px; }
+.admin-shell table.rsvp-table tr:last-child td{ border-bottom:none; }
+.admin-shell table.rsvp-table tbody tr{ transition:background 0.15s ease; }
+.admin-shell table.rsvp-table tbody tr:hover{ background:rgba(184,134,63,0.045); }
+
+.admin-shell .admin-media-thumb{ border-radius:10px; }
+.admin-shell .theme-color-item{ border-radius:12px; }
+
 /* ---------- FALLING PETALS ---------- */
 .petals-overlay{
   position:fixed;
