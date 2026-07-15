@@ -47,18 +47,23 @@ body{
   padding:60px 20px 40px;
   position:relative;
 }
-.hero-illustration-wrap{
-  width:100%;
-  max-width:250px;
-  margin:10px auto 20px;
-  -webkit-mask-image:linear-gradient(to bottom, #000 78%, transparent 100%);
-  mask-image:linear-gradient(to bottom, #000 78%, transparent 100%);
+.hero-bg-illustration{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+  pointer-events:none;
 }
-.hero-illustration{
+.hero-bg-illustration img{
   width:100%;
-  height:auto;
-  display:block;
+  height:100%;
+  object-fit:cover;
+  object-position:top center;
+  opacity:0.14;
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0%, #000 18%, #000 55%, transparent 90%);
+  mask-image:linear-gradient(to bottom, transparent 0%, #000 18%, #000 55%, transparent 90%);
 }
+.hero-content{ position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; }
 .lamp-wrap{
   position:relative;
   width:150px;
