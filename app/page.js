@@ -29,7 +29,7 @@ const DEFAULT_SETTINGS = {
   heroDate1Value: 'September 16, 2026 · 9:24 AM',
   heroDate2Label: 'Homecoming',
   heroDate2Value: 'September 19, 2026',
-  countdownTarget: '2026-09-16T09:24:00',
+  countdownTarget: '2026-09-16',
   ceremonyTime: '9:24 AM Onwards',
   thankYouTitle: 'To Our Wonderful Guests',
   thankYouMessage: 'From the bottom of our hearts, thank you for being part of our story. Your love, laughter, and support mean the world to us as we begin this new chapter together.',
@@ -653,55 +653,6 @@ function WishesWall() {
   );
 }
 
-function SaveTheDateSection({ settings }) {
-  const raw = settings.countdownTarget || '';
-  const isoStr = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T00:00:00+05:30` : raw;
-  const dateObj = raw ? new Date(isoStr) : null;
-  const dateStr =
-    dateObj && !isNaN(dateObj.getTime())
-      ? dateObj.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-      : 'To be announced';
-
-  const hallLine = settings.venueHallName || settings.venueName;
-  const addressLine = settings.venueHallName
-    ? `${settings.venueName}, ${settings.venueAddress}`
-    : settings.venueAddress;
-
-  return (
-    <section id="save-the-date">
-      <Reveal className="std-card">
-        <div className="std-eyebrow">📌 Save the Date</div>
-        <h2 className="std-title">Wedding Ceremony</h2>
-
-        <div className="std-row">
-          <span className="std-icon">📅</span>
-          <div>
-            <div className="std-label">Date</div>
-            <div className="std-value">{dateStr}</div>
-          </div>
-        </div>
-
-        <div className="std-row">
-          <span className="std-icon">⏰</span>
-          <div>
-            <div className="std-label">Time</div>
-            <div className="std-value">{settings.ceremonyTime}</div>
-          </div>
-        </div>
-
-        <div className="std-row">
-          <span className="std-icon">📍</span>
-          <div>
-            <div className="std-label">Venue</div>
-            <div className="std-value">{hallLine}</div>
-            {addressLine && <div className="std-subvalue">{addressLine}</div>}
-          </div>
-        </div>
-      </Reveal>
-    </section>
-  );
-}
-
 function LocationSection({ settings }) {
   const embedSrc = settings.venueLat && settings.venueLng
     ? `https://www.google.com/maps?q=${settings.venueLat},${settings.venueLng}&z=15&output=embed`
@@ -1025,6 +976,11 @@ export default function Home({ searchParams }) {
   const hh = Math.floor((heroDiff / 3600000) % 24);
   const hm = Math.floor((heroDiff / 60000) % 60);
   const hs = Math.floor((heroDiff / 1000) % 60);
+  const heroDateObj = rawTarget ? new Date(heroTargetStr) : null;
+  const heroDateStr =
+    heroDateObj && !isNaN(heroDateObj.getTime())
+      ? heroDateObj.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      : '';
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -1077,6 +1033,8 @@ export default function Home({ searchParams }) {
             <span className="en">&quot;{settings.taglineEn}&quot;</span>
           </div>
 
+          <div className="hero-date-display">{heroDateStr}</div>
+
           <div className="main-cd">
             <div className="cd-row">
               <div className="cd-box"><span className="cd-num">{two(hd)}</span><span className="cd-label">Days</span></div>
@@ -1089,10 +1047,6 @@ export default function Home({ searchParams }) {
           <div className="scroll-cue">⌄ SCROLL TO EXPLORE ⌄</div>
         </div>
       </div>
-
-      <div className="lattice" />
-
-      <SaveTheDateSection settings={settings} />
 
       <div className="lattice" />
 
