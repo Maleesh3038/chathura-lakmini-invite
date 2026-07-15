@@ -163,11 +163,17 @@ body{
 .main-cd{ margin-top:44px; }
 .hero-date-display{
   margin-top:28px;
+  display:inline-block;
   font-family:var(--font-heading);
-  font-size:clamp(16px,2.6vw,20px);
-  color:var(--gold-bright);
+  font-size:clamp(15px,2.4vw,18px);
+  color:var(--ink);
   letter-spacing:0.02em;
-  font-weight:500;
+  font-weight:600;
+  background:rgba(255,252,244,0.72);
+  border:1px solid rgba(184,134,63,0.25);
+  padding:8px 20px;
+  border-radius:20px;
+  box-shadow:0 2px 12px rgba(184,134,63,0.12);
 }
 .main-cd-label{
   font-size:11px;
