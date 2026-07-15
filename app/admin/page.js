@@ -419,7 +419,7 @@ function ScheduleTab({ passcode }) {
   return (
     <div>
       <div className="admin-list">
-        {events.map((ev) => (
+        {events.map((ev, idx) => (
           <div key={ev.id} className="admin-item">
             {editingId === ev.id ? (
               <div className="admin-edit-form">
@@ -435,6 +435,7 @@ function ScheduleTab({ passcode }) {
             ) : (
               <>
                 <div className="admin-item-body">
+                  <span className="admin-item-num">{idx + 1}</span>
                   <strong>{ev.en}</strong>
                   <span className="admin-item-meta">{ev.date ? new Date(ev.date).toLocaleString() : 'No date set'}</span>
                 </div>
