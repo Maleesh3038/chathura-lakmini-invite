@@ -9,7 +9,7 @@ export async function GET() {
   const { data, error } = await supabaseAdmin
     .from('schedule')
     .select('*')
-    .order('sort_order', { ascending: true });
+    .order('event_date', { ascending: true, nullsFirst: false });
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
