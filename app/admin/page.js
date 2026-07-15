@@ -174,19 +174,19 @@ function RsvpTab({ passcode }) {
         <button className="btn-small" onClick={exportToExcel} disabled={filteredData.length === 0}>⬇ Export to Excel</button>
       </div>
 
-      <div className="admin-item-actions" style={{ marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
-        <select value={filterAttending} onChange={(e) => setFilterAttending(e.target.value)} style={{ fontSize: 13 }}>
+      <div className="admin-filter-bar">
+        <select className="admin-filter-select" value={filterAttending} onChange={(e) => setFilterAttending(e.target.value)}>
           <option value="all">All — Attending</option>
           <option value="Yes">Attending: Yes</option>
           <option value="No">Attending: No</option>
         </select>
-        <select value={filterDrinks} onChange={(e) => setFilterDrinks(e.target.value)} style={{ fontSize: 13 }}>
+        <select className="admin-filter-select" value={filterDrinks} onChange={(e) => setFilterDrinks(e.target.value)}>
           <option value="all">All — Drinks</option>
           <option value="Yes">Drinks: Yes</option>
           <option value="No">Drinks: No</option>
           <option value="unset">Drinks: Not set</option>
         </select>
-        <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} style={{ fontSize: 13 }}>
+        <select className="admin-filter-select" value={filterSource} onChange={(e) => setFilterSource(e.target.value)}>
           <option value="all">All — Source</option>
           <option value="link">Source: Link</option>
           <option value="manual">Source: Manual</option>
@@ -200,7 +200,7 @@ function RsvpTab({ passcode }) {
             ✕ Clear Filters
           </button>
         )}
-        <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>
+        <span className="admin-filter-count">
           Showing {filteredData.length} of {total}
         </span>
       </div>
