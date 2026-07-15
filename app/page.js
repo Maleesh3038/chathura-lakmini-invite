@@ -1054,42 +1054,43 @@ export default function Home({ searchParams }) {
       )}
 
       <div className="hero">
-        <div className="lamp-wrap">
-          <LampIcon />
+        <div className="hero-bg-illustration" aria-hidden="true">
+          <img
+            src="/images/couple-illustration.png"
+            alt=""
+            onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+          />
         </div>
 
-        <a href="#wishes" className="hero-wishes-jump">💌 Guest Wishes</a>
-
-        <div className="eyebrow">You are lovingly invited</div>
-
-        <h1 className="names-en">{settings.groomName}<span className="amp">&amp;</span>{settings.brideName}</h1>
-
-        <div className="tagline">
-          <span className="en">&quot;{settings.taglineEn}&quot;</span>
-        </div>
-
-        <div className="main-cd">
-          <div className="cd-row">
-            <div className="cd-box"><span className="cd-num">{two(hd)}</span><span className="cd-label">Days</span></div>
-            <div className="cd-box"><span className="cd-num">{two(hh)}</span><span className="cd-label">Hrs</span></div>
-            <div className="cd-box"><span className="cd-num">{two(hm)}</span><span className="cd-label">Min</span></div>
-            <div className="cd-box"><span className="cd-num">{two(hs)}</span><span className="cd-label">Sec</span></div>
+        <div className="hero-content">
+          <div className="lamp-wrap">
+            <LampIcon />
           </div>
-        </div>
 
-        <div className="scroll-cue">⌄ SCROLL TO EXPLORE ⌄</div>
+          <a href="#wishes" className="hero-wishes-jump">💌 Guest Wishes</a>
+
+          <div className="eyebrow">You are lovingly invited</div>
+
+          <h1 className="names-en">{settings.groomName}<span className="amp">&amp;</span>{settings.brideName}</h1>
+
+          <div className="tagline">
+            <span className="en">&quot;{settings.taglineEn}&quot;</span>
+          </div>
+
+          <div className="main-cd">
+            <div className="cd-row">
+              <div className="cd-box"><span className="cd-num">{two(hd)}</span><span className="cd-label">Days</span></div>
+              <div className="cd-box"><span className="cd-num">{two(hh)}</span><span className="cd-label">Hrs</span></div>
+              <div className="cd-box"><span className="cd-num">{two(hm)}</span><span className="cd-label">Min</span></div>
+              <div className="cd-box"><span className="cd-num">{two(hs)}</span><span className="cd-label">Sec</span></div>
+            </div>
+          </div>
+
+          <div className="scroll-cue">⌄ SCROLL TO EXPLORE ⌄</div>
+        </div>
       </div>
 
       <div className="lattice" />
-
-      <div className="hero-illustration-wrap">
-        <img
-          src="/images/couple-illustration.png"
-          alt={`${settings.groomName} and ${settings.brideName} illustration`}
-          className="hero-illustration"
-          onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
-        />
-      </div>
 
       <SaveTheDateSection settings={settings} />
 
