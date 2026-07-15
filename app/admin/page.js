@@ -236,10 +236,11 @@ function RsvpTab({ passcode }) {
       ) : filteredData.length === 0 ? (
         <p className="empty-note">No RSVPs match the current filters.</p>
       ) : (
-        <table className="rsvp-table">
-          <thead>
-            <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
-          </thead>
+        <div className="table-scroll">
+          <table className="rsvp-table">
+            <thead>
+              <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
+            </thead>
           <tbody>
             {filteredData.slice().reverse().map((r) => {
               const isEditing = editingRowId === r.id;
@@ -327,7 +328,8 @@ function RsvpTab({ passcode }) {
               );
             })}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
     </div>
   );
@@ -991,7 +993,7 @@ export default function AdminPage() {
 
   if (!unlocked) {
     return (
-      <div style={{ maxWidth: 420, margin: '90px auto', padding: '0 20px' }}>
+      <div className="admin-shell" style={{ maxWidth: 420, margin: '90px auto', padding: '0 20px' }}>
         <div className="rsvp-card">
           <h2 className="sec-title-en" style={{ textAlign: 'center' }}>Couple&apos;s Dashboard</h2>
           <p style={{ color: 'var(--muted)', fontSize: 13, textAlign: 'center', margin: '10px 0 20px' }}>
@@ -1014,7 +1016,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: '40px auto', padding: '0 20px 60px' }}>
+    <div className="admin-shell" style={{ maxWidth: 900, margin: '40px auto', padding: '0 20px 60px' }}>
       <h2 className="sec-title-en">Couple&apos;s Dashboard</h2>
 
       <div className="admin-tabs">
