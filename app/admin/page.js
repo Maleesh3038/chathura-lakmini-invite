@@ -20,8 +20,9 @@ function RsvpTab({ passcode }) {
   const [showAdd, setShowAdd] = useState(false);
   const [guestForm, setGuestForm] = useState(emptyGuestForm());
   const [addStatus, setAddStatus] = useState(null);
-  const [editingTableId, setEditingTableId] = useState(null);
-  const [tableValue, setTableValue] = useState('');
+  const [editingRowId, setEditingRowId] = useState(null);
+  const [editRow, setEditRow] = useState({});
+  const [editRowError, setEditRowError] = useState('');
 
   async function load() {
     setLoading(true);
@@ -70,30 +71,41 @@ function RsvpTab({ passcode }) {
     load();
   }
 
-  const [tableError, setTableError] = useState('');
-
-  function startEditTable(r) {
-    setEditingTableId(r.id);
-    setTableValue(r.tableNumber || '');
-    setTableError('');
+  function startEditRow(r) {
+    setEditingRowId(r.id);
+    setEditRow({
+      name: r.name || '',
+      phone: r.phone || '',
+      attending: r.attending || 'Yes',
+      guests: r.guests ?? 1,
+      drinks: r.drinks || '',
+      tableNumber: r.tableNumber || '',
+      message: r.message || '',
+    });
+    setEditRowError('');
   }
 
-  async function saveTable(id) {
-    setTableError('');
+  function cancelEditRow() {
+    setEditingRowId(null);
+    setEditRowError('');
+  }
+
+  async function saveRow(id) {
+    setEditRowError('');
     try {
       const res = await fetch('/api/rsvp', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
-        body: JSON.stringify({ id, tableNumber: tableValue }),
+        body: JSON.stringify({ id, ...editRow }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || json.ok === false) {
         throw new Error(json.error || `Save failed (${res.status}). Did you run MIGRATION.sql in Supabase?`);
       }
-      setEditingTableId(null);
+      setEditingRowId(null);
       load();
     } catch (err) {
-      setTableError(err.message);
+      setEditRowError(err.message);
     }
   }
 
@@ -130,6 +142,8 @@ function RsvpTab({ passcode }) {
     .filter((r) => r.attending === 'Yes')
     .reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
   const manualCount = data.filter((r) => r.source === 'manual').length;
+
+  const inputStyle = { width: '100%', minWidth: 70, padding: '4px 6px', fontSize: 12.5 };
 
   return (
     <div>
@@ -180,45 +194,91 @@ function RsvpTab({ passcode }) {
             <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {data.slice().reverse().map((r) => (
-              <tr key={r.id}>
-                <td>{r.name || '—'}</td>
-                <td>{r.phone || '—'}</td>
-                <td>{r.attending || '—'}</td>
-                <td>{r.guests ?? '—'}</td>
-                <td>{r.drinks || '—'}</td>
-                <td>
-                  {editingTableId === r.id ? (
-                    <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <span style={{ display: 'flex', gap: 6 }}>
-                        <input
-                          value={tableValue}
-                          onChange={(e) => setTableValue(e.target.value)}
-                          placeholder="e.g. 12"
-                          style={{ width: 60, padding: '4px 6px', fontSize: 13 }}
-                        />
-                        <button className="btn-small btn-approve" onClick={() => saveTable(r.id)}>Save</button>
-                        <button className="btn-small" onClick={() => setEditingTableId(null)}>Cancel</button>
+            {data.slice().reverse().map((r) => {
+              const isEditing = editingRowId === r.id;
+              return (
+                <tr key={r.id}>
+                  <td>
+                    {isEditing ? (
+                      <input style={inputStyle} value={editRow.name} onChange={(e) => setEditRow({ ...editRow, name: e.target.value })} />
+                    ) : (
+                      r.name || '—'
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input style={inputStyle} value={editRow.phone} onChange={(e) => setEditRow({ ...editRow, phone: e.target.value })} />
+                    ) : (
+                      r.phone || '—'
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <select style={inputStyle} value={editRow.attending} onChange={(e) => setEditRow({ ...editRow, attending: e.target.value })}>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                    ) : (
+                      r.attending || '—'
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input type="number" min="1" max="20" style={{ ...inputStyle, minWidth: 50 }} value={editRow.guests} onChange={(e) => setEditRow({ ...editRow, guests: e.target.value })} />
+                    ) : (
+                      r.guests ?? '—'
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <select style={inputStyle} value={editRow.drinks} onChange={(e) => setEditRow({ ...editRow, drinks: e.target.value })}>
+                        <option value="">—</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                    ) : (
+                      r.drinks || '—'
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input style={{ ...inputStyle, minWidth: 50 }} value={editRow.tableNumber} onChange={(e) => setEditRow({ ...editRow, tableNumber: e.target.value })} placeholder="e.g. 12" />
+                    ) : (
+                      r.tableNumber || '—'
+                    )}
+                  </td>
+                  <td>
+                    <span className={`badge ${r.source === 'manual' ? 'badge-pending' : 'badge-approved'}`}>
+                      {r.source === 'manual' ? 'Manual' : 'Link'}
+                    </span>
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input style={inputStyle} value={editRow.message} onChange={(e) => setEditRow({ ...editRow, message: e.target.value })} placeholder="Note" />
+                    ) : (
+                      r.message || '—'
+                    )}
+                  </td>
+                  <td>{r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : '—'}</td>
+                  <td>
+                    {isEditing ? (
+                      <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <span style={{ display: 'flex', gap: 6 }}>
+                          <button className="btn-small btn-approve" onClick={() => saveRow(r.id)}>Save</button>
+                          <button className="btn-small" onClick={cancelEditRow}>Cancel</button>
+                        </span>
+                        {editRowError && <span style={{ fontSize: 11.5, color: '#b9695f' }}>{editRowError}</span>}
                       </span>
-                      {tableError && <span style={{ fontSize: 11.5, color: '#b9695f' }}>{tableError}</span>}
-                    </span>
-                  ) : (
-                    <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      {r.tableNumber || '—'}
-                      <button className="btn-small" onClick={() => startEditTable(r)}>Edit</button>
-                    </span>
-                  )}
-                </td>
-                <td>
-                  <span className={`badge ${r.source === 'manual' ? 'badge-pending' : 'badge-approved'}`}>
-                    {r.source === 'manual' ? 'Manual' : 'Link'}
-                  </span>
-                </td>
-                <td>{r.message || '—'}</td>
-                <td>{r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : '—'}</td>
-                <td><button className="btn-small btn-delete" onClick={() => removeGuest(r.id)}>Delete</button></td>
-              </tr>
-            ))}
+                    ) : (
+                      <span style={{ display: 'flex', gap: 6 }}>
+                        <button className="btn-small" onClick={() => startEditRow(r)}>Edit</button>
+                        <button className="btn-small btn-delete" onClick={() => removeGuest(r.id)}>Delete</button>
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
