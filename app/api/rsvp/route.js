@@ -72,9 +72,18 @@ export async function PATCH(request) {
     const body = await request.json();
     if (!body.id) return Response.json({ ok: false, error: 'Missing id.' }, { status: 400 });
 
+    const update = {};
+    if (body.name !== undefined) update.name = String(body.name).slice(0, 80);
+    if (body.phone !== undefined) update.phone = body.phone ? String(body.phone).replace(/\s+/g, '') : null;
+    if (body.attending !== undefined) update.attending = body.attending;
+    if (body.guests !== undefined) update.guests = body.guests || 1;
+    if (body.drinks !== undefined) update.drinks = body.drinks ? String(body.drinks).slice(0, 10) : null;
+    if (body.message !== undefined) update.message = body.message ? String(body.message).slice(0, 600) : null;
+    if (body.tableNumber !== undefined) update.table_number = body.tableNumber ? String(body.tableNumber).slice(0, 20) : null;
+
     const { error } = await supabaseAdmin
       .from('rsvps')
-      .update({ table_number: body.tableNumber ? String(body.tableNumber).slice(0, 20) : null })
+      .update(update)
       .eq('id', body.id);
     if (error) throw error;
     return Response.json({ ok: true });
