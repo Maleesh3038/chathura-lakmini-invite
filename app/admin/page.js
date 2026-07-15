@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 const PASSCODE = 'poruwa2026';
 
 function emptyGuestForm() {
-  return { name: '', phone: '', attending: 'Yes', guests: 1, message: '' };
+  return { name: '', phone: '', attending: 'Yes', guests: 1, drinks: '', message: '' };
 }
 
 function RsvpTab({ passcode }) {
@@ -98,12 +98,13 @@ function RsvpTab({ passcode }) {
   }
 
   function exportToExcel() {
-    const headers = ['Name', 'Phone', 'Attending', 'Guests', 'Table', 'Source', 'Message', 'Date'];
+    const headers = ['Name', 'Phone', 'Attending', 'Guests', 'Drinks', 'Table', 'Source', 'Message', 'Date'];
     const rows = data.map((r) => [
       r.name || '',
       r.phone || '',
       r.attending || '',
       r.guests ?? '',
+      r.drinks || '',
       r.tableNumber || '',
       r.source === 'manual' ? 'Manual' : 'Link',
       (r.message || '').replace(/\r?\n/g, ' '),
@@ -154,6 +155,11 @@ function RsvpTab({ passcode }) {
             <option value="No">Declined</option>
           </select>
           <input type="number" min="1" max="20" value={guestForm.guests} onChange={(e) => setGuestForm({ ...guestForm, guests: e.target.value })} placeholder="Number of Guests" />
+          <select value={guestForm.drinks} onChange={(e) => setGuestForm({ ...guestForm, drinks: e.target.value })}>
+            <option value="">Drinks? — not set</option>
+            <option value="Yes">Drinks: Yes</option>
+            <option value="No">Drinks: No</option>
+          </select>
           <input value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Note (optional)" />
           <div className="admin-item-actions">
             <button type="submit" className="btn-small btn-approve">Add Guest</button>
@@ -171,7 +177,7 @@ function RsvpTab({ passcode }) {
       ) : (
         <table className="rsvp-table">
           <thead>
-            <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
+            <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {data.slice().reverse().map((r) => (
@@ -180,6 +186,7 @@ function RsvpTab({ passcode }) {
                 <td>{r.phone || '—'}</td>
                 <td>{r.attending || '—'}</td>
                 <td>{r.guests ?? '—'}</td>
+                <td>{r.drinks || '—'}</td>
                 <td>
                   {editingTableId === r.id ? (
                     <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
