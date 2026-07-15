@@ -763,24 +763,59 @@ function TableLookupSection() {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('idle'); // idle | loading | done | error
   const [results, setResults] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceRef = useRef(null);
 
-  async function handleSearch(e) {
-    e.preventDefault();
-    if (!query.trim()) return;
-    setStatus('loading');
+  async function fetchMatches(q, suggest) {
     try {
       const res = await fetch('/api/rsvp/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: query.trim() }),
+        body: JSON.stringify({ query: q, suggest }),
       });
-      if (!res.ok) throw new Error('failed');
+      if (!res.ok) return [];
       const json = await res.json();
-      setResults(json.results || []);
-      setStatus('done');
+      return json.results || [];
     } catch (err) {
-      setStatus('error');
+      return [];
     }
+  }
+
+  function handleChange(e) {
+    const val = e.target.value;
+    setQuery(val);
+    setStatus('idle');
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const trimmed = val.trim();
+    if (!trimmed) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      const matches = await fetchMatches(trimmed, true);
+      setSuggestions(matches);
+      setShowSuggestions(matches.length > 0);
+    }, 220);
+  }
+
+  function pickSuggestion(match) {
+    setQuery(match.name);
+    setShowSuggestions(false);
+    setResults([match]);
+    setStatus('done');
+  }
+
+  async function handleSearch(e) {
+    e.preventDefault();
+    if (!query.trim()) return;
+    setShowSuggestions(false);
+    setStatus('loading');
+    const matches = await fetchMatches(query.trim(), false);
+    setResults(matches);
+    setStatus('done');
   }
 
   return (
@@ -788,12 +823,12 @@ function TableLookupSection() {
       <div className="sec-head">
         <div className="sec-eyebrow">Seating</div>
         <h2 className="sec-title-en">Find Your Table</h2>
-        <p className="sec-sub">Search your name or phone number to see your table number.</p>
+        <p className="sec-sub">Start typing your name or phone number — matching guests will appear as suggestions.</p>
       </div>
 
       <Reveal className="rsvp-card">
-        <form onSubmit={handleSearch}>
-          <div className="field">
+        <form onSubmit={handleSearch} autoComplete="off">
+          <div className="field" style={{ position: 'relative' }}>
             <label htmlFor="t-query">Name or Phone Number</label>
             <input
               id="t-query"
@@ -801,8 +836,24 @@ function TableLookupSection() {
               required
               placeholder="e.g. Nimal Perera or 0771234567"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={handleChange}
+              onFocus={() => { if (suggestions.length) setShowSuggestions(true); }}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             />
+            {showSuggestions && (
+              <div className="table-suggestions">
+                {suggestions.map((s, i) => (
+                  <div
+                    key={i}
+                    className="table-suggestion-item"
+                    onMouseDown={() => pickSuggestion(s)}
+                  >
+                    <span>{s.name}</span>
+                    {s.tableNumber && <span className="table-suggestion-num">Table {s.tableNumber}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <button type="submit" className="btn btn-glow" disabled={status === 'loading'}>
             {status === 'loading' ? 'Searching...' : 'Search'}
