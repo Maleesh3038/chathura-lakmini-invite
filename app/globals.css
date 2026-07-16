@@ -883,7 +883,7 @@ table.rsvp-table td{ color:var(--ink); }
 /* wish wall masonry grid + glassmorphism cards */
 .wish-grid{
   column-count:1;
-  column-gap:20px;
+  column-gap:14px;
 }
 @media (min-width:640px){ .wish-grid{ column-count:2; } }
 @media (min-width:960px){ .wish-grid{ column-count:3; } }
@@ -899,7 +899,7 @@ table.rsvp-table td{ color:var(--ink); }
   display:inline-block;
   width:100%;
   break-inside:avoid;
-  margin-bottom:20px;
+  margin-bottom:14px;
   transition:transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s ease, border-color 0.35s ease;
 }
 .wish-card:hover{
@@ -910,7 +910,7 @@ table.rsvp-table td{ color:var(--ink); }
 .wish-media-grid{
   display:grid;
   grid-template-columns:repeat(4, 1fr);
-  gap:3px;
+  gap:2px;
   margin:-22px -20px 14px;
   overflow:hidden;
   border-radius:10px 10px 0 0;
