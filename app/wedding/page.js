@@ -148,6 +148,58 @@ function AppleLogoIcon() {
   );
 }
 
+function NavIconCalendar() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+      <path d="M3.5 9.5h17" />
+      <path d="M8 3v3.5M16 3v3.5" />
+      <circle cx="8.2" cy="14" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="14" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15.8" cy="14" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function NavIconEnvelope() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="5.5" width="18" height="13" rx="2.2" />
+      <path d="M4 7l8 6.2L20 7" />
+    </svg>
+  );
+}
+
+function NavIconSearch() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="10.8" cy="10.8" r="6.3" />
+      <path d="M20 20l-4.6-4.6" />
+    </svg>
+  );
+}
+
+function NavIconPin() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 21.5s7-7.1 7-12.3A7 7 0 0 0 5 9.2c0 5.2 7 12.3 7 12.3z" />
+      <circle cx="12" cy="9.2" r="2.4" />
+    </svg>
+  );
+}
+
+function NavIconFlower() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none" />
+      <path d="M12 9.4c-1.8 0-3.2-1.5-3.2-3.2S10.2 3 12 3s3.2 1.5 3.2 3.2S13.8 9.4 12 9.4z" />
+      <path d="M12 14.6c1.8 0 3.2 1.5 3.2 3.2S13.8 21 12 21s-3.2-1.5-3.2-3.2 1.4-3.2 3.2-3.2z" />
+      <path d="M9.4 12c0 1.8-1.5 3.2-3.2 3.2S3 13.8 3 12s1.5-3.2 3.2-3.2S9.4 10.2 9.4 12z" />
+      <path d="M14.6 12c0-1.8 1.5-3.2 3.2-3.2S21 10.2 21 12s-1.5 3.2-3.2 3.2-3.2-1.4-3.2-3.2z" />
+    </svg>
+  );
+}
+
 function CornerFlourish({ flip }) {
   return (
     <svg viewBox="0 0 60 60" width="34" height="34" style={{ transform: flip ? 'scaleX(-1)' : 'none' }}>
@@ -697,7 +749,7 @@ function LocationSection({ settings }) {
 
       <Reveal className="venue-card">
         <div className="venue-info">
-          <div className="venue-pin">📍</div>
+          <div className="venue-pin"><NavIconPin /></div>
           <div>
             {settings.venueHallName && <p className="venue-hall">{settings.venueHallName}</p>}
             <h3 className="venue-name">{settings.venueName}</h3>
@@ -925,7 +977,7 @@ function AddToCalendarSection({ settings }) {
   return (
     <Reveal className="calendar-card">
       <button type="button" className="calendar-header" onClick={() => setOpen(!open)}>
-        <span className="calendar-icon">📅</span>
+        <span className="calendar-icon"><NavIconCalendar /></span>
         <span className="calendar-header-text">
           <span className="calendar-title">Add to Calendar</span>
           <span className="calendar-subtitle">Save the date to your calendar</span>
@@ -964,17 +1016,108 @@ function ThankYouSection({ settings }) {
   );
 }
 
-function MobileQuickNav() {
+function TopNavBar({ settings }) {
+  const [activeHref, setActiveHref] = useState('');
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const links = [
-    { href: '#schedule', label: 'Schedule', icon: '📅' },
-    { href: '#location', label: 'Venue', icon: '📍' },
-    { href: '#rsvp', label: 'RSVP', icon: '💌' },
-    { href: '#wishes', label: 'Wishes', icon: '💐' },
+    { href: '#schedule', label: 'Schedule' },
+    { href: '#rsvp', label: 'RSVP' },
+    { href: '#find-table', label: 'Find Table' },
+    { href: '#location', label: 'Venue' },
+    { href: '#wishes', label: 'Wishes' },
   ];
+
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 60);
+      const offset = 130;
+      let current = '';
+      for (const l of links) {
+        const el = document.querySelector(l.href);
+        if (el && el.getBoundingClientRect().top <= offset) {
+          current = l.href;
+        }
+      }
+      setActiveHref(current);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const groomInitial = (settings.groomName || 'C')[0];
+  const brideInitial = (settings.brideName || 'L')[0];
+
+  return (
+    <nav className={`top-navbar ${scrolled ? 'scrolled' : ''}`} aria-label="Main navigation">
+      <a href="#top" className="top-navbar-brand" onClick={() => setMenuOpen(false)}>
+        {groomInitial}<span className="top-navbar-amp">&amp;</span>{brideInitial}
+      </a>
+
+      <div className={`top-navbar-links ${menuOpen ? 'open' : ''}`}>
+        {links.map((l) => (
+          <a
+            key={l.href}
+            href={l.href}
+            className={`top-navbar-link ${activeHref === l.href ? 'active' : ''}`}
+            onClick={() => setMenuOpen(false)}
+          >
+            {l.label}
+          </a>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        className="top-navbar-toggle"
+        aria-label="Toggle menu"
+        onClick={() => setMenuOpen((v) => !v)}
+      >
+        <span /><span /><span />
+      </button>
+    </nav>
+  );
+}
+
+function MobileQuickNav() {
+  const [activeHref, setActiveHref] = useState('');
+  const links = [
+    { href: '#schedule', label: 'Schedule', icon: <NavIconCalendar /> },
+    { href: '#rsvp', label: 'RSVP', icon: <NavIconEnvelope /> },
+    { href: '#find-table', label: 'Table', icon: <NavIconSearch /> },
+    { href: '#location', label: 'Venue', icon: <NavIconPin /> },
+    { href: '#wishes', label: 'Wishes', icon: <NavIconFlower /> },
+  ];
+
+  useEffect(() => {
+    function onScroll() {
+      const offset = 140;
+      let current = '';
+      for (const l of links) {
+        const el = document.querySelector(l.href);
+        if (el && el.getBoundingClientRect().top <= offset) {
+          current = l.href;
+        }
+      }
+      setActiveHref(current);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <nav className="mobile-quicknav" aria-label="Quick navigation">
       {links.map((l) => (
-        <a key={l.href} href={l.href} className="mobile-quicknav-item">
+        <a
+          key={l.href}
+          href={l.href}
+          className={`mobile-quicknav-item ${activeHref === l.href ? 'active' : ''}`}
+        >
           <span className="mobile-quicknav-icon">{l.icon}</span>
           <span className="mobile-quicknav-label">{l.label}</span>
         </a>
@@ -1126,6 +1269,8 @@ export default function Home({ searchParams }) {
     <>
       <FallingPetals />
 
+      <TopNavBar settings={settings} />
+
       <MobileQuickNav />
 
       {showGreeting && <GuestGreeting name={guestName} leaving={greetingLeaving} />}
@@ -1134,7 +1279,7 @@ export default function Home({ searchParams }) {
         <IntroScreen onEnter={handleEnter} leaving={introLeaving} settings={settings} />
       )}
 
-      <div className="hero">
+      <div className="hero" id="top">
         <div className="hero-bg-illustration" aria-hidden="true">
           <img
             src="/images/couple-illustration.png"
@@ -1148,7 +1293,7 @@ export default function Home({ searchParams }) {
             <LampIcon />
           </div>
 
-          <a href="#wishes" className="hero-wishes-jump">💌 Guest Wishes</a>
+          <a href="#wishes" className="hero-wishes-jump"><NavIconEnvelope /> Guest Wishes</a>
 
           <div className="eyebrow">You are lovingly invited</div>
 
