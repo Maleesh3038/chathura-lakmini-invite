@@ -987,7 +987,7 @@ export default function Home({ searchParams }) {
   const [now, setNow] = useState(() => Date.now());
   const [form, setForm] = useState({ name: guestNameParam || '', phone: '', attending: '', guests: 1, drinks: '', message: '' });
   const [status, setStatus] = useState(null);
-  const [introOpen, setIntroOpen] = useState(true);
+  const [validationError, setValidationError] = useState('');
   const [introLeaving, setIntroLeaving] = useState(false);
   const [events, setEvents] = useState(DEFAULT_EVENTS);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -1088,14 +1088,28 @@ export default function Home({ searchParams }) {
       ? heroDateObj.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
       : '';
 
+  const PHONE_REGEX = /^(0|\+94)7\d{8}$/;
+
   async function handleSubmit(e) {
     e.preventDefault();
+    setValidationError('');
+
+    const cleanedPhone = (form.phone || '').replace(/[\s-]/g, '');
+    if (!PHONE_REGEX.test(cleanedPhone)) {
+      setValidationError('Please enter a valid phone number (e.g. 0771234567).');
+      return;
+    }
+    if (!form.drinks) {
+      setValidationError('Please let us know if you\u2019ll be having drinks.');
+      return;
+    }
+
     setStatus('sending');
     try {
       const res = await fetch('/api/rsvp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, submittedAt: new Date().toISOString() }),
+        body: JSON.stringify({ ...form, phone: cleanedPhone, submittedAt: new Date().toISOString() }),
       });
       if (!res.ok) throw new Error('failed');
       setStatus('ok');
@@ -1206,6 +1220,8 @@ export default function Home({ searchParams }) {
                 type="tel"
                 required
                 placeholder="e.g. 0771234567"
+                pattern="^(0|\+94)7[0-9]{8}$"
+                title="Enter a valid phone number, e.g. 0771234567"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
@@ -1238,6 +1254,7 @@ export default function Home({ searchParams }) {
               <label htmlFor="r-drinks">Will you be having drinks?</label>
               <select
                 id="r-drinks"
+                required
                 value={form.drinks}
                 onChange={(e) => setForm({ ...form, drinks: e.target.value })}
               >
@@ -1256,6 +1273,7 @@ export default function Home({ searchParams }) {
               />
             </div>
             <button type="submit" className="btn btn-glow">Send RSVP</button>
+            {validationError && <div className="form-msg err">{validationError}</div>}
             {status === 'sending' && <div className="form-msg">Sending...</div>}
             {status === 'ok' && <div className="form-msg ok">Thank you! Your RSVP has been received.</div>}
             {status === 'err' && <div className="form-msg err">Something went wrong. Please try again.</div>}
