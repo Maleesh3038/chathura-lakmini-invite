@@ -882,7 +882,7 @@ function GuestLinksTab() {
   }, []);
 
   const trimmedName = guestName.trim();
-  const link = trimmedName ? `${origin}/?to=${encodeURIComponent(trimmedName)}` : '';
+  const link = trimmedName ? `${origin}/wedding?to=${encodeURIComponent(trimmedName)}` : '';
   const finalMessage = link ? waMessage.replace('{link}', link) : waMessage;
 
   async function copyLink() {
