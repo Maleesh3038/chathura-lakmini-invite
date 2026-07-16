@@ -1152,6 +1152,16 @@ table.rsvp-table td{ color:var(--ink); }
 .lightbox-content{
   max-width:min(90vw, 900px);
   max-height:85vh;
+  position:relative;
+}
+.lightbox-counter{
+  position:absolute;
+  bottom:-32px;
+  left:50%;
+  transform:translateX(-50%);
+  color:rgba(255,255,255,0.75);
+  font-size:13px;
+  letter-spacing:0.05em;
 }
 .lightbox-media{
   max-width:100%; max-height:85vh;
