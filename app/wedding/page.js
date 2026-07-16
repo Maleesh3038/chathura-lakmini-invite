@@ -1199,6 +1199,14 @@ export default function Home({ searchParams }) {
 
       <LocationSection settings={settings} />
 
+      <TableLookupSection />
+
+      <div className="lattice" />
+
+      <VenueMapSection settings={settings} />
+
+      <div className="lattice" />
+
       <section id="rsvp">
         <div className="sec-head">
           <div className="sec-eyebrow">Kindly Respond</div>
@@ -1287,14 +1295,6 @@ export default function Home({ searchParams }) {
       </section>
 
       <AddToCalendarSection settings={settings} />
-
-      <div className="lattice" />
-
-      <TableLookupSection />
-
-      <div className="lattice" />
-
-      <VenueMapSection settings={settings} />
 
       <div className="lattice" />
 
