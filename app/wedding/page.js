@@ -684,6 +684,10 @@ function WishesWall() {
 }
 
 function LocationSection({ settings }) {
+  const embedSrc = settings.venueLat && settings.venueLng
+    ? `https://www.google.com/maps?q=${settings.venueLat},${settings.venueLng}&z=15&output=embed`
+    : null;
+
   return (
     <section id="location">
       <div className="sec-head">
@@ -700,21 +704,7 @@ function LocationSection({ settings }) {
             <p className="venue-address">{settings.venueAddress}</p>
           </div>
         </div>
-      </Reveal>
-    </section>
-  );
-}
 
-function VenueMapSection({ settings }) {
-  const embedSrc = settings.venueLat && settings.venueLng
-    ? `https://www.google.com/maps?q=${settings.venueLat},${settings.venueLng}&z=15&output=embed`
-    : null;
-
-  if (!embedSrc && !settings.venueMapUrl) return null;
-
-  return (
-    <section id="venue-map">
-      <Reveal className="venue-card">
         {embedSrc && (
           <div className="venue-map-wrap">
             <iframe
@@ -729,7 +719,9 @@ function VenueMapSection({ settings }) {
           </div>
         )}
 
-        <a className="btn-pill venue-cta" href={settings.venueMapUrl} target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
+        {settings.venueMapUrl && (
+          <a className="btn-pill venue-cta" href={settings.venueMapUrl} target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
+        )}
       </Reveal>
     </section>
   );
@@ -1197,16 +1189,6 @@ export default function Home({ searchParams }) {
 
       <div className="lattice" />
 
-      <LocationSection settings={settings} />
-
-      <div className="lattice" />
-
-      <VenueMapSection settings={settings} />
-
-      <TableLookupSection />
-
-      <div className="lattice" />
-
       <section id="rsvp">
         <div className="sec-head">
           <div className="sec-eyebrow">Kindly Respond</div>
@@ -1295,6 +1277,12 @@ export default function Home({ searchParams }) {
       </section>
 
       <AddToCalendarSection settings={settings} />
+
+      <div className="lattice" />
+
+      <LocationSection settings={settings} />
+
+      <TableLookupSection />
 
       <div className="lattice" />
 
