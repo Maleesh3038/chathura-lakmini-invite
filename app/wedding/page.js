@@ -988,6 +988,7 @@ export default function Home({ searchParams }) {
   const [form, setForm] = useState({ name: guestNameParam || '', phone: '', attending: '', guests: 1, drinks: '', message: '' });
   const [status, setStatus] = useState(null);
   const [validationError, setValidationError] = useState('');
+  const [introOpen, setIntroOpen] = useState(true);
   const [introLeaving, setIntroLeaving] = useState(false);
   const [events, setEvents] = useState(DEFAULT_EVENTS);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
