@@ -1430,6 +1430,39 @@ table.rsvp-table td{ color:var(--ink); }
 .admin-shell .admin-media-thumb{ border-radius:10px; }
 .admin-shell .theme-color-item{ border-radius:12px; }
 
+/* ---------- MOBILE QUICK NAV ---------- */
+.mobile-quicknav{ display:none; }
+@media (max-width:680px){
+  body{ padding-bottom:64px; }
+  .mobile-quicknav{
+    display:flex;
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:600;
+    background:rgba(253,246,232,0.94);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);
+    box-shadow:0 -4px 18px rgba(184,134,63,0.10);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .mobile-quicknav-item{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    padding:6px 2px;
+    text-decoration:none;
+    color:var(--ink);
+    font-size:10.5px;
+    font-weight:500;
+    letter-spacing:0.02em;
+  }
+  .mobile-quicknav-icon{ font-size:18px; line-height:1; }
+  .mobile-quicknav-item:active{ opacity:0.6; }
+}
+
 .admin-filter-bar{
   display:flex;
   align-items:center;
