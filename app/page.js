@@ -359,6 +359,8 @@ async function uploadMediaFile(file) {
 // ---------- Lightbox ----------
 
 function Lightbox({ items, index, onClose, onPrev, onNext }) {
+  const touchStartX = useRef(null);
+
   useEffect(() => {
     function onKey(e) {
       if (e.key === 'Escape') onClose();
@@ -372,17 +374,38 @@ function Lightbox({ items, index, onClose, onPrev, onNext }) {
   if (index === null || !items || !items[index]) return null;
   const item = items[index];
 
+  function handleTouchStart(e) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+  function handleTouchEnd(e) {
+    if (touchStartX.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) onPrev();
+      else onNext();
+    }
+    touchStartX.current = null;
+  }
+
   return (
     <div className="lightbox-overlay" onClick={onClose}>
       <button className="lightbox-close" onClick={onClose} aria-label="Close">✕</button>
       {items.length > 1 && (
         <button className="lightbox-nav prev" onClick={(e) => { e.stopPropagation(); onPrev(); }} aria-label="Previous">‹</button>
       )}
-      <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="lightbox-content"
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {item.type === 'video' ? (
           <video src={item.url} controls autoPlay className="lightbox-media" />
         ) : (
           <img src={item.url} alt="" className="lightbox-media" />
+        )}
+        {items.length > 1 && (
+          <div className="lightbox-counter">{index + 1} / {items.length}</div>
         )}
       </div>
       {items.length > 1 && (
@@ -407,7 +430,7 @@ function MediaThumb({ item, onClick }) {
   );
 }
 
-function WishCard({ wish, index, onOpenMedia }) {
+function WishCard({ wish, index, onOpenMedia, allMedia, mediaOffset }) {
   const [ref, inView] = useInView(0.08);
   const media = wish.media || [];
   return (
@@ -420,9 +443,9 @@ function WishCard({ wish, index, onOpenMedia }) {
         <div className={`wish-media-grid ${media.length === 1 ? 'single' : ''}`}>
           {media.slice(0, 4).map((m, i) => (
             <div key={i} className={`wish-media-cell ${media.length === 1 ? 'single-cell' : ''}`}>
-              <MediaThumb item={m} onClick={() => onOpenMedia(media, i)} />
+              <MediaThumb item={m} onClick={() => onOpenMedia(allMedia, mediaOffset + i)} />
               {i === 3 && media.length > 4 && (
-                <button type="button" className="media-more" onClick={() => onOpenMedia(media, 3)}>
+                <button type="button" className="media-more" onClick={() => onOpenMedia(allMedia, mediaOffset + 3)}>
                   +{media.length - 4}
                 </button>
               )}
@@ -634,9 +657,24 @@ function WishesWall() {
         <p className="empty-note">No wishes yet — be the first to leave one!</p>
       ) : (
         <div className="wish-grid">
-          {wishes.map((w, i) => (
-            <WishCard key={w.id} wish={w} index={i} onOpenMedia={openLightbox} />
-          ))}
+          {(() => {
+            const allMedia = wishes.flatMap((w) => w.media || []);
+            let runningOffset = 0;
+            return wishes.map((w, i) => {
+              const mediaOffset = runningOffset;
+              runningOffset += (w.media || []).length;
+              return (
+                <WishCard
+                  key={w.id}
+                  wish={w}
+                  index={i}
+                  onOpenMedia={openLightbox}
+                  allMedia={allMedia}
+                  mediaOffset={mediaOffset}
+                />
+              );
+            });
+          })()}
         </div>
       )}
 
