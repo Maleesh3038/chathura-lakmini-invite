@@ -1280,9 +1280,9 @@ export default function Home({ searchParams }) {
 
       <div className="lattice" />
 
-      <LocationSection settings={settings} />
-
       <TableLookupSection />
+
+      <LocationSection settings={settings} />
 
       <div className="lattice" />
 
