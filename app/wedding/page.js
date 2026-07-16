@@ -684,10 +684,6 @@ function WishesWall() {
 }
 
 function LocationSection({ settings }) {
-  const embedSrc = settings.venueLat && settings.venueLng
-    ? `https://www.google.com/maps?q=${settings.venueLat},${settings.venueLng}&z=15&output=embed`
-    : null;
-
   return (
     <section id="location">
       <div className="sec-head">
@@ -704,7 +700,21 @@ function LocationSection({ settings }) {
             <p className="venue-address">{settings.venueAddress}</p>
           </div>
         </div>
+      </Reveal>
+    </section>
+  );
+}
 
+function VenueMapSection({ settings }) {
+  const embedSrc = settings.venueLat && settings.venueLng
+    ? `https://www.google.com/maps?q=${settings.venueLat},${settings.venueLng}&z=15&output=embed`
+    : null;
+
+  if (!embedSrc && !settings.venueMapUrl) return null;
+
+  return (
+    <section id="venue-map">
+      <Reveal className="venue-card">
         {embedSrc && (
           <div className="venue-map-wrap">
             <iframe
@@ -1281,6 +1291,10 @@ export default function Home({ searchParams }) {
       <div className="lattice" />
 
       <TableLookupSection />
+
+      <div className="lattice" />
+
+      <VenueMapSection settings={settings} />
 
       <div className="lattice" />
 
