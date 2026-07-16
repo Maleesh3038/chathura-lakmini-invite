@@ -1199,11 +1199,11 @@ export default function Home({ searchParams }) {
 
       <LocationSection settings={settings} />
 
-      <TableLookupSection />
-
       <div className="lattice" />
 
       <VenueMapSection settings={settings} />
+
+      <TableLookupSection />
 
       <div className="lattice" />
 
