@@ -962,6 +962,25 @@ function ThankYouSection({ settings }) {
   );
 }
 
+function MobileQuickNav() {
+  const links = [
+    { href: '#schedule', label: 'Schedule', icon: '📅' },
+    { href: '#location', label: 'Venue', icon: '📍' },
+    { href: '#rsvp', label: 'RSVP', icon: '💌' },
+    { href: '#wishes', label: 'Wishes', icon: '💐' },
+  ];
+  return (
+    <nav className="mobile-quicknav" aria-label="Quick navigation">
+      {links.map((l) => (
+        <a key={l.href} href={l.href} className="mobile-quicknav-item">
+          <span className="mobile-quicknav-icon">{l.icon}</span>
+          <span className="mobile-quicknav-label">{l.label}</span>
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 export default function Home({ searchParams }) {
   const guestNameParam = (searchParams?.to || '').toString().trim() || null;
 
@@ -1089,6 +1108,8 @@ export default function Home({ searchParams }) {
   return (
     <>
       <FallingPetals />
+
+      <MobileQuickNav />
 
       {showGreeting && <GuestGreeting name={guestName} leaving={greetingLeaving} />}
 
