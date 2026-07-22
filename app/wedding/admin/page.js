@@ -28,6 +28,40 @@ function RsvpTab({ passcode }) {
   const [filterDrinks, setFilterDrinks] = useState('all');
   const [filterSource, setFilterSource] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [waMessageTemplate, setWaMessageTemplate] = useState(DEFAULT_WA_MESSAGE);
+  const [origin, setOrigin] = useState('');
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.waMessageTemplate) {
+          setWaMessageTemplate(data.waMessageTemplate);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  function formatPhoneForWhatsApp(phone) {
+    let p = (phone || '').replace(/[^\d+]/g, '');
+    if (!p) return '';
+    if (p.startsWith('+')) return p.slice(1);
+    if (p.startsWith('0')) return '94' + p.slice(1);
+    return p;
+  }
+
+  function shareRowOnWhatsApp(r) {
+    const guestLink = `${origin}/wedding?to=${encodeURIComponent(r.name || '')}`;
+    const message = waMessageTemplate.includes('{link}')
+      ? waMessageTemplate.replace('{link}', guestLink)
+      : `${waMessageTemplate}\n\n${guestLink}`;
+    const waPhone = formatPhoneForWhatsApp(r.phone);
+    const url = waPhone
+      ? `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  }
 
   async function load() {
     setLoading(true);
@@ -368,6 +402,7 @@ function RsvpTab({ passcode }) {
                       <span style={{ display: 'flex', gap: 6 }}>
                         <button className="btn-small" onClick={() => startEditRow(r)}>Edit</button>
                         <button className="btn-small btn-delete" onClick={() => removeGuest(r.id)}>Delete</button>
+                        <button className="btn-small btn-whatsapp" onClick={() => shareRowOnWhatsApp(r)} title="Share invitation link on WhatsApp">↗ WhatsApp</button>
                       </span>
                     )}
                   </td>
