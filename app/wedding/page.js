@@ -313,7 +313,6 @@ function IntroScreen({ onEnter, leaving, settings }) {
           <video
             ref={videoRef}
             src="/videos/eternal-bloom-cover.mp4"
-            poster="/images/couple-illustration.png"
             muted
             playsInline
             preload="auto"
