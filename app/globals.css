@@ -570,7 +570,6 @@ table.rsvp-table td{ color:var(--ink); }
   height:130px;
   background:radial-gradient(circle, rgba(185,105,95,0.20), rgba(185,105,95,0.05) 70%);
 }
-.gg-flower{ font-size:44px; }
 .gg-text{
   font-family:var(--font-heading);
   font-style:italic;
@@ -579,10 +578,10 @@ table.rsvp-table td{ color:var(--ink); }
   max-width:90vw;
 }
 .gg-name{
-  font-family:'Parisienne', cursive;
-  font-style:normal;
+  font-family:var(--font-heading);
+  font-style:italic;
+  font-weight:600;
   color:var(--gold-bright);
-  font-size:1.15em;
 }
 .gg-divider{ width:56px; height:1px; background:var(--gold); opacity:0.5; }
 .gg-sub{
