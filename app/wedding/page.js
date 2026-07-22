@@ -200,6 +200,40 @@ function NavIconFlower() {
   );
 }
 
+function IconTikTok() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+      <path d="M16.6 5.2c-.9-.9-1.4-2.1-1.4-3.4h-3.1v13.6c0 1.5-1.2 2.7-2.7 2.7s-2.7-1.2-2.7-2.7 1.2-2.7 2.7-2.7c.3 0 .6.05.9.14V9.7c-.3-.04-.6-.07-.9-.07-3.2 0-5.8 2.6-5.8 5.8s2.6 5.8 5.8 5.8 5.8-2.6 5.8-5.8V8.9c1.2.9 2.7 1.4 4.3 1.4V7.2c-1 0-1.9-.3-2.6-.9-.15-.13-.28-.27-.4-.4-.4-.4-.7-.9-.9-1.4z" />
+    </svg>
+  );
+}
+
+function IconFacebook() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+      <path d="M13.5 21v-8.1h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5H16.7V3.6c-.28-.04-1.24-.12-2.36-.12-2.34 0-3.94 1.43-3.94 4.04v2.25H7.7v3.1h2.7V21h3.1z" />
+    </svg>
+  );
+}
+
+function IconInstagram() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+      <rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5" />
+      <circle cx="12" cy="12" r="4.2" />
+      <circle cx="17.1" cy="6.9" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function IconPhone() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6.6 10.8c1.3 2.6 3.4 4.7 6 6l2-2c.25-.25.6-.33.9-.2 1 .35 2.1.55 3.2.55.5 0 .9.4.9.9V19c0 .5-.4.9-.9.9C9.9 19.9 4.1 14.1 4.1 5.2c0-.5.4-.9.9-.9h3.2c.5 0 .9.4.9.9 0 1.1.2 2.2.55 3.2.1.3.05.65-.2.9l-2.85 2.5z" />
+    </svg>
+  );
+}
+
 function CornerFlourish({ flip }) {
   return (
     <svg viewBox="0 0 60 60" width="34" height="34" style={{ transform: flip ? 'scaleX(-1)' : 'none' }}>
@@ -1574,6 +1608,31 @@ export default function Home({ searchParams }) {
       <footer>
         WITH LOVE, {settings.groomName?.toUpperCase()} <span className="amp-inline">&amp;</span> {settings.brideName?.toUpperCase()}
       </footer>
+
+      <div className="ig-credit">
+        <a
+          href="https://inviteglow.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ig-credit-brand"
+        >
+          Website by <strong>Invite Glow</strong>
+        </a>
+        <div className="ig-credit-links">
+          <a href="https://www.tiktok.com/@invitvei1w8?_r=1&_t=ZS-9858lr1qCkn" target="_blank" rel="noopener noreferrer" aria-label="Invite Glow on TikTok">
+            <IconTikTok />
+          </a>
+          <a href="https://www.facebook.com/share/1AtpWeKASA/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Invite Glow on Facebook">
+            <IconFacebook />
+          </a>
+          <a href="https://www.instagram.com/invite__glow?igsh=M3Fsc2E0NTBwYw==" target="_blank" rel="noopener noreferrer" aria-label="Invite Glow on Instagram">
+            <IconInstagram />
+          </a>
+          <a href="tel:+94770024484" aria-label="Call Invite Glow">
+            <IconPhone />
+          </a>
+        </div>
+      </div>
     </>
   );
 }
