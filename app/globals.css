@@ -471,7 +471,36 @@ section{ padding:70px 20px; max-width:900px; margin:0 auto; }
 .table-result-phone{ font-size:12px; color:var(--muted); }
 .table-result-num{ font-size:14px; color:var(--gold-bright); font-weight:600; }
 
-footer{ text-align:center; padding:50px 20px 70px; color:var(--gold); font-size:12.5px; letter-spacing:0.08em; font-weight:500;}
+footer{ text-align:center; padding:50px 20px 20px; color:var(--gold); font-size:12.5px; letter-spacing:0.08em; font-weight:500;}
+
+.ig-credit{
+  text-align:center;
+  padding:0 20px 32px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+}
+.ig-credit-brand{
+  font-size:11.5px;
+  letter-spacing:0.04em;
+  color:var(--muted);
+  text-decoration:none;
+  transition:color 0.2s ease;
+}
+.ig-credit-brand strong{ color:var(--gold-bright); font-weight:600; }
+.ig-credit-brand:hover{ color:var(--gold-bright); }
+.ig-credit-links{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+.ig-credit-links a{
+  color:var(--muted);
+  display:flex;
+  transition:color 0.2s ease, transform 0.2s ease;
+}
+.ig-credit-links a:hover{ color:var(--gold-bright); transform:translateY(-2px); }
 footer a{ color:var(--muted); text-decoration:none; font-size:11.5px; }
 footer a:hover{ color:var(--gold-bright); }
 
