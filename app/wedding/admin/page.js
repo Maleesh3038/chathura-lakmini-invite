@@ -1217,7 +1217,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="admin-shell" style={{ maxWidth: 900, margin: '40px auto', padding: '0 20px 60px' }}>
+    <div className="admin-shell" style={{ maxWidth: 1400, margin: '40px auto', padding: '0 20px 60px' }}>
       <h2 className="sec-title-en">Couple&apos;s Dashboard</h2>
 
       <div className="admin-tabs">
