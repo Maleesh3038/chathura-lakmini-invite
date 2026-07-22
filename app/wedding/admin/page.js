@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 const PASSCODE = 'poruwa2026';
 
 function emptyGuestForm() {
-  return { name: '', phone: '', attending: 'Yes', guests: 1, drinks: '', message: '' };
+  return { name: '', phone: '', side: '', attending: 'Yes', guests: 1, drinks: '', message: '' };
 }
 
 function RsvpTab({ passcode }) {
@@ -24,6 +24,7 @@ function RsvpTab({ passcode }) {
   const [editRow, setEditRow] = useState({});
   const [editRowError, setEditRowError] = useState('');
   const [filterAttending, setFilterAttending] = useState('all');
+  const [filterSide, setFilterSide] = useState('all');
   const [filterDrinks, setFilterDrinks] = useState('all');
   const [filterSource, setFilterSource] = useState('all');
 
@@ -79,6 +80,7 @@ function RsvpTab({ passcode }) {
     setEditRow({
       name: r.name || '',
       phone: r.phone || '',
+      side: r.side || '',
       attending: r.attending || 'Yes',
       guests: r.guests ?? 1,
       drinks: r.drinks || '',
@@ -113,10 +115,11 @@ function RsvpTab({ passcode }) {
   }
 
   function exportToExcel() {
-    const headers = ['Name', 'Phone', 'Attending', 'Guests', 'Drinks', 'Table', 'Source', 'Message', 'Date'];
+    const headers = ['Name', 'Phone', 'Side', 'Attending', 'Guests', 'Drinks', 'Table', 'Source', 'Message', 'Date'];
     const rows = filteredData.map((r) => [
       r.name || '',
       r.phone || '',
+      r.side === 'Bride' ? "Bride's Side" : r.side === 'Groom' ? "Groom's Side" : '',
       r.attending || '',
       r.guests ?? '',
       r.drinks || '',
@@ -146,9 +149,14 @@ function RsvpTab({ passcode }) {
     .reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
   const manualCount = data.filter((r) => r.source === 'manual').length;
   const drinksYes = data.filter((r) => r.drinks === 'Yes').length;
+  const brideSideCount = data.filter((r) => r.side === 'Bride').length;
+  const groomSideCount = data.filter((r) => r.side === 'Groom').length;
 
   const filteredData = data.filter((r) => {
     if (filterAttending !== 'all' && r.attending !== filterAttending) return false;
+    if (filterSide === 'unset') {
+      if (r.side) return false;
+    } else if (filterSide !== 'all' && r.side !== filterSide) return false;
     if (filterDrinks === 'unset') {
       if (r.drinks) return false;
     } else if (filterDrinks !== 'all' && r.drinks !== filterDrinks) return false;
@@ -165,6 +173,8 @@ function RsvpTab({ passcode }) {
         <div className="stat"><span className="stat-num">{yes}</span><span className="stat-lab">Attending</span></div>
         <div className="stat"><span className="stat-num">{no}</span><span className="stat-lab">Declined</span></div>
         <div className="stat"><span className="stat-num">{guests}</span><span className="stat-lab">Total Guests</span></div>
+        <div className="stat"><span className="stat-num">{brideSideCount}</span><span className="stat-lab">Bride&apos;s Side</span></div>
+        <div className="stat"><span className="stat-num">{groomSideCount}</span><span className="stat-lab">Groom&apos;s Side</span></div>
         <div className="stat"><span className="stat-num">{drinksYes}</span><span className="stat-lab">Drinks: Yes</span></div>
         <div className="stat"><span className="stat-num">{manualCount}</span><span className="stat-lab">Manually Added</span></div>
       </div>
@@ -180,6 +190,12 @@ function RsvpTab({ passcode }) {
           <option value="Yes">Attending: Yes</option>
           <option value="No">Attending: No</option>
         </select>
+        <select className="admin-filter-select" value={filterSide} onChange={(e) => setFilterSide(e.target.value)}>
+          <option value="all">All — Side</option>
+          <option value="Bride">Bride&apos;s Side</option>
+          <option value="Groom">Groom&apos;s Side</option>
+          <option value="unset">Side: Not set</option>
+        </select>
         <select className="admin-filter-select" value={filterDrinks} onChange={(e) => setFilterDrinks(e.target.value)}>
           <option value="all">All — Drinks</option>
           <option value="Yes">Drinks: Yes</option>
@@ -191,11 +207,11 @@ function RsvpTab({ passcode }) {
           <option value="link">Source: Link</option>
           <option value="manual">Source: Manual</option>
         </select>
-        {(filterAttending !== 'all' || filterDrinks !== 'all' || filterSource !== 'all') && (
+        {(filterAttending !== 'all' || filterSide !== 'all' || filterDrinks !== 'all' || filterSource !== 'all') && (
           <button
             type="button"
             className="btn-small"
-            onClick={() => { setFilterAttending('all'); setFilterDrinks('all'); setFilterSource('all'); }}
+            onClick={() => { setFilterAttending('all'); setFilterSide('all'); setFilterDrinks('all'); setFilterSource('all'); }}
           >
             ✕ Clear Filters
           </button>
@@ -209,6 +225,11 @@ function RsvpTab({ passcode }) {
         <form className="admin-edit-form" onSubmit={addGuest} style={{ marginBottom: 20 }}>
           <input required value={guestForm.name} onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })} placeholder="Guest Name" />
           <input value={guestForm.phone} onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })} placeholder="Phone (optional)" />
+          <select value={guestForm.side} onChange={(e) => setGuestForm({ ...guestForm, side: e.target.value })}>
+            <option value="">Side? — not set</option>
+            <option value="Bride">Bride&apos;s Side</option>
+            <option value="Groom">Groom&apos;s Side</option>
+          </select>
           <select value={guestForm.attending} onChange={(e) => setGuestForm({ ...guestForm, attending: e.target.value })}>
             <option value="Yes">Attending</option>
             <option value="No">Declined</option>
@@ -239,7 +260,7 @@ function RsvpTab({ passcode }) {
         <div className="table-scroll">
           <table className="rsvp-table">
             <thead>
-              <tr><th>Name</th><th>Phone</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
+              <tr><th>Name</th><th>Phone</th><th>Side</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
             </thead>
           <tbody>
             {filteredData.slice().reverse().map((r) => {
@@ -258,6 +279,17 @@ function RsvpTab({ passcode }) {
                       <input style={inputStyle} value={editRow.phone} onChange={(e) => setEditRow({ ...editRow, phone: e.target.value })} />
                     ) : (
                       r.phone || '—'
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <select style={inputStyle} value={editRow.side} onChange={(e) => setEditRow({ ...editRow, side: e.target.value })}>
+                        <option value="">—</option>
+                        <option value="Bride">Bride</option>
+                        <option value="Groom">Groom</option>
+                      </select>
+                    ) : (
+                      r.side === 'Bride' ? "Bride's Side" : r.side === 'Groom' ? "Groom's Side" : '—'
                     )}
                   </td>
                   <td>
