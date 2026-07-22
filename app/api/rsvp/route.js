@@ -17,6 +17,7 @@ export async function GET() {
     attending: r.attending,
     guests: r.guests,
     drinks: r.drinks || null,
+    category: r.category || null,
     message: r.message,
     source: r.source || 'link',
     submittedAt: r.submitted_at,
@@ -47,6 +48,7 @@ export async function POST(request) {
       attending: body.attending,
       guests: body.guests || 1,
       drinks: body.drinks ? String(body.drinks).slice(0, 10) : null,
+      category: body.category ? String(body.category).slice(0, 40) : null,
       message: body.message ? String(body.message).slice(0, 600) : null,
       submitted_at: new Date().toISOString(),
       source,
@@ -81,6 +83,7 @@ export async function PATCH(request) {
     if (body.attending !== undefined) update.attending = body.attending;
     if (body.guests !== undefined) update.guests = body.guests || 1;
     if (body.drinks !== undefined) update.drinks = body.drinks ? String(body.drinks).slice(0, 10) : null;
+    if (body.category !== undefined) update.category = body.category ? String(body.category).slice(0, 40) : null;
     if (body.message !== undefined) update.message = body.message ? String(body.message).slice(0, 600) : null;
     if (body.tableNumber !== undefined) update.table_number = body.tableNumber ? String(body.tableNumber).slice(0, 20) : null;
 
