@@ -13,6 +13,7 @@ export async function GET() {
     id: r.id,
     name: r.name,
     phone: r.phone,
+    side: r.side || null,
     attending: r.attending,
     guests: r.guests,
     drinks: r.drinks || null,
@@ -42,6 +43,7 @@ export async function POST(request) {
 
     const payload = {
       name: String(body.name).slice(0, 80),
+      side: body.side ? String(body.side).slice(0, 10) : null,
       attending: body.attending,
       guests: body.guests || 1,
       drinks: body.drinks ? String(body.drinks).slice(0, 10) : null,
@@ -75,6 +77,7 @@ export async function PATCH(request) {
     const update = {};
     if (body.name !== undefined) update.name = String(body.name).slice(0, 80);
     if (body.phone !== undefined) update.phone = body.phone ? String(body.phone).replace(/\s+/g, '') : null;
+    if (body.side !== undefined) update.side = body.side ? String(body.side).slice(0, 10) : null;
     if (body.attending !== undefined) update.attending = body.attending;
     if (body.guests !== undefined) update.guests = body.guests || 1;
     if (body.drinks !== undefined) update.drinks = body.drinks ? String(body.drinks).slice(0, 10) : null;
