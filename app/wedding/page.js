@@ -275,14 +275,14 @@ function IntroScreen({ onEnter, leaving, settings }) {
     const video = videoRef.current;
     if (video) {
       setPlaying(true);
-      const finish = () => onEnter();
-      video.addEventListener('ended', finish, { once: true });
       video.currentTime = 0;
       video.play().catch(() => {
         // Autoplay/play blocked or video unavailable — just proceed.
-        video.removeEventListener('ended', finish);
-        onEnter();
       });
+      setTimeout(() => {
+        video.pause();
+        onEnter();
+      }, 5000);
     } else {
       onEnter();
     }
