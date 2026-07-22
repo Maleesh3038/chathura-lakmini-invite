@@ -1504,15 +1504,60 @@ table.rsvp-table td{ color:var(--ink); }
   -webkit-overflow-scrolling:touch;
   box-shadow:0 3px 14px rgba(184,134,63,0.06);
 }
-.admin-shell table.rsvp-table{ margin-top:0; min-width:820px; }
+.admin-shell table.rsvp-table{ margin-top:0; min-width:760px; font-size:12.5px; }
 .admin-shell table.rsvp-table th:last-child,
 .admin-shell table.rsvp-table td:last-child{ white-space:nowrap; }
 .admin-shell table.rsvp-table th{
   background:var(--bg-panel-2);
-  padding:12px 14px;
+  padding:10px 10px;
 }
-.admin-shell table.rsvp-table td{ padding:11px 14px; }
+.admin-shell table.rsvp-table td{ padding:9px 10px; }
 .admin-shell table.rsvp-table tr:last-child td{ border-bottom:none; }
+
+/* Below ~760px, drop the horizontal-scroll table entirely and render each
+   RSVP as a stacked card instead — no side-scrolling needed on mobile. */
+@media (max-width:760px){
+  .admin-shell .table-scroll{ overflow-x:visible; border:none; box-shadow:none; border-radius:0; }
+  .admin-shell table.rsvp-table{ min-width:0; width:100%; }
+  .admin-shell table.rsvp-table thead{ display:none; }
+  .admin-shell table.rsvp-table tbody tr{
+    display:block;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:0 3px 14px rgba(184,134,63,0.07);
+    margin-bottom:14px;
+    padding:6px 4px;
+  }
+  .admin-shell table.rsvp-table tbody tr:hover{ background:var(--bg-panel); }
+  .admin-shell table.rsvp-table td{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    padding:9px 12px;
+    border-bottom:1px solid var(--line);
+    text-align:right;
+    white-space:normal;
+  }
+  .admin-shell table.rsvp-table tr:last-child td{ border-bottom:1px solid var(--line); }
+  .admin-shell table.rsvp-table tr td:last-child{ border-bottom:none; }
+  .admin-shell table.rsvp-table td::before{
+    content:attr(data-label);
+    flex:0 0 auto;
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--gold-bright);
+    text-align:left;
+    padding-top:2px;
+  }
+  .admin-shell table.rsvp-table td[data-label="Name"]{ font-weight:600; font-size:14px; }
+  .admin-shell table.rsvp-table td[data-label="Name"]::before,
+  .admin-shell table.rsvp-table td[data-label="Actions"]::before{ display:none; }
+  .admin-shell table.rsvp-table td[data-label="Actions"] span{ justify-content:flex-end; flex-wrap:wrap; }
+}
 .admin-shell table.rsvp-table tbody tr{ transition:background 0.15s ease; }
 .admin-shell table.rsvp-table tbody tr:hover{ background:rgba(184,134,63,0.045); }
 
