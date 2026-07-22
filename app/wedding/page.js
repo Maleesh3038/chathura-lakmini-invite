@@ -1300,29 +1300,29 @@ export default function Home({ searchParams }) {
     }
   }
 
-  function handleRsvpStep0Continue() {
+  function validateNameAndPhone() {
     setValidationError('');
     if (!form.name.trim()) {
       setValidationError('Please enter your name.');
-      return;
+      return false;
     }
     const cleanedPhone = (form.phone || '').replace(/[\s\-()]/g, '');
     if (!PHONE_REGEX.test(cleanedPhone)) {
       setValidationError('Please enter a valid phone number (e.g. 0771234567 or +14155552671).');
-      return;
+      return false;
     }
-    setRsvpStep(1);
+    return true;
   }
 
   function handleRsvpAccept() {
+    if (!validateNameAndPhone()) return;
     setForm((f) => ({ ...f, attending: 'Yes' }));
-    setValidationError('');
     setRsvpStep(2);
   }
 
   function handleRsvpDecline() {
+    if (!validateNameAndPhone()) return;
     setForm((f) => ({ ...f, attending: 'No' }));
-    setValidationError('');
     submitRsvp({ attending: 'No' });
   }
 
@@ -1457,18 +1457,12 @@ export default function Home({ searchParams }) {
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   />
                 </div>
-                <button type="button" className="btn btn-glow" onClick={handleRsvpStep0Continue}>Continue →</button>
-              </div>
-            )}
 
-            {rsvpStep === 1 && (
-              <div className="rsvp-step rsvp-step-center">
                 <p className="rsvp-question">Will You Join Us, {(form.name || '').split(' ')[0] || 'there'}?</p>
                 <div className="rsvp-accept-decline">
                   <button type="button" className="rsvp-accept-btn" onClick={handleRsvpAccept}>✓ Accept</button>
                   <button type="button" className="rsvp-decline-btn" onClick={handleRsvpDecline}>✗ Decline</button>
                 </div>
-                <button type="button" className="rsvp-back" onClick={() => setRsvpStep(0)}>← Back</button>
               </div>
             )}
 
@@ -1488,7 +1482,7 @@ export default function Home({ searchParams }) {
                   </select>
                 </div>
                 <div className="rsvp-step-actions">
-                  <button type="button" className="rsvp-back" onClick={() => setRsvpStep(1)}>← Back</button>
+                  <button type="button" className="rsvp-back" onClick={() => setRsvpStep(0)}>← Back</button>
                   <button type="button" className="btn btn-glow" onClick={handleRsvpStep2Continue}>Continue →</button>
                 </div>
               </div>
