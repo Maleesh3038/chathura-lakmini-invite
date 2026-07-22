@@ -1557,6 +1557,7 @@ table.rsvp-table td{ color:var(--ink); }
   .admin-shell table.rsvp-table td[data-label="Name"]::before,
   .admin-shell table.rsvp-table td[data-label="Actions"]::before{ display:none; }
   .admin-shell table.rsvp-table td[data-label="Actions"] span{ justify-content:flex-end; flex-wrap:wrap; }
+  .admin-shell table.rsvp-table td[data-label="#"]{ display:none; }
 }
 .admin-shell table.rsvp-table tbody tr{ transition:background 0.15s ease; }
 .admin-shell table.rsvp-table tbody tr:hover{ background:rgba(184,134,63,0.045); }
@@ -1745,11 +1746,36 @@ table.rsvp-table td{ color:var(--ink); }
 }
 .admin-filter-select:hover{ border-color:var(--gold); }
 .admin-filter-select:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:1px; }
+.admin-filter-search{
+  background:var(--bg-panel-2);
+  border:1px solid var(--line);
+  color:var(--ink);
+  font-size:13px;
+  font-family:var(--font-body);
+  padding:8px 16px;
+  border-radius:20px;
+  min-width:200px;
+  flex:1 1 200px;
+  transition:border-color 0.15s ease;
+}
+.admin-filter-search:focus-visible, .admin-filter-search:focus{ outline:2px solid var(--gold-bright); outline-offset:1px; border-color:var(--gold); }
 .admin-filter-count{
   font-size:12px;
   color:var(--muted);
   margin-left:auto;
   white-space:nowrap;
+}
+.admin-pagination{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  margin-top:18px;
+}
+.admin-pagination-info{
+  font-size:12.5px;
+  color:var(--muted);
+  font-weight:500;
 }
 
 /* ---------- FALLING PETALS ---------- */
