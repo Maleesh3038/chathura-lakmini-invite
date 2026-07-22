@@ -251,9 +251,7 @@ function FallingPetals() {
 function GuestGreeting({ name, leaving }) {
   return (
     <div className={`guest-greeting ${leaving ? 'leaving' : ''}`}>
-      <div className="gg-circle gg-circle-top">
-        <span className="gg-flower">🌸</span>
-      </div>
+      <div className="gg-circle gg-circle-top" />
       <div className="gg-text">
         Dear <span className="gg-name">{name}</span>,
       </div>
