@@ -270,6 +270,24 @@ function IntroScreen({ onEnter, leaving, settings }) {
   const videoRef = useRef(null);
   const [playing, setPlaying] = useState(false);
 
+  // Mobile browsers often refuse to paint the first frame of a paused video
+  // until it's actually played (to save data). Forcing a tiny seek once the
+  // video's metadata is ready tricks them into rendering that first frame.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    function paintFirstFrame() {
+      try {
+        video.currentTime = 0.01;
+      } catch (e) {
+        // ignore
+      }
+    }
+    video.addEventListener('loadedmetadata', paintFirstFrame);
+    video.load();
+    return () => video.removeEventListener('loadedmetadata', paintFirstFrame);
+  }, []);
+
   function handleCtaClick() {
     if (playing) return;
     const video = videoRef.current;
@@ -295,6 +313,7 @@ function IntroScreen({ onEnter, leaving, settings }) {
           <video
             ref={videoRef}
             src="/videos/eternal-bloom-cover.mp4"
+            poster="/images/couple-illustration.png"
             muted
             playsInline
             preload="auto"
