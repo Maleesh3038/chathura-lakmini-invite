@@ -1382,7 +1382,6 @@ export default function Home({ searchParams }) {
             <LampIcon />
           </div>
 
-          <a href="#wishes" className="hero-wishes-jump"><NavIconEnvelope /> Guest Wishes</a>
 
           <div className="eyebrow">You are lovingly invited</div>
 
