@@ -49,6 +49,9 @@ function RsvpTab({ passcode }) {
   const [filterSource, setFilterSource] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [pageSize, setPageSize] = useState(50);
+  const [currentPage, setCurrentPage] = useState(1);
   const [waMessageTemplate, setWaMessageTemplate] = useState(DEFAULT_WA_MESSAGE);
   const [origin, setOrigin] = useState('');
 
@@ -247,6 +250,8 @@ function RsvpTab({ passcode }) {
       if (r.category) return false;
     } else if (filterCategory !== 'all' && r.category !== filterCategory) return false;
     if (filterSource !== 'all' && (r.source || 'link') !== filterSource) return false;
+    const q = searchQuery.trim().toLowerCase();
+    if (q && !(r.name || '').toLowerCase().includes(q) && !(r.phone || '').toLowerCase().includes(q)) return false;
     return true;
   });
 
@@ -258,6 +263,11 @@ function RsvpTab({ passcode }) {
     // newest first (default)
     return new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0);
   });
+
+  const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStart = (safeCurrentPage - 1) * pageSize;
+  const pagedData = sortedData.slice(pageStart, pageStart + pageSize);
 
   const inputStyle = { width: '100%', minWidth: 70, padding: '4px 6px', fontSize: 12.5 };
 
@@ -280,29 +290,36 @@ function RsvpTab({ passcode }) {
       </div>
 
       <div className="admin-filter-bar">
-        <select className="admin-filter-select" value={filterAttending} onChange={(e) => setFilterAttending(e.target.value)}>
+        <input
+          type="text"
+          className="admin-filter-search"
+          placeholder="🔍 Search name or phone..."
+          value={searchQuery}
+          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+        />
+        <select className="admin-filter-select" value={filterAttending} onChange={(e) => { setFilterAttending(e.target.value); setCurrentPage(1); }}>
           <option value="all">All — Attending</option>
           <option value="Yes">Attending: Yes</option>
           <option value="No">Attending: No</option>
         </select>
-        <select className="admin-filter-select" value={filterSide} onChange={(e) => setFilterSide(e.target.value)}>
+        <select className="admin-filter-select" value={filterSide} onChange={(e) => { setFilterSide(e.target.value); setCurrentPage(1); }}>
           <option value="all">All — Side</option>
           <option value="Bride">Bride&apos;s Side</option>
           <option value="Groom">Groom&apos;s Side</option>
           <option value="unset">Side: Not set</option>
         </select>
-        <select className="admin-filter-select" value={filterDrinks} onChange={(e) => setFilterDrinks(e.target.value)}>
+        <select className="admin-filter-select" value={filterDrinks} onChange={(e) => { setFilterDrinks(e.target.value); setCurrentPage(1); }}>
           <option value="all">All — Drinks</option>
           <option value="Yes">Drinks: Yes</option>
           <option value="No">Drinks: No</option>
           <option value="unset">Drinks: Not set</option>
         </select>
-        <select className="admin-filter-select" value={filterSource} onChange={(e) => setFilterSource(e.target.value)}>
+        <select className="admin-filter-select" value={filterSource} onChange={(e) => { setFilterSource(e.target.value); setCurrentPage(1); }}>
           <option value="all">All — Source</option>
           <option value="link">Source: Link</option>
           <option value="manual">Source: Manual</option>
         </select>
-        <select className="admin-filter-select" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+        <select className="admin-filter-select" value={filterCategory} onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}>
           <option value="all">All — Category</option>
           {GUEST_CATEGORIES.map((c) => (
             <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>
@@ -316,17 +333,22 @@ function RsvpTab({ passcode }) {
           <option value="name-desc">Sort: Name (Z–A)</option>
           <option value="category-asc">Sort: Category (A–Z)</option>
         </select>
-        {(filterAttending !== 'all' || filterSide !== 'all' || filterDrinks !== 'all' || filterCategory !== 'all' || filterSource !== 'all') && (
+        <select className="admin-filter-select" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}>
+          <option value={30}>30 per page</option>
+          <option value={50}>50 per page</option>
+          <option value={100}>100 per page</option>
+        </select>
+        {(filterAttending !== 'all' || filterSide !== 'all' || filterDrinks !== 'all' || filterCategory !== 'all' || filterSource !== 'all' || searchQuery) && (
           <button
             type="button"
             className="btn-small"
-            onClick={() => { setFilterAttending('all'); setFilterSide('all'); setFilterDrinks('all'); setFilterCategory('all'); setFilterSource('all'); }}
+            onClick={() => { setFilterAttending('all'); setFilterSide('all'); setFilterDrinks('all'); setFilterCategory('all'); setFilterSource('all'); setSearchQuery(''); setCurrentPage(1); }}
           >
             ✕ Clear Filters
           </button>
         )}
         <span className="admin-filter-count">
-          Showing {filteredData.length} of {total}
+          Showing {pagedData.length ? pageStart + 1 : 0}–{pageStart + pagedData.length} of {filteredData.length}
         </span>
       </div>
 
@@ -380,13 +402,14 @@ function RsvpTab({ passcode }) {
         <div className="table-scroll">
           <table className="rsvp-table">
             <thead>
-              <tr><th>Name</th><th>Phone</th><th>Side</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Category</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
+              <tr><th>#</th><th>Name</th><th>Phone</th><th>Side</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Category</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
             </thead>
           <tbody>
-            {sortedData.map((r) => {
+            {pagedData.map((r, idx) => {
               const isEditing = editingRowId === r.id;
               return (
                 <tr key={r.id}>
+                  <td data-label="#">{pageStart + idx + 1}</td>
                   <td data-label="Name">
                     {isEditing ? (
                       <input style={inputStyle} value={editRow.name} onChange={(e) => setEditRow({ ...editRow, name: e.target.value })} />
@@ -494,6 +517,28 @@ function RsvpTab({ passcode }) {
             })}
           </tbody>
           </table>
+        </div>
+      )}
+
+      {!loading && filteredData.length > 0 && totalPages > 1 && (
+        <div className="admin-pagination">
+          <button
+            type="button"
+            className="btn-small"
+            disabled={safeCurrentPage <= 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          >
+            ← Prev
+          </button>
+          <span className="admin-pagination-info">Page {safeCurrentPage} of {totalPages}</span>
+          <button
+            type="button"
+            className="btn-small"
+            disabled={safeCurrentPage >= totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Next →
+          </button>
         </div>
       )}
     </div>
