@@ -1188,6 +1188,7 @@ export default function Home({ searchParams }) {
   const [form, setForm] = useState({ name: guestNameParam || '', phone: '', side: '', attending: '', guests: 1, drinks: '', message: '' });
   const [status, setStatus] = useState(null);
   const [validationError, setValidationError] = useState('');
+  const [rsvpStep, setRsvpStep] = useState(0);
   const [introOpen, setIntroOpen] = useState(true);
   const [introLeaving, setIntroLeaving] = useState(false);
   const [events, setEvents] = useState(DEFAULT_EVENTS);
@@ -1282,37 +1283,77 @@ export default function Home({ searchParams }) {
 
   const PHONE_REGEX = /^(0|\+94)7\d{8}$/;
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setValidationError('');
-
-    const cleanedPhone = (form.phone || '').replace(/[\s-]/g, '');
-    if (!PHONE_REGEX.test(cleanedPhone)) {
-      setValidationError('Please enter a valid phone number (e.g. 0771234567).');
-      return;
-    }
-    if (!form.side) {
-      setValidationError('Please let us know if you\u2019re joining from the bride\u2019s or groom\u2019s side.');
-      return;
-    }
-    if (!form.drinks) {
-      setValidationError('Please let us know if you\u2019ll be having drinks.');
-      return;
-    }
-
+  async function submitRsvp(overrides = {}) {
+    const payload = { ...form, ...overrides };
+    const cleanedPhone = (payload.phone || '').replace(/[\s-]/g, '');
     setStatus('sending');
     try {
       const res = await fetch('/api/rsvp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, phone: cleanedPhone, submittedAt: new Date().toISOString() }),
+        body: JSON.stringify({ ...payload, phone: cleanedPhone, submittedAt: new Date().toISOString() }),
       });
       if (!res.ok) throw new Error('failed');
       setStatus('ok');
       setForm({ name: '', phone: '', side: '', attending: '', guests: 1, drinks: '', message: '' });
+      setRsvpStep(0);
     } catch (err) {
       setStatus('err');
     }
+  }
+
+  function handleRsvpStep0Continue() {
+    setValidationError('');
+    if (!form.name.trim()) {
+      setValidationError('Please enter your name.');
+      return;
+    }
+    const cleanedPhone = (form.phone || '').replace(/[\s-]/g, '');
+    if (!PHONE_REGEX.test(cleanedPhone)) {
+      setValidationError('Please enter a valid phone number (e.g. 0771234567).');
+      return;
+    }
+    setRsvpStep(1);
+  }
+
+  function handleRsvpAccept() {
+    setForm((f) => ({ ...f, attending: 'Yes' }));
+    setValidationError('');
+    setRsvpStep(2);
+  }
+
+  function handleRsvpDecline() {
+    setForm((f) => ({ ...f, attending: 'No' }));
+    setValidationError('');
+    submitRsvp({ attending: 'No' });
+  }
+
+  function handleRsvpStep2Continue() {
+    if (!form.side) {
+      setValidationError('Please let us know if you\u2019re joining from the bride\u2019s or groom\u2019s side.');
+      return;
+    }
+    setValidationError('');
+    setRsvpStep(3);
+  }
+
+  function handleRsvpStep3Continue() {
+    setValidationError('');
+    setRsvpStep(4);
+  }
+
+  function handleRsvpStep4Continue() {
+    if (!form.drinks) {
+      setValidationError('Please let us know if you\u2019ll be having drinks.');
+      return;
+    }
+    setValidationError('');
+    setRsvpStep(5);
+  }
+
+  async function handleRsvpFinalSubmit(e) {
+    e.preventDefault();
+    await submitRsvp({});
   }
 
   return (
@@ -1391,96 +1432,135 @@ export default function Home({ searchParams }) {
         </div>
 
         <Reveal className="rsvp-card">
-          <form onSubmit={handleSubmit}>
-            <div className="field">
-              <label htmlFor="r-name">Full Name</label>
-              <input
-                id="r-name"
-                type="text"
-                required
-                placeholder="e.g. Nimal Perera"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="r-phone">Phone Number</label>
-              <input
-                id="r-phone"
-                type="tel"
-                required
-                placeholder="e.g. 0771234567"
-                pattern="^(0|\+94)7[0-9]{8}$"
-                title="Enter a valid phone number, e.g. 0771234567"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="r-side">You&apos;re joining as</label>
-              <select
-                id="r-side"
-                required
-                value={form.side}
-                onChange={(e) => setForm({ ...form, side: e.target.value })}
-              >
-                <option value="" disabled>Select</option>
-                <option value="Bride">Bride&apos;s Side</option>
-                <option value="Groom">Groom&apos;s Side</option>
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="r-attend">Will you attend?</label>
-              <select
-                id="r-attend"
-                required
-                value={form.attending}
-                onChange={(e) => setForm({ ...form, attending: e.target.value })}
-              >
-                <option value="" disabled>Select</option>
-                <option value="Yes">Joyfully Yes</option>
-                <option value="No">Sadly No</option>
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="r-guests">Number of Guests</label>
-              <input
-                id="r-guests"
-                type="number"
-                min="1"
-                max="10"
-                value={form.guests}
-                onChange={(e) => setForm({ ...form, guests: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="r-drinks">Will you be having drinks?</label>
-              <select
-                id="r-drinks"
-                required
-                value={form.drinks}
-                onChange={(e) => setForm({ ...form, drinks: e.target.value })}
-              >
-                <option value="" disabled>Select</option>
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="r-msg">Message for the couple (optional)</label>
-              <textarea
-                id="r-msg"
-                placeholder="Write your wishes here"
-                value={form.message}
-                onChange={(e) => setForm({ ...form, message: e.target.value })}
-              />
-            </div>
-            <button type="submit" className="btn btn-glow">Send RSVP</button>
+          <div className="rsvp-wizard">
+            {rsvpStep === 0 && (
+              <div className="rsvp-step">
+                <div className="field">
+                  <label htmlFor="r-name">Full Name</label>
+                  <input
+                    id="r-name"
+                    type="text"
+                    required
+                    placeholder="e.g. Nimal Perera"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="r-phone">Phone Number</label>
+                  <input
+                    id="r-phone"
+                    type="tel"
+                    required
+                    placeholder="e.g. 0771234567"
+                    pattern="^(0|\+94)7[0-9]{8}$"
+                    title="Enter a valid phone number, e.g. 0771234567"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  />
+                </div>
+                <button type="button" className="btn btn-glow" onClick={handleRsvpStep0Continue}>Continue →</button>
+              </div>
+            )}
+
+            {rsvpStep === 1 && (
+              <div className="rsvp-step rsvp-step-center">
+                <p className="rsvp-question">Will You Join Us, {(form.name || '').split(' ')[0] || 'there'}?</p>
+                <div className="rsvp-accept-decline">
+                  <button type="button" className="rsvp-accept-btn" onClick={handleRsvpAccept}>✓ Accept</button>
+                  <button type="button" className="rsvp-decline-btn" onClick={handleRsvpDecline}>✗ Decline</button>
+                </div>
+                <button type="button" className="rsvp-back" onClick={() => setRsvpStep(0)}>← Back</button>
+              </div>
+            )}
+
+            {rsvpStep === 2 && (
+              <div className="rsvp-step">
+                <div className="field">
+                  <label htmlFor="r-side">You&apos;re joining as</label>
+                  <select
+                    id="r-side"
+                    required
+                    value={form.side}
+                    onChange={(e) => setForm({ ...form, side: e.target.value })}
+                  >
+                    <option value="" disabled>Select</option>
+                    <option value="Bride">Bride&apos;s Side</option>
+                    <option value="Groom">Groom&apos;s Side</option>
+                  </select>
+                </div>
+                <div className="rsvp-step-actions">
+                  <button type="button" className="rsvp-back" onClick={() => setRsvpStep(1)}>← Back</button>
+                  <button type="button" className="btn btn-glow" onClick={handleRsvpStep2Continue}>Continue →</button>
+                </div>
+              </div>
+            )}
+
+            {rsvpStep === 3 && (
+              <div className="rsvp-step">
+                <div className="field">
+                  <label htmlFor="r-guests">Number of Guests</label>
+                  <input
+                    id="r-guests"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={form.guests}
+                    onChange={(e) => setForm({ ...form, guests: e.target.value })}
+                  />
+                </div>
+                <div className="rsvp-step-actions">
+                  <button type="button" className="rsvp-back" onClick={() => setRsvpStep(2)}>← Back</button>
+                  <button type="button" className="btn btn-glow" onClick={handleRsvpStep3Continue}>Continue →</button>
+                </div>
+              </div>
+            )}
+
+            {rsvpStep === 4 && (
+              <div className="rsvp-step">
+                <div className="field">
+                  <label htmlFor="r-drinks">Will you be having drinks?</label>
+                  <select
+                    id="r-drinks"
+                    required
+                    value={form.drinks}
+                    onChange={(e) => setForm({ ...form, drinks: e.target.value })}
+                  >
+                    <option value="" disabled>Select</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+                <div className="rsvp-step-actions">
+                  <button type="button" className="rsvp-back" onClick={() => setRsvpStep(3)}>← Back</button>
+                  <button type="button" className="btn btn-glow" onClick={handleRsvpStep4Continue}>Continue →</button>
+                </div>
+              </div>
+            )}
+
+            {rsvpStep === 5 && (
+              <form className="rsvp-step" onSubmit={handleRsvpFinalSubmit}>
+                <div className="field">
+                  <label htmlFor="r-msg">Message for the couple (optional)</label>
+                  <textarea
+                    id="r-msg"
+                    placeholder="Write your wishes here"
+                    value={form.message}
+                    onChange={(e) => setForm({ ...form, message: e.target.value })}
+                  />
+                </div>
+                <div className="rsvp-step-actions">
+                  <button type="button" className="rsvp-back" onClick={() => setRsvpStep(4)}>← Back</button>
+                  <button type="submit" className="btn btn-glow">Send RSVP</button>
+                </div>
+              </form>
+            )}
+
             {validationError && <div className="form-msg err">{validationError}</div>}
             {status === 'sending' && <div className="form-msg">Sending...</div>}
             {status === 'ok' && <div className="form-msg ok">Thank you! Your RSVP has been received.</div>}
             {status === 'err' && <div className="form-msg err">Something went wrong. Please try again.</div>}
-          </form>
+          </div>
         </Reveal>
       </section>
 
