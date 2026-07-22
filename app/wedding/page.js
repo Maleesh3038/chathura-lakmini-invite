@@ -290,6 +290,17 @@ function IntroScreen({ onEnter, leaving, settings }) {
 
   function handleCtaClick() {
     if (playing) return;
+
+    if (settings.songUrl) {
+      try {
+        const audio = new Audio(settings.songUrl);
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+      } catch (e) {
+        // ignore
+      }
+    }
+
     const video = videoRef.current;
     if (video) {
       setPlaying(true);
@@ -1250,15 +1261,6 @@ export default function Home({ searchParams }) {
 
   function handleEnter() {
     setIntroLeaving(true);
-    if (settings.songUrl) {
-      try {
-        const audio = new Audio(settings.songUrl);
-        audio.volume = 0.5;
-        audio.play().catch(() => {});
-      } catch (e) {
-        // ignore
-      }
-    }
     setTimeout(() => setIntroOpen(false), 550);
   }
 
