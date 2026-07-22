@@ -552,7 +552,7 @@ table.rsvp-table td{ color:var(--ink); }
   height:100%;
   object-fit:cover;
   object-position:top center;
-  opacity:0.22;
+  opacity:0.4;
   -webkit-mask-image:linear-gradient(to bottom, #000 40%, transparent 92%);
   mask-image:linear-gradient(to bottom, #000 40%, transparent 92%);
 }
