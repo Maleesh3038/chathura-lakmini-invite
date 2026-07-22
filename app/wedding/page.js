@@ -1279,11 +1279,11 @@ export default function Home({ searchParams }) {
       ? heroDateObj.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
       : '';
 
-  const PHONE_REGEX = /^(0|\+94)7\d{8}$/;
+  const PHONE_REGEX = /^\+?[0-9]{7,15}$/;
 
   async function submitRsvp(overrides = {}) {
     const payload = { ...form, ...overrides };
-    const cleanedPhone = (payload.phone || '').replace(/[\s-]/g, '');
+    const cleanedPhone = (payload.phone || '').replace(/[\s\-()]/g, '');
     setStatus('sending');
     try {
       const res = await fetch('/api/rsvp', {
@@ -1306,9 +1306,9 @@ export default function Home({ searchParams }) {
       setValidationError('Please enter your name.');
       return;
     }
-    const cleanedPhone = (form.phone || '').replace(/[\s-]/g, '');
+    const cleanedPhone = (form.phone || '').replace(/[\s\-()]/g, '');
     if (!PHONE_REGEX.test(cleanedPhone)) {
-      setValidationError('Please enter a valid phone number (e.g. 0771234567).');
+      setValidationError('Please enter a valid phone number (e.g. 0771234567 or +14155552671).');
       return;
     }
     setRsvpStep(1);
@@ -1450,9 +1450,9 @@ export default function Home({ searchParams }) {
                     id="r-phone"
                     type="tel"
                     required
-                    placeholder="e.g. 0771234567"
-                    pattern="^(0|\+94)7[0-9]{8}$"
-                    title="Enter a valid phone number, e.g. 0771234567"
+                    placeholder="e.g. 0771234567 or +14155552671"
+                    pattern="^\+?[0-9]{7,15}$"
+                    title="Enter a valid phone number (Sri Lankan or international)"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   />
