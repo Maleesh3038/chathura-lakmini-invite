@@ -1365,6 +1365,8 @@ table.rsvp-table td{ color:var(--ink); }
 .btn-small:hover{ border-color:var(--gold); }
 .btn-approve{ color:#5f8f5a; border-color:#5f8f5a; }
 .btn-delete{ color:var(--rose); border-color:var(--rose); }
+.btn-whatsapp{ color:#25b25a; border-color:#25b25a; white-space:nowrap; }
+.btn-whatsapp:hover{ background:rgba(37,178,90,0.1); }
 
 .admin-edit-form{
   display:flex;
