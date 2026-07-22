@@ -387,21 +387,21 @@ function RsvpTab({ passcode }) {
               const isEditing = editingRowId === r.id;
               return (
                 <tr key={r.id}>
-                  <td>
+                  <td data-label="Name">
                     {isEditing ? (
                       <input style={inputStyle} value={editRow.name} onChange={(e) => setEditRow({ ...editRow, name: e.target.value })} />
                     ) : (
                       r.name || '—'
                     )}
                   </td>
-                  <td>
+                  <td data-label="Phone">
                     {isEditing ? (
                       <input style={inputStyle} value={editRow.phone} onChange={(e) => setEditRow({ ...editRow, phone: e.target.value })} />
                     ) : (
                       r.phone || '—'
                     )}
                   </td>
-                  <td>
+                  <td data-label="Side">
                     {isEditing ? (
                       <select style={inputStyle} value={editRow.side} onChange={(e) => setEditRow({ ...editRow, side: e.target.value })}>
                         <option value="">—</option>
@@ -412,7 +412,7 @@ function RsvpTab({ passcode }) {
                       r.side === 'Bride' ? "Bride's Side" : r.side === 'Groom' ? "Groom's Side" : '—'
                     )}
                   </td>
-                  <td>
+                  <td data-label="Attending">
                     {isEditing ? (
                       <select style={inputStyle} value={editRow.attending} onChange={(e) => setEditRow({ ...editRow, attending: e.target.value })}>
                         <option value="Yes">Yes</option>
@@ -422,14 +422,14 @@ function RsvpTab({ passcode }) {
                       r.attending || '—'
                     )}
                   </td>
-                  <td>
+                  <td data-label="Guests">
                     {isEditing ? (
                       <input type="number" min="1" max="20" style={{ ...inputStyle, minWidth: 50 }} value={editRow.guests} onChange={(e) => setEditRow({ ...editRow, guests: e.target.value })} />
                     ) : (
                       r.guests ?? '—'
                     )}
                   </td>
-                  <td>
+                  <td data-label="Drinks">
                     {isEditing ? (
                       <select style={inputStyle} value={editRow.drinks} onChange={(e) => setEditRow({ ...editRow, drinks: e.target.value })}>
                         <option value="">—</option>
@@ -440,7 +440,7 @@ function RsvpTab({ passcode }) {
                       r.drinks || '—'
                     )}
                   </td>
-                  <td>
+                  <td data-label="Category">
                     {isEditing ? (
                       <select style={inputStyle} value={editRow.category} onChange={(e) => setEditRow({ ...editRow, category: e.target.value })}>
                         <option value="">—</option>
@@ -452,27 +452,27 @@ function RsvpTab({ passcode }) {
                       r.category ? r.category.replace(/_/g, ' ') : '—'
                     )}
                   </td>
-                  <td>
+                  <td data-label="Table">
                     {isEditing ? (
                       <input style={{ ...inputStyle, minWidth: 50 }} value={editRow.tableNumber} onChange={(e) => setEditRow({ ...editRow, tableNumber: e.target.value })} placeholder="e.g. 12" />
                     ) : (
                       r.tableNumber || '—'
                     )}
                   </td>
-                  <td>
+                  <td data-label="Source">
                     <span className={`badge ${r.source === 'manual' ? 'badge-pending' : 'badge-approved'}`}>
                       {r.source === 'manual' ? 'Manual' : 'Link'}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Message">
                     {isEditing ? (
                       <input style={inputStyle} value={editRow.message} onChange={(e) => setEditRow({ ...editRow, message: e.target.value })} placeholder="Note" />
                     ) : (
                       r.message || '—'
                     )}
                   </td>
-                  <td>{r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : '—'}</td>
-                  <td>
+                  <td data-label="Date">{r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : '—'}</td>
+                  <td data-label="Actions">
                     {isEditing ? (
                       <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <span style={{ display: 'flex', gap: 6 }}>
@@ -482,7 +482,7 @@ function RsvpTab({ passcode }) {
                         {editRowError && <span style={{ fontSize: 11.5, color: '#b9695f' }}>{editRowError}</span>}
                       </span>
                     ) : (
-                      <span style={{ display: 'flex', gap: 6 }}>
+                      <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         <button className="btn-small" onClick={() => startEditRow(r)}>Edit</button>
                         <button className="btn-small btn-delete" onClick={() => removeGuest(r.id)}>Delete</button>
                         <button className="btn-small btn-whatsapp" onClick={() => shareRowOnWhatsApp(r)} title="Share invitation link on WhatsApp">↗ WhatsApp</button>
