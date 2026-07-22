@@ -27,6 +27,7 @@ function RsvpTab({ passcode }) {
   const [filterSide, setFilterSide] = useState('all');
   const [filterDrinks, setFilterDrinks] = useState('all');
   const [filterSource, setFilterSource] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   async function load() {
     setLoading(true);
@@ -116,7 +117,7 @@ function RsvpTab({ passcode }) {
 
   function exportToExcel() {
     const headers = ['Name', 'Phone', 'Side', 'Attending', 'Guests', 'Drinks', 'Table', 'Source', 'Message', 'Date'];
-    const rows = filteredData.map((r) => [
+    const rows = sortedData.map((r) => [
       r.name || '',
       r.phone || '',
       r.side === 'Bride' ? "Bride's Side" : r.side === 'Groom' ? "Groom's Side" : '',
@@ -164,6 +165,14 @@ function RsvpTab({ passcode }) {
     return true;
   });
 
+  const sortedData = filteredData.slice().sort((a, b) => {
+    if (sortBy === 'name-asc') return (a.name || '').localeCompare(b.name || '');
+    if (sortBy === 'name-desc') return (b.name || '').localeCompare(a.name || '');
+    if (sortBy === 'oldest') return new Date(a.submittedAt || 0) - new Date(b.submittedAt || 0);
+    // newest first (default)
+    return new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0);
+  });
+
   const inputStyle = { width: '100%', minWidth: 70, padding: '4px 6px', fontSize: 12.5 };
 
   return (
@@ -206,6 +215,12 @@ function RsvpTab({ passcode }) {
           <option value="all">All — Source</option>
           <option value="link">Source: Link</option>
           <option value="manual">Source: Manual</option>
+        </select>
+        <select className="admin-filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="newest">Sort: Newest First</option>
+          <option value="oldest">Sort: Oldest First</option>
+          <option value="name-asc">Sort: Name (A–Z)</option>
+          <option value="name-desc">Sort: Name (Z–A)</option>
         </select>
         {(filterAttending !== 'all' || filterSide !== 'all' || filterDrinks !== 'all' || filterSource !== 'all') && (
           <button
@@ -263,7 +278,7 @@ function RsvpTab({ passcode }) {
               <tr><th>Name</th><th>Phone</th><th>Side</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
             </thead>
           <tbody>
-            {filteredData.slice().reverse().map((r) => {
+            {sortedData.map((r) => {
               const isEditing = editingRowId === r.id;
               return (
                 <tr key={r.id}>
