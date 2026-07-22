@@ -267,13 +267,37 @@ function GuestGreeting({ name, leaving }) {
 function IntroScreen({ onEnter, leaving, settings }) {
   const groomInitial = (settings.groomName || 'C')[0];
   const brideInitial = (settings.brideName || 'L')[0];
+  const videoRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+
+  function handleCtaClick() {
+    if (playing) return;
+    const video = videoRef.current;
+    if (video) {
+      setPlaying(true);
+      const finish = () => onEnter();
+      video.addEventListener('ended', finish, { once: true });
+      video.currentTime = 0;
+      video.play().catch(() => {
+        // Autoplay/play blocked or video unavailable — just proceed.
+        video.removeEventListener('ended', finish);
+        onEnter();
+      });
+    } else {
+      onEnter();
+    }
+  }
+
   return (
     <div className={`intro-overlay ${leaving ? 'leaving' : ''}`}>
       <div className="intro-card">
         <div className="intro-bg-illustration" aria-hidden="true">
-          <img
-            src="/images/couple-illustration.png"
-            alt=""
+          <video
+            ref={videoRef}
+            src="/videos/eternal-bloom-cover.mp4"
+            muted
+            playsInline
+            preload="auto"
             onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
           />
         </div>
@@ -297,11 +321,13 @@ function IntroScreen({ onEnter, leaving, settings }) {
 
           <p className="intro-tagline">{settings.taglineEn}</p>
 
-          <button className="intro-cta" onClick={onEnter}>
+          <button className="intro-cta" onClick={handleCtaClick} disabled={playing}>
             You&apos;re Invited <span aria-hidden="true">→</span>
           </button>
 
-          <p className="intro-hint">{settings.songUrl ? '🔊 Tap to begin — with music' : 'Tap to begin'}</p>
+          <p className="intro-hint">
+            {playing ? '✨ Opening your invitation...' : settings.songUrl ? '🔊 Tap to begin — with music' : 'Tap to begin'}
+          </p>
 
           <div className="intro-corner bl"><CornerFlourish flip /></div>
           <div className="intro-corner br"><CornerFlourish /></div>
