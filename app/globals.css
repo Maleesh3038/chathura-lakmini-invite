@@ -343,6 +343,79 @@ section{ padding:70px 20px; max-width:900px; margin:0 auto; }
   font-family:var(--font-body);
   font-size:14.5px;
 }
+
+/* ---------- RSVP WIZARD ---------- */
+.rsvp-wizard{ position:relative; }
+.rsvp-step{
+  animation:rsvp-step-in 0.35s ease;
+}
+@keyframes rsvp-step-in{
+  from{ opacity:0; transform:translateY(8px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+.rsvp-step-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.rsvp-step-actions .btn{ width:auto; flex:1; }
+.rsvp-back{
+  background:none;
+  border:none;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+  padding:10px 4px;
+  transition:color 0.2s ease;
+}
+.rsvp-back:hover{ color:var(--gold-bright); }
+.rsvp-step-center{
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:18px;
+  padding:10px 0 4px;
+}
+.rsvp-question{
+  font-family:var(--font-heading);
+  font-style:italic;
+  font-size:24px;
+  color:var(--ink);
+  margin:0;
+}
+.rsvp-accept-decline{
+  display:flex;
+  gap:14px;
+  width:100%;
+}
+.rsvp-accept-btn, .rsvp-decline-btn{
+  flex:1;
+  padding:15px 10px;
+  border-radius:10px;
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:0.02em;
+  cursor:pointer;
+  transition:transform 0.15s ease, filter 0.15s ease, background 0.2s ease;
+}
+.rsvp-accept-btn{
+  background:linear-gradient(180deg, var(--gold-glow), var(--gold-bright));
+  color:#fffaf0;
+  border:none;
+  box-shadow:0 8px 20px rgba(184,134,63,0.3);
+}
+.rsvp-accept-btn:hover{ filter:brightness(1.05); }
+.rsvp-accept-btn:active{ transform:scale(0.98); }
+.rsvp-decline-btn{
+  background:var(--bg-panel-2);
+  color:var(--muted);
+  border:1px solid var(--line);
+}
+.rsvp-decline-btn:hover{ color:var(--rose); border-color:var(--rose); }
+.rsvp-decline-btn:active{ transform:scale(0.98); }
 .field textarea{ min-height:80px; resize:vertical; }
 .field input:focus, .field select:focus, .field textarea:focus{
   outline:2px solid var(--gold-bright); outline-offset:1px; border-color:transparent;
