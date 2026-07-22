@@ -1130,7 +1130,7 @@ export default function Home({ searchParams }) {
   const guestNameParam = (searchParams?.to || '').toString().trim() || null;
 
   const [now, setNow] = useState(() => Date.now());
-  const [form, setForm] = useState({ name: guestNameParam || '', phone: '', attending: '', guests: 1, drinks: '', message: '' });
+  const [form, setForm] = useState({ name: guestNameParam || '', phone: '', side: '', attending: '', guests: 1, drinks: '', message: '' });
   const [status, setStatus] = useState(null);
   const [validationError, setValidationError] = useState('');
   const [introOpen, setIntroOpen] = useState(true);
@@ -1245,6 +1245,10 @@ export default function Home({ searchParams }) {
       setValidationError('Please enter a valid phone number (e.g. 0771234567).');
       return;
     }
+    if (!form.side) {
+      setValidationError('Please let us know if you\u2019re joining from the bride\u2019s or groom\u2019s side.');
+      return;
+    }
     if (!form.drinks) {
       setValidationError('Please let us know if you\u2019ll be having drinks.');
       return;
@@ -1259,7 +1263,7 @@ export default function Home({ searchParams }) {
       });
       if (!res.ok) throw new Error('failed');
       setStatus('ok');
-      setForm({ name: '', phone: '', attending: '', guests: 1, drinks: '', message: '' });
+      setForm({ name: '', phone: '', side: '', attending: '', guests: 1, drinks: '', message: '' });
     } catch (err) {
       setStatus('err');
     }
@@ -1365,6 +1369,19 @@ export default function Home({ searchParams }) {
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
+            </div>
+            <div className="field">
+              <label htmlFor="r-side">You&apos;re joining as</label>
+              <select
+                id="r-side"
+                required
+                value={form.side}
+                onChange={(e) => setForm({ ...form, side: e.target.value })}
+              >
+                <option value="" disabled>Select</option>
+                <option value="Bride">Bride&apos;s Side</option>
+                <option value="Groom">Groom&apos;s Side</option>
+              </select>
             </div>
             <div className="field">
               <label htmlFor="r-attend">Will you attend?</label>
