@@ -10,8 +10,27 @@ export const dynamic = 'force-dynamic';
 // (falls back to this same value if that env var isn't set).
 const PASSCODE = 'poruwa2026';
 
+const GUEST_CATEGORIES = [
+  'At_the_coop',
+  'At_the_hospital_1',
+  'At_the_hospital_2',
+  'At_the_School',
+  'At_the_SchoolGrid',
+  'At_the_university',
+  'At_the_Village',
+  'Ayya_Akka',
+  'Band',
+  'Friends_Amma',
+  'Friends_Thaththa',
+  'Other',
+  'Photographers',
+  'Relations_Amma',
+  'Relations_Thaththa',
+  'Saloon',
+];
+
 function emptyGuestForm() {
-  return { name: '', phone: '', side: '', attending: 'Yes', guests: 1, drinks: '', message: '' };
+  return { name: '', phone: '', side: '', attending: 'Yes', guests: 1, drinks: '', category: '', message: '' };
 }
 
 function RsvpTab({ passcode }) {
@@ -28,6 +47,7 @@ function RsvpTab({ passcode }) {
   const [filterSide, setFilterSide] = useState('all');
   const [filterDrinks, setFilterDrinks] = useState('all');
   const [filterSource, setFilterSource] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [waMessageTemplate, setWaMessageTemplate] = useState(DEFAULT_WA_MESSAGE);
   const [origin, setOrigin] = useState('');
@@ -93,6 +113,7 @@ function RsvpTab({ passcode }) {
         attending: match.attending || 'Yes',
         guests: match.guests ?? 1,
         drinks: match.drinks || '',
+        category: match.category || '',
         message: match.message || '',
       });
       setAutoFilledMatch(true);
@@ -144,6 +165,7 @@ function RsvpTab({ passcode }) {
       attending: r.attending || 'Yes',
       guests: r.guests ?? 1,
       drinks: r.drinks || '',
+      category: r.category || '',
       tableNumber: r.tableNumber || '',
       message: r.message || '',
     });
@@ -175,7 +197,7 @@ function RsvpTab({ passcode }) {
   }
 
   function exportToExcel() {
-    const headers = ['Name', 'Phone', 'Side', 'Attending', 'Guests', 'Drinks', 'Table', 'Source', 'Message', 'Date'];
+    const headers = ['Name', 'Phone', 'Side', 'Attending', 'Guests', 'Drinks', 'Category', 'Table', 'Source', 'Message', 'Date'];
     const rows = sortedData.map((r) => [
       r.name || '',
       r.phone || '',
@@ -183,6 +205,7 @@ function RsvpTab({ passcode }) {
       r.attending || '',
       r.guests ?? '',
       r.drinks || '',
+      r.category || '',
       r.tableNumber || '',
       r.source === 'manual' ? 'Manual' : 'Link',
       (r.message || '').replace(/\r?\n/g, ' '),
@@ -220,6 +243,9 @@ function RsvpTab({ passcode }) {
     if (filterDrinks === 'unset') {
       if (r.drinks) return false;
     } else if (filterDrinks !== 'all' && r.drinks !== filterDrinks) return false;
+    if (filterCategory === 'unset') {
+      if (r.category) return false;
+    } else if (filterCategory !== 'all' && r.category !== filterCategory) return false;
     if (filterSource !== 'all' && (r.source || 'link') !== filterSource) return false;
     return true;
   });
@@ -227,6 +253,7 @@ function RsvpTab({ passcode }) {
   const sortedData = filteredData.slice().sort((a, b) => {
     if (sortBy === 'name-asc') return (a.name || '').localeCompare(b.name || '');
     if (sortBy === 'name-desc') return (b.name || '').localeCompare(a.name || '');
+    if (sortBy === 'category-asc') return (a.category || '').localeCompare(b.category || '');
     if (sortBy === 'oldest') return new Date(a.submittedAt || 0) - new Date(b.submittedAt || 0);
     // newest first (default)
     return new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0);
@@ -275,17 +302,25 @@ function RsvpTab({ passcode }) {
           <option value="link">Source: Link</option>
           <option value="manual">Source: Manual</option>
         </select>
+        <select className="admin-filter-select" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+          <option value="all">All — Category</option>
+          {GUEST_CATEGORIES.map((c) => (
+            <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>
+          ))}
+          <option value="unset">Category: Not set</option>
+        </select>
         <select className="admin-filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
           <option value="newest">Sort: Newest First</option>
           <option value="oldest">Sort: Oldest First</option>
           <option value="name-asc">Sort: Name (A–Z)</option>
           <option value="name-desc">Sort: Name (Z–A)</option>
+          <option value="category-asc">Sort: Category (A–Z)</option>
         </select>
-        {(filterAttending !== 'all' || filterSide !== 'all' || filterDrinks !== 'all' || filterSource !== 'all') && (
+        {(filterAttending !== 'all' || filterSide !== 'all' || filterDrinks !== 'all' || filterCategory !== 'all' || filterSource !== 'all') && (
           <button
             type="button"
             className="btn-small"
-            onClick={() => { setFilterAttending('all'); setFilterSide('all'); setFilterDrinks('all'); setFilterSource('all'); }}
+            onClick={() => { setFilterAttending('all'); setFilterSide('all'); setFilterDrinks('all'); setFilterCategory('all'); setFilterSource('all'); }}
           >
             ✕ Clear Filters
           </button>
@@ -314,6 +349,12 @@ function RsvpTab({ passcode }) {
             <option value="Yes">Drinks: Yes</option>
             <option value="No">Drinks: No</option>
           </select>
+          <select value={guestForm.category} onChange={(e) => setGuestForm({ ...guestForm, category: e.target.value })}>
+            <option value="">Category — not set</option>
+            {GUEST_CATEGORIES.map((c) => (
+              <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>
+            ))}
+          </select>
           <input value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Note (optional)" />
           <div className="admin-item-actions">
             <button type="submit" className="btn-small btn-approve">Add Guest</button>
@@ -339,7 +380,7 @@ function RsvpTab({ passcode }) {
         <div className="table-scroll">
           <table className="rsvp-table">
             <thead>
-              <tr><th>Name</th><th>Phone</th><th>Side</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
+              <tr><th>Name</th><th>Phone</th><th>Side</th><th>Attending</th><th>Guests</th><th>Drinks</th><th>Category</th><th>Table</th><th>Source</th><th>Message</th><th>Date</th><th>Actions</th></tr>
             </thead>
           <tbody>
             {sortedData.map((r) => {
@@ -397,6 +438,18 @@ function RsvpTab({ passcode }) {
                       </select>
                     ) : (
                       r.drinks || '—'
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <select style={inputStyle} value={editRow.category} onChange={(e) => setEditRow({ ...editRow, category: e.target.value })}>
+                        <option value="">—</option>
+                        {GUEST_CATEGORIES.map((c) => (
+                          <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      r.category ? r.category.replace(/_/g, ' ') : '—'
                     )}
                   </td>
                   <td>
