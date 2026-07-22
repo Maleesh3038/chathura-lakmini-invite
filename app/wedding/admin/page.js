@@ -20,6 +20,7 @@ function RsvpTab({ passcode }) {
   const [showAdd, setShowAdd] = useState(false);
   const [guestForm, setGuestForm] = useState(emptyGuestForm());
   const [addStatus, setAddStatus] = useState(null);
+  const [autoFilledMatch, setAutoFilledMatch] = useState(false);
   const [editingRowId, setEditingRowId] = useState(null);
   const [editRow, setEditRow] = useState({});
   const [editRowError, setEditRowError] = useState('');
@@ -78,6 +79,29 @@ function RsvpTab({ passcode }) {
     load();
   }, []);
 
+  function handleManualPhoneChange(value) {
+    const cleaned = value.replace(/[\s\-()]/g, '');
+    const match = cleaned.length >= 7
+      ? data.find((r) => (r.phone || '').replace(/[\s\-()]/g, '') === cleaned)
+      : null;
+
+    if (match) {
+      setGuestForm({
+        name: match.name || '',
+        phone: value,
+        side: match.side || '',
+        attending: match.attending || 'Yes',
+        guests: match.guests ?? 1,
+        drinks: match.drinks || '',
+        message: match.message || '',
+      });
+      setAutoFilledMatch(true);
+    } else {
+      setGuestForm((prev) => ({ ...prev, phone: value }));
+      setAutoFilledMatch(false);
+    }
+  }
+
   async function addGuest(e) {
     e.preventDefault();
     setAddStatus('saving');
@@ -90,6 +114,7 @@ function RsvpTab({ passcode }) {
       if (!res.ok) throw new Error('failed');
       setAddStatus('ok');
       setGuestForm(emptyGuestForm());
+      setAutoFilledMatch(false);
       load();
       setTimeout(() => {
         setShowAdd(false);
@@ -273,7 +298,7 @@ function RsvpTab({ passcode }) {
       {showAdd && (
         <form className="admin-edit-form" onSubmit={addGuest} style={{ marginBottom: 20 }}>
           <input required value={guestForm.name} onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })} placeholder="Guest Name" />
-          <input value={guestForm.phone} onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })} placeholder="Phone (optional)" />
+          <input value={guestForm.phone} onChange={(e) => handleManualPhoneChange(e.target.value)} placeholder="Phone (optional)" />
           <select value={guestForm.side} onChange={(e) => setGuestForm({ ...guestForm, side: e.target.value })}>
             <option value="">Side? — not set</option>
             <option value="Bride">Bride&apos;s Side</option>
@@ -292,8 +317,13 @@ function RsvpTab({ passcode }) {
           <input value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Note (optional)" />
           <div className="admin-item-actions">
             <button type="submit" className="btn-small btn-approve">Add Guest</button>
-            <button type="button" className="btn-small" onClick={() => setShowAdd(false)}>Cancel</button>
+            <button type="button" className="btn-small" onClick={() => { setShowAdd(false); setGuestForm(emptyGuestForm()); setAutoFilledMatch(false); }}>Cancel</button>
           </div>
+          {autoFilledMatch && (
+            <p className="form-msg" style={{ color: 'var(--gold-bright)' }}>
+              ✓ Existing guest found — details auto-filled below. Edit anything you like, then save to update their RSVP.
+            </p>
+          )}
           {addStatus === 'ok' && <p className="form-msg ok">Guest added!</p>}
           {addStatus === 'err' && <p className="form-msg err">Something went wrong.</p>}
         </form>
