@@ -917,15 +917,24 @@ function SettingsTab({ passcode }) {
 const DEFAULT_WA_MESSAGE =
   "💌 We're getting married! We would be so honoured to have you celebrate this special day with us. Your presence would mean the world to us 🌸 Open your invitation below 👇\n{link}";
 
-function GuestLinksTab() {
+function GuestLinksTab({ passcode }) {
   const [guestName, setGuestName] = useState('');
   const [waMessage, setWaMessage] = useState(DEFAULT_WA_MESSAGE);
   const [editingMessage, setEditingMessage] = useState(false);
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState('');
+  const [saveStatus, setSaveStatus] = useState(null);
 
   useEffect(() => {
     setOrigin(window.location.origin);
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.waMessageTemplate) {
+          setWaMessage(data.waMessageTemplate);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const trimmedName = guestName.trim();
@@ -948,6 +957,24 @@ function GuestLinksTab() {
   function shareOnWhatsApp() {
     if (!link) return;
     window.open(`https://wa.me/?text=${encodeURIComponent(finalMessage)}`, '_blank');
+  }
+
+  async function finishEditingMessage() {
+    setEditingMessage(false);
+    setSaveStatus('saving');
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
+        body: JSON.stringify({ waMessageTemplate: waMessage }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.ok === false) throw new Error(json.error || 'Failed to save');
+      setSaveStatus('ok');
+      setTimeout(() => setSaveStatus(null), 1800);
+    } catch (e) {
+      setSaveStatus('err');
+    }
   }
 
   return (
@@ -984,10 +1011,17 @@ function GuestLinksTab() {
 
             <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <label style={{ marginTop: 0 }}>📱 WhatsApp Message</label>
-              <button type="button" className="btn-small" onClick={() => setEditingMessage(!editingMessage)}>
+              <button
+                type="button"
+                className="btn-small"
+                onClick={() => (editingMessage ? finishEditingMessage() : setEditingMessage(true))}
+              >
                 {editingMessage ? 'Done' : '✎ Edit'}
               </button>
             </div>
+            {saveStatus === 'saving' && <p className="form-msg">Saving template...</p>}
+            {saveStatus === 'ok' && <p className="form-msg ok">Template saved — it&apos;ll stay next time you visit.</p>}
+            {saveStatus === 'err' && <p className="form-msg err">Could not save the template. Please try again.</p>}
             {editingMessage ? (
               <textarea
                 value={waMessage}
@@ -1081,7 +1115,7 @@ export default function AdminPage() {
         {tab === 'wishes' && <WishesTab passcode={pin} />}
         {tab === 'schedule' && <ScheduleTab passcode={pin} />}
         {tab === 'settings' && <SettingsTab passcode={pin} />}
-        {tab === 'guestlinks' && <GuestLinksTab />}
+        {tab === 'guestlinks' && <GuestLinksTab passcode={pin} />}
       </div>
     </div>
   );
