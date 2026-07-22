@@ -930,7 +930,9 @@ function GuestLinksTab() {
 
   const trimmedName = guestName.trim();
   const link = trimmedName ? `${origin}/wedding?to=${encodeURIComponent(trimmedName)}` : '';
-  const finalMessage = link ? waMessage.replace('{link}', link) : waMessage;
+  const finalMessage = link
+    ? (waMessage.includes('{link}') ? waMessage.replace('{link}', link) : `${waMessage}\n\n${link}`)
+    : waMessage;
 
   async function copyLink() {
     if (!link) return;
