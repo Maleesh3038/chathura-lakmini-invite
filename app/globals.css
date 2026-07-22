@@ -384,7 +384,8 @@ section{ padding:70px 20px; max-width:900px; margin:0 auto; }
   font-style:italic;
   font-size:24px;
   color:var(--ink);
-  margin:0;
+  text-align:center;
+  margin:8px 0 18px;
 }
 .rsvp-accept-decline{
   display:flex;
