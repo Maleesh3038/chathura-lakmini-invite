@@ -296,11 +296,10 @@ function GuestGreeting({ name, leaving }) {
   );
 }
 
-function IntroScreen({ onEnter, leaving, settings }) {
+function IntroScreen({ onEnter, onPlayMusic, leaving, settings }) {
   const groomInitial = (settings.groomName || 'C')[0];
   const brideInitial = (settings.brideName || 'L')[0];
   const videoRef = useRef(null);
-  const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
 
   // Mobile browsers often refuse to paint the first frame of a paused video
@@ -321,62 +320,15 @@ function IntroScreen({ onEnter, leaving, settings }) {
     return () => video.removeEventListener('loadedmetadata', paintFirstFrame);
   }, []);
 
-  // Preload the background song as soon as the intro screen mounts, rather
-  // than creating it at click-time. This gives it time to buffer, and — just
-  // as important — keeps a persistent reference so the Audio element can't
-  // get garbage-collected before playback actually starts, which was the
-  // likely cause of the song intermittently failing to play.
-  useEffect(() => {
-    if (!settings.songUrl) return;
-    const audio = new Audio(settings.songUrl);
-    audio.preload = 'auto';
-    audio.volume = 0.5;
-    audioRef.current = audio;
-    return () => {
-      audio.pause();
-      audioRef.current = null;
-    };
-  }, [settings.songUrl]);
-
   function handleCtaClick() {
     if (playing) return;
 
-    if (audioRef.current) {
-      try {
-        audioRef.current.currentTime = 0;
-        const p = audioRef.current.play();
-        if (p && typeof p.catch === 'function') {
-          p.catch(() => {
-            // If the preloaded element somehow fails, fall back to a fresh
-            // Audio instance as a last resort.
-            try {
-              const fallback = new Audio(settings.songUrl);
-              fallback.volume = 0.5;
-              audioRef.current = fallback;
-              fallback.play().catch(() => {});
-            } catch (e) {
-              // ignore
-            }
-          });
-        }
-      } catch (e) {
-        // ignore
-      }
-    } else if (settings.songUrl) {
-      // Not preloaded yet — this happens if the click comes in right after a
-      // page refresh, before the settings fetch (and the song URL it
-      // provides) has finished loading. Create and play it right here
-      // instead — this still counts as happening within the click's user
-      // gesture, so browsers won't block it.
-      try {
-        const audio = new Audio(settings.songUrl);
-        audio.volume = 0.5;
-        audioRef.current = audio;
-        audio.play().catch(() => {});
-      } catch (e) {
-        // ignore
-      }
-    }
+    // The music itself lives in the parent (Home) so it keeps playing across
+    // the transition into the main site instead of stopping when this intro
+    // screen unmounts. Calling it here — synchronously, inside the click
+    // handler — keeps it within the click's "user gesture" so browsers won't
+    // block playback.
+    onPlayMusic();
 
     const video = videoRef.current;
     if (video) {
@@ -1148,7 +1100,28 @@ function ThankYouSection({ settings }) {
   );
 }
 
-function TopNavBar({ settings }) {
+function IconMusicOn() {
+  return (
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 18V5l11-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="17" cy="16" r="3" />
+    </svg>
+  );
+}
+
+function IconMusicOff() {
+  return (
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 18V5l11-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="17" cy="16" r="3" />
+      <line x1="3" y1="3" x2="21" y2="21" />
+    </svg>
+  );
+}
+
+function TopNavBar({ settings, musicPlaying, onToggleMusic }) {
   const [activeHref, setActiveHref] = useState('');
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1201,6 +1174,18 @@ function TopNavBar({ settings }) {
           </a>
         ))}
       </div>
+
+      {settings.songUrl && (
+        <button
+          type="button"
+          className={`top-navbar-music ${musicPlaying ? 'playing' : ''}`}
+          onClick={onToggleMusic}
+          aria-label={musicPlaying ? 'Pause music' : 'Play music'}
+          title={musicPlaying ? 'Pause music' : 'Play music'}
+        >
+          {musicPlaying ? <IconMusicOn /> : <IconMusicOff />}
+        </button>
+      )}
 
       <button
         type="button"
@@ -1273,6 +1258,60 @@ export default function Home({ searchParams }) {
   const [guestName] = useState(guestNameParam);
   const [showGreeting, setShowGreeting] = useState(!!guestNameParam);
   const [greetingLeaving, setGreetingLeaving] = useState(false);
+  const audioRef = useRef(null);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+
+  // The background song lives here (not inside IntroScreen) so it keeps
+  // playing continuously across the transition into the main site, instead
+  // of stopping when the intro screen unmounts. Preloading it as soon as the
+  // song URL is known also keeps a persistent reference alive, which avoids
+  // the Audio element being garbage-collected before playback starts.
+  useEffect(() => {
+    if (!settings.songUrl) return;
+    const audio = new Audio(settings.songUrl);
+    audio.preload = 'auto';
+    audio.volume = 0.5;
+    audio.loop = true;
+    audio.addEventListener('play', () => setMusicPlaying(true));
+    audio.addEventListener('pause', () => setMusicPlaying(false));
+    audioRef.current = audio;
+    return () => {
+      audio.pause();
+      audioRef.current = null;
+    };
+  }, [settings.songUrl]);
+
+  function playMusic() {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    } else if (settings.songUrl) {
+      // Not preloaded yet (e.g. clicked right after a page refresh, before
+      // settings finished loading) — create and play it right here instead.
+      try {
+        const fresh = new Audio(settings.songUrl);
+        fresh.volume = 0.5;
+        fresh.loop = true;
+        fresh.addEventListener('play', () => setMusicPlaying(true));
+        fresh.addEventListener('pause', () => setMusicPlaying(false));
+        audioRef.current = fresh;
+        fresh.play().catch(() => {});
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+
+  function toggleMusic() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }
 
   useEffect(() => {
     if (guestNameParam) {
@@ -1436,14 +1475,14 @@ export default function Home({ searchParams }) {
     <>
       <FallingPetals />
 
-      <TopNavBar settings={settings} />
+      <TopNavBar settings={settings} musicPlaying={musicPlaying} onToggleMusic={toggleMusic} />
 
       <MobileQuickNav />
 
       {showGreeting && <GuestGreeting name={guestName} leaving={greetingLeaving} />}
 
       {introOpen && (!guestNameParam || greetingLeaving) && (
-        <IntroScreen onEnter={handleEnter} leaving={introLeaving} settings={settings} />
+        <IntroScreen onEnter={handleEnter} onPlayMusic={playMusic} leaving={introLeaving} settings={settings} />
       )}
 
       <div className="hero" id="top">
