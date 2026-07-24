@@ -1199,7 +1199,7 @@ function TopNavBar({ settings, musicPlaying, onToggleMusic }) {
   );
 }
 
-function MobileQuickNav() {
+function MobileQuickNav({ settings, musicPlaying, onToggleMusic }) {
   const [activeHref, setActiveHref] = useState('');
   const links = [
     { href: '#schedule', label: 'Schedule', icon: <NavIconCalendar /> },
@@ -1239,6 +1239,17 @@ function MobileQuickNav() {
           <span className="mobile-quicknav-label">{l.label}</span>
         </a>
       ))}
+      {settings.songUrl && (
+        <button
+          type="button"
+          className={`mobile-quicknav-item mobile-quicknav-music ${musicPlaying ? 'active' : ''}`}
+          onClick={onToggleMusic}
+          aria-label={musicPlaying ? 'Pause music' : 'Play music'}
+        >
+          <span className="mobile-quicknav-icon">{musicPlaying ? <IconMusicOn /> : <IconMusicOff />}</span>
+          <span className="mobile-quicknav-label">{musicPlaying ? 'Pause' : 'Play'}</span>
+        </button>
+      )}
     </nav>
   );
 }
@@ -1477,7 +1488,7 @@ export default function Home({ searchParams }) {
 
       <TopNavBar settings={settings} musicPlaying={musicPlaying} onToggleMusic={toggleMusic} />
 
-      <MobileQuickNav />
+      <MobileQuickNav settings={settings} musicPlaying={musicPlaying} onToggleMusic={toggleMusic} />
 
       {showGreeting && <GuestGreeting name={guestName} leaving={greetingLeaving} />}
 
