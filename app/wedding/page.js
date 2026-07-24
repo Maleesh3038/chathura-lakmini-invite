@@ -1329,6 +1329,9 @@ export default function Home({ searchParams }) {
       setStatus('ok');
       setForm({ name: '', phone: '', side: '', attending: '', guests: 1, drinks: '', message: '' });
       setRsvpStep(0);
+      setTimeout(() => {
+        document.getElementById('wishes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 1100);
     } catch (err) {
       setStatus('err');
     }
@@ -1374,17 +1377,13 @@ export default function Home({ searchParams }) {
     setRsvpStep(4);
   }
 
-  function handleRsvpStep4Continue() {
+  async function handleRsvpFinalSubmit(e) {
+    e.preventDefault();
     if (!form.drinks) {
       setValidationError('Please let us know if you\u2019ll be having drinks.');
       return;
     }
     setValidationError('');
-    setRsvpStep(5);
-  }
-
-  async function handleRsvpFinalSubmit(e) {
-    e.preventDefault();
     await submitRsvp({});
   }
 
@@ -1542,7 +1541,7 @@ export default function Home({ searchParams }) {
             )}
 
             {rsvpStep === 4 && (
-              <div className="rsvp-step">
+              <form className="rsvp-step" onSubmit={handleRsvpFinalSubmit}>
                 <div className="field">
                   <label htmlFor="r-drinks">Will you be having drinks?</label>
                   <select
@@ -1558,24 +1557,6 @@ export default function Home({ searchParams }) {
                 </div>
                 <div className="rsvp-step-actions">
                   <button type="button" className="rsvp-back" onClick={() => setRsvpStep(3)}>← Back</button>
-                  <button type="button" className="btn btn-glow" onClick={handleRsvpStep4Continue}>Continue →</button>
-                </div>
-              </div>
-            )}
-
-            {rsvpStep === 5 && (
-              <form className="rsvp-step" onSubmit={handleRsvpFinalSubmit}>
-                <div className="field">
-                  <label htmlFor="r-msg">Message for the couple (optional)</label>
-                  <textarea
-                    id="r-msg"
-                    placeholder="Write your wishes here"
-                    value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  />
-                </div>
-                <div className="rsvp-step-actions">
-                  <button type="button" className="rsvp-back" onClick={() => setRsvpStep(4)}>← Back</button>
                   <button type="submit" className="btn btn-glow">Send RSVP</button>
                 </div>
               </form>
@@ -1583,7 +1564,7 @@ export default function Home({ searchParams }) {
 
             {validationError && <div className="form-msg err">{validationError}</div>}
             {status === 'sending' && <div className="form-msg">Sending...</div>}
-            {status === 'ok' && <div className="form-msg ok">Thank you! Your RSVP has been received.</div>}
+            {status === 'ok' && <div className="form-msg ok">Thank you! Your RSVP has been received — taking you to Guest Wishes to leave a message 💌</div>}
             {status === 'err' && <div className="form-msg err">Something went wrong. Please try again.</div>}
           </div>
         </Reveal>
