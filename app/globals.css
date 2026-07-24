@@ -1635,6 +1635,32 @@ table.rsvp-table td{ color:var(--ink); }
 .top-navbar-link:hover{ color:var(--gold-bright); }
 .top-navbar-link.active{ color:var(--gold-bright); }
 .top-navbar-link.active::after{ transform:scaleX(1); }
+.top-navbar-music{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:var(--bg-panel-2);
+  color:var(--muted);
+  cursor:pointer;
+  margin-left:12px;
+  transition:background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.top-navbar-music:hover{ border-color:var(--gold); color:var(--gold-bright); }
+.top-navbar-music.playing{
+  background:rgba(184,134,63,0.14);
+  border-color:var(--gold);
+  color:var(--gold-bright);
+  animation:navbar-music-pulse 2s ease-in-out infinite;
+}
+@keyframes navbar-music-pulse{
+  0%, 100%{ transform:scale(1); }
+  50%{ transform:scale(1.08); }
+}
 .top-navbar-toggle{
   display:none;
   flex-direction:column;
