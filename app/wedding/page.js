@@ -362,6 +362,20 @@ function IntroScreen({ onEnter, leaving, settings }) {
       } catch (e) {
         // ignore
       }
+    } else if (settings.songUrl) {
+      // Not preloaded yet — this happens if the click comes in right after a
+      // page refresh, before the settings fetch (and the song URL it
+      // provides) has finished loading. Create and play it right here
+      // instead — this still counts as happening within the click's user
+      // gesture, so browsers won't block it.
+      try {
+        const audio = new Audio(settings.songUrl);
+        audio.volume = 0.5;
+        audioRef.current = audio;
+        audio.play().catch(() => {});
+      } catch (e) {
+        // ignore
+      }
     }
 
     const video = videoRef.current;
