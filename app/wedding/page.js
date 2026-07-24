@@ -300,6 +300,7 @@ function IntroScreen({ onEnter, leaving, settings }) {
   const groomInitial = (settings.groomName || 'C')[0];
   const brideInitial = (settings.brideName || 'L')[0];
   const videoRef = useRef(null);
+  const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
 
   // Mobile browsers often refuse to paint the first frame of a paused video
@@ -320,14 +321,44 @@ function IntroScreen({ onEnter, leaving, settings }) {
     return () => video.removeEventListener('loadedmetadata', paintFirstFrame);
   }, []);
 
+  // Preload the background song as soon as the intro screen mounts, rather
+  // than creating it at click-time. This gives it time to buffer, and — just
+  // as important — keeps a persistent reference so the Audio element can't
+  // get garbage-collected before playback actually starts, which was the
+  // likely cause of the song intermittently failing to play.
+  useEffect(() => {
+    if (!settings.songUrl) return;
+    const audio = new Audio(settings.songUrl);
+    audio.preload = 'auto';
+    audio.volume = 0.5;
+    audioRef.current = audio;
+    return () => {
+      audio.pause();
+      audioRef.current = null;
+    };
+  }, [settings.songUrl]);
+
   function handleCtaClick() {
     if (playing) return;
 
-    if (settings.songUrl) {
+    if (audioRef.current) {
       try {
-        const audio = new Audio(settings.songUrl);
-        audio.volume = 0.5;
-        audio.play().catch(() => {});
+        audioRef.current.currentTime = 0;
+        const p = audioRef.current.play();
+        if (p && typeof p.catch === 'function') {
+          p.catch(() => {
+            // If the preloaded element somehow fails, fall back to a fresh
+            // Audio instance as a last resort.
+            try {
+              const fallback = new Audio(settings.songUrl);
+              fallback.volume = 0.5;
+              audioRef.current = fallback;
+              fallback.play().catch(() => {});
+            } catch (e) {
+              // ignore
+            }
+          });
+        }
       } catch (e) {
         // ignore
       }
