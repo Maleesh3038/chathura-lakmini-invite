@@ -1731,6 +1731,10 @@ table.rsvp-table td{ color:var(--ink); }
     font-weight:600;
     letter-spacing:0.01em;
     border-radius:16px;
+    border:none;
+    background:none;
+    cursor:pointer;
+    font-family:inherit;
     transition:background 0.25s ease, color 0.25s ease, transform 0.2s ease;
   }
   .mobile-quicknav-icon{
@@ -1746,6 +1750,9 @@ table.rsvp-table td{ color:var(--ink); }
     transform:translateY(-1px) scale(1.08);
   }
   .mobile-quicknav-item:active{ transform:scale(0.94); }
+  .mobile-quicknav-music.active .mobile-quicknav-icon{
+    animation:navbar-music-pulse 2s ease-in-out infinite;
+  }
 }
 
 .admin-filter-bar{
