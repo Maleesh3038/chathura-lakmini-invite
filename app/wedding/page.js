@@ -849,7 +849,7 @@ function LocationSection({ settings }) {
             <iframe
               src={embedSrc}
               width="100%"
-              height="280"
+              height="190"
               style={{ border: 0 }}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
