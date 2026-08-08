@@ -1,10 +1,14 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { isValidPasscode } from '@/lib/checkPasscode';
 
-export async function GET() {
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const event = searchParams.get('event') || 'wedding';
+
   const { data, error } = await supabaseAdmin
     .from('rsvps')
     .select('*')
+    .eq('event_type', event)
     .order('submitted_at', { ascending: true });
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
@@ -22,6 +26,7 @@ export async function GET() {
     source: r.source || 'link',
     submittedAt: r.submitted_at,
     tableNumber: r.table_number || null,
+    eventType: r.event_type || 'wedding',
   }));
   return Response.json(mapped);
 }
@@ -41,6 +46,7 @@ export async function POST(request) {
 
     const phone = body.phone ? String(body.phone).replace(/\s+/g, '') : null;
     const source = isAdmin && body.source === 'manual' ? 'manual' : 'link';
+    const eventType = body.event === 'homecoming' ? 'homecoming' : 'wedding';
 
     const payload = {
       name: String(body.name).slice(0, 80),
@@ -52,11 +58,12 @@ export async function POST(request) {
       message: body.message ? String(body.message).slice(0, 600) : null,
       submitted_at: new Date().toISOString(),
       source,
+      event_type: eventType,
     };
 
     let error;
     if (phone) {
-      ({ error } = await supabaseAdmin.from('rsvps').upsert({ ...payload, phone }, { onConflict: 'phone' }));
+      ({ error } = await supabaseAdmin.from('rsvps').upsert({ ...payload, phone }, { onConflict: 'phone,event_type' }));
     } else {
       ({ error } = await supabaseAdmin.from('rsvps').insert(payload));
     }
