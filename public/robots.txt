@@ -1,6 +1,7 @@
 User-agent: *
 Disallow: /admin
 Disallow: /wedding/admin
+Disallow: /homecoming/admin
 Disallow: /api/
 
 Sitemap: https://chathurajayawardhane.com/sitemap.xml
