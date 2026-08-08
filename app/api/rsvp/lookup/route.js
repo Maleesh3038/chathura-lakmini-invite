@@ -14,12 +14,14 @@ export async function POST(request) {
 
     const cleanedPhone = query.replace(/\s+/g, '');
     const limit = body.suggest ? 6 : 5;
+    const eventType = body.event === 'homecoming' ? 'homecoming' : 'wedding';
 
     // Prefix match on either name or phone, so typing just the first
     // letter/digit already surfaces matching guests as suggestions.
     const { data, error } = await supabaseAdmin
       .from('rsvps')
       .select('name, table_number, phone')
+      .eq('event_type', eventType)
       .or(`name.ilike.${query}%,phone.ilike.${cleanedPhone}%`)
       .limit(limit);
     if (error) throw error;
