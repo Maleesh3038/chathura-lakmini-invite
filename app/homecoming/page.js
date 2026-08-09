@@ -602,7 +602,17 @@ export default function HomecomingPage() {
                   <div className="hc-detail-value">{HOMECOMING_TIME}</div>
                 </div>
               </div>
-              <div className="hc-detail-row" id="hc-venue">
+              </div>
+            </HcReveal>
+          </section>
+
+          <section id="hc-venue" className="hc-section">
+            <div className="hc-section-head">
+              <div className="hc-eyebrow">Find Us Here</div>
+              <h2 className="hc-section-title">Venue</h2>
+            </div>
+            <HcReveal className="hc-panel">
+              <div className="hc-detail-row" style={{ borderTop: 'none', paddingTop: 0 }}>
                 <span className="hc-detail-icon">📍</span>
                 <div>
                   <div className="hc-detail-label">Venue</div>
@@ -626,7 +636,6 @@ export default function HomecomingPage() {
               <a className="hc-cta hc-cta-block" href={MAPS_LINK} target="_blank" rel="noopener noreferrer">
                 Open in Google Maps
               </a>
-              </div>
             </HcReveal>
           </section>
 
