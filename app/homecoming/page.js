@@ -46,6 +46,27 @@ function HcPetal() {
   return <span className="hc-petal" aria-hidden="true" />;
 }
 
+function HcCornerFlourish({ flip }) {
+  return (
+    <svg viewBox="0 0 60 60" width="30" height="30" style={{ transform: flip ? 'scaleX(-1)' : 'none' }}>
+      <path
+        d="M2 30 Q2 2 30 2"
+        fill="none"
+        stroke="#b23a2e"
+        strokeWidth="1"
+        opacity="0.45"
+      />
+      <path
+        d="M10 30 Q10 10 30 10"
+        fill="none"
+        stroke="#b23a2e"
+        strokeWidth="1"
+        opacity="0.3"
+      />
+    </svg>
+  );
+}
+
 function HcIntroVideo({ onEnter, leaving, names }) {
   const videoRef = useRef(null);
   const [playing, setPlaying] = useState(false);
@@ -81,6 +102,9 @@ function HcIntroVideo({ onEnter, leaving, names }) {
     }
   }
 
+  const groomInitial = (names.groomName || 'C')[0];
+  const brideInitial = (names.brideName || 'L')[0];
+
   return (
     <div className={`hc-intro-overlay ${leaving ? 'leaving' : ''}`}>
       <div className="hc-intro-card">
@@ -95,17 +119,35 @@ function HcIntroVideo({ onEnter, leaving, names }) {
           />
         </div>
         <div className="hc-intro-content">
-          <div className="hc-badge">● Home Coming</div>
+          <div className="hc-intro-corner tl"><HcCornerFlourish /></div>
+          <div className="hc-intro-corner tr"><HcCornerFlourish flip /></div>
+
+          <div className="hc-monogram">
+            {groomInitial}<span className="hc-monogram-amp">&amp;</span>{brideInitial}
+          </div>
+
+          <span className="hc-badge">● Home Coming</span>
+
           <h1 className="hc-names">
             {names.groomName}
             <span className="hc-amp">&amp;</span>
             {names.brideName}
           </h1>
+
           <div className="hc-divider" />
+
           <p className="hc-tagline">You are warmly invited to our Home Coming celebration.</p>
+
           <button className="hc-cta" onClick={handleClick} disabled={playing}>
-            {playing ? 'Opening your invitation...' : "You're Invited"}
+            {playing ? 'Opening your invitation...' : (
+              <>You&apos;re Invited <span aria-hidden="true">→</span></>
+            )}
           </button>
+
+          <p className="hc-intro-hint">{playing ? '✨ Opening...' : 'Tap to begin'}</p>
+
+          <div className="hc-intro-corner bl"><HcCornerFlourish flip /></div>
+          <div className="hc-intro-corner br"><HcCornerFlourish /></div>
         </div>
       </div>
     </div>
