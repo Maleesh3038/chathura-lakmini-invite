@@ -185,44 +185,99 @@
   margin:0 auto 22px;
 }
 
-/* ---------- HERO CARD ---------- */
-.hc-hero{
-  padding:60px 20px 20px;
-  display:flex;
-  justify-content:center;
+/* ---------- FULL-BLEED HERO ---------- */
+.hc-hero-full{
   position:relative;
-  z-index:1;
-}
-.hc-card{
-  position:relative;
-  overflow:hidden;
+  height:92vh;
+  min-height:500px;
+  max-height:820px;
   width:100%;
-  max-width:420px;
-  background:rgba(255,252,250,0.92);
-  backdrop-filter:blur(6px);
-  border:1px solid rgba(139,30,43,0.18);
-  border-radius:24px;
-  padding:36px 30px 32px;
-  text-align:center;
-  box-shadow:0 24px 60px rgba(139,30,43,0.18);
+  overflow:hidden;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
 }
-.hc-hero-bg{
+.hc-hero-video{
   position:absolute;
   inset:0;
-  z-index:0;
-  overflow:hidden;
-  pointer-events:none;
-}
-.hc-hero-bg video{
   width:100%;
   height:100%;
   object-fit:cover;
-  object-position:top center;
-  opacity:0.32;
-  -webkit-mask-image:linear-gradient(to bottom, #000 45%, transparent 95%);
-  mask-image:linear-gradient(to bottom, #000 45%, transparent 95%);
+  object-position:center 25%;
 }
-.hc-hero-content{ position:relative; z-index:1; }
+.hc-hero-overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to bottom, rgba(139,30,43,0.05) 0%, rgba(92,20,32,0.15) 55%, rgba(60,10,18,0.72) 100%);
+}
+.hc-hero-full-content{
+  position:relative;
+  z-index:1;
+  width:100%;
+  text-align:center;
+  padding:0 24px 48px;
+}
+.hc-hero-eyebrow{
+  font-size:11px;
+  letter-spacing:0.3em;
+  text-transform:uppercase;
+  color:#f5d9d2;
+  font-weight:500;
+  margin-bottom:10px;
+}
+.hc-hero-full-names{
+  font-family:'Cormorant Garamond', serif;
+  font-weight:700;
+  font-size:clamp(30px, 8vw, 48px);
+  color:#fff6f0;
+  margin:0;
+  letter-spacing:0.02em;
+  text-shadow:0 4px 24px rgba(0,0,0,0.35);
+}
+.hc-hero-amp{
+  font-family:'Parisienne', cursive;
+  font-weight:400;
+  color:#f0938c;
+  font-size:0.85em;
+  padding:0 6px;
+}
+
+/* ---------- DETAILS CARD ---------- */
+.hc-details-panel{
+  position:relative;
+  text-align:center;
+  padding-top:40px;
+  padding-bottom:36px;
+}
+.hc-corner{
+  position:absolute;
+  width:22px;
+  height:22px;
+  border-color:#b23a2e;
+  opacity:0.6;
+}
+.hc-corner.tl{ top:14px; left:14px; border-top:1.5px solid; border-left:1.5px solid; }
+.hc-corner.tr{ top:14px; right:14px; border-top:1.5px solid; border-right:1.5px solid; }
+.hc-corner.bl{ bottom:14px; left:14px; border-bottom:1.5px solid; border-left:1.5px solid; }
+.hc-corner.br{ bottom:14px; right:14px; border-bottom:1.5px solid; border-right:1.5px solid; }
+.hc-details-eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:#b23a2e;
+  font-weight:600;
+  margin-bottom:10px;
+}
+.hc-details-title{
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  font-size:26px;
+  color:#5c1420;
+  margin:0 0 20px;
+}
 
 .hc-detail-row{
   display:flex;
