@@ -557,6 +557,18 @@ export default function HomecomingPage() {
 
           <section className="hc-hero" id="hc-top">
             <HcReveal className="hc-card">
+              <div className="hc-hero-bg" aria-hidden="true">
+                <video
+                  src="/videos/homecoming-intro-video.mp4"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+                />
+              </div>
+              <div className="hc-hero-content">
               <div className="hc-badge">● Home Coming</div>
               <h1 className="hc-names">
                 {names.groomName}
@@ -614,6 +626,7 @@ export default function HomecomingPage() {
               <a className="hc-cta hc-cta-block" href={MAPS_LINK} target="_blank" rel="noopener noreferrer">
                 Open in Google Maps
               </a>
+              </div>
             </HcReveal>
           </section>
 
