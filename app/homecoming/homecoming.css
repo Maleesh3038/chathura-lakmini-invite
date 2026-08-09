@@ -468,3 +468,211 @@
   .hc-card, .hc-panel, .hc-intro-card{ padding:28px 22px; border-radius:20px; }
   .hc-names{ font-size:30px; }
 }
+
+/* ---------- NAV BAR ---------- */
+.hc-navbar{
+  position:fixed;
+  top:0; left:0; right:0;
+  z-index:700;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 28px;
+  background:rgba(255,246,240,0.65);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid transparent;
+  transition:background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.hc-navbar.scrolled{
+  background:rgba(255,246,240,0.92);
+  border-bottom-color:rgba(139,30,43,0.14);
+  box-shadow:0 4px 20px rgba(139,30,43,0.08);
+}
+.hc-navbar-brand{
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  font-size:19px;
+  font-weight:600;
+  color:#8b1e2b;
+  text-decoration:none;
+  display:flex;
+  align-items:center;
+}
+.hc-navbar-amp{
+  font-family:'Parisienne', cursive;
+  font-style:normal;
+  color:#b23a2e;
+  font-size:1.2em;
+  padding:0 3px;
+}
+.hc-navbar-links{ display:flex; align-items:center; gap:28px; }
+.hc-navbar-link{
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:#5c1420;
+  text-decoration:none;
+  transition:color 0.2s ease;
+}
+.hc-navbar-link:hover{ color:#b23a2e; }
+.hc-navbar-toggle{
+  display:none;
+  flex-direction:column;
+  gap:4px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:8px;
+}
+.hc-navbar-toggle span{ width:22px; height:2px; background:#5c1420; border-radius:2px; }
+@media (max-width:760px){
+  .hc-navbar-links{
+    display:none;
+    position:absolute;
+    top:100%; left:0; right:0;
+    flex-direction:column;
+    align-items:stretch;
+    background:rgba(255,246,240,0.97);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(139,30,43,0.14);
+    box-shadow:0 10px 26px rgba(139,30,43,0.12);
+  }
+  .hc-navbar-links.open{ display:flex; }
+  .hc-navbar-link{ padding:14px 28px; border-top:1px solid rgba(139,30,43,0.1); }
+  .hc-navbar-toggle{ display:flex; }
+}
+
+/* ---------- COUNTDOWN ---------- */
+.hc-countdown{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin:20px 0 4px;
+}
+.hc-cd-box{
+  background:#fdf3ef;
+  border:1px solid rgba(139,30,43,0.16);
+  border-radius:10px;
+  padding:10px 6px;
+  min-width:52px;
+  text-align:center;
+}
+.hc-cd-num{
+  display:block;
+  font-family:'Cormorant Garamond', serif;
+  font-size:22px;
+  color:#8b1e2b;
+  font-weight:600;
+}
+.hc-cd-label{
+  display:block;
+  font-size:8.5px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:#a97a72;
+  margin-top:2px;
+}
+
+/* ---------- ADD TO CALENDAR ---------- */
+.hc-calendar-panel{ padding:0; overflow:hidden; }
+.hc-calendar-header{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  width:100%;
+  padding:22px 24px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  text-align:left;
+}
+.hc-calendar-icon{
+  flex:0 0 auto;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:linear-gradient(180deg, #d9534f, #8b1e2b);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:17px;
+  box-shadow:0 6px 14px rgba(139,30,43,0.28);
+}
+.hc-calendar-header-text{ flex:1; display:flex; flex-direction:column; gap:2px; }
+.hc-calendar-title{ font-family:'Cormorant Garamond', serif; font-size:17px; color:#5c1420; font-weight:600; }
+.hc-calendar-subtitle{ font-size:11.5px; color:#a97a72; }
+.hc-calendar-chevron{ color:#a97a72; font-size:16px; }
+.hc-calendar-options{ border-top:1px solid rgba(139,30,43,0.12); }
+.hc-calendar-option{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  padding:16px 24px;
+  background:none;
+  border:none;
+  border-bottom:1px solid rgba(139,30,43,0.1);
+  cursor:pointer;
+  text-decoration:none;
+  text-align:left;
+  color:#5c1420;
+  font-size:13.5px;
+  font-family:'Poppins', sans-serif;
+}
+.hc-calendar-option:last-child{ border-bottom:none; }
+.hc-calendar-option:hover{ background:rgba(178,58,46,0.05); }
+.hc-calendar-option-icon{ font-size:16px; flex:0 0 auto; }
+.hc-calendar-option-label{ flex:1; font-weight:500; }
+.hc-calendar-option-arrow{ color:#a97a72; font-size:15px; }
+
+/* ---------- THANK YOU ---------- */
+.hc-thankyou-panel{ text-align:center; }
+.hc-thankyou-icon{ font-size:26px; margin-bottom:10px; }
+.hc-thankyou-title{
+  font-family:'Cormorant Garamond', serif;
+  font-size:22px;
+  color:#5c1420;
+  margin:0 0 12px;
+}
+.hc-thankyou-msg{
+  font-size:13.5px;
+  color:#7a4a45;
+  line-height:1.8;
+}
+.hc-thankyou-sign{
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  font-size:15px;
+  color:#b23a2e;
+  margin-top:14px;
+}
+
+/* ---------- SOCIAL CREDIT FOOTER ---------- */
+.hc-credit{
+  text-align:center;
+  padding:0 20px 32px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+  position:relative;
+  z-index:1;
+}
+.hc-credit-brand{
+  font-size:11.5px;
+  letter-spacing:0.04em;
+  color:#a97a72;
+  text-decoration:none;
+  transition:color 0.2s ease;
+}
+.hc-credit-brand strong{ color:#b23a2e; font-weight:600; }
+.hc-credit-brand:hover{ color:#b23a2e; }
+.hc-credit-links{ display:flex; align-items:center; gap:16px; }
+.hc-credit-links a{
+  color:#a97a72;
+  display:flex;
+  transition:color 0.2s ease, transform 0.2s ease;
+}
+.hc-credit-links a:hover{ color:#b23a2e; transform:translateY(-2px); }
