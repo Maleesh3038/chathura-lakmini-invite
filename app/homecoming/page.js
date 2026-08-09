@@ -555,36 +555,35 @@ export default function HomecomingPage() {
         <>
           <HcNavBar names={names} />
 
-          <section className="hc-hero" id="hc-top">
-            <HcReveal className="hc-card">
-              <div className="hc-hero-bg" aria-hidden="true">
-                <video
-                  src="/videos/homecoming-intro-video.mp4"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                  onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
-                />
-              </div>
-              <div className="hc-hero-content">
-              <div className="hc-badge">● Home Coming</div>
-              <h1 className="hc-names">
-                {names.groomName}
-                <span className="hc-amp">&amp;</span>
-                {names.brideName}
+          <section className="hc-hero-full" id="hc-top">
+            <video
+              className="hc-hero-video"
+              src="/videos/homecoming-intro-video.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
+            <div className="hc-hero-overlay" />
+            <div className="hc-hero-full-content">
+              <div className="hc-hero-eyebrow">Together With Their Families</div>
+              <h1 className="hc-hero-full-names">
+                {names.groomName} <span className="hc-hero-amp">&amp;</span> {names.brideName}
               </h1>
-              <p className="hc-tagline">
-                With hearts full of joy, we warmly welcome you to celebrate our Home Coming.
-              </p>
+            </div>
+          </section>
 
-              <div className="hc-countdown">
-                <div className="hc-cd-box"><span className="hc-cd-num">{two(hd)}</span><span className="hc-cd-label">Days</span></div>
-                <div className="hc-cd-box"><span className="hc-cd-num">{two(hh)}</span><span className="hc-cd-label">Hrs</span></div>
-                <div className="hc-cd-box"><span className="hc-cd-num">{two(hm)}</span><span className="hc-cd-label">Min</span></div>
-                <div className="hc-cd-box"><span className="hc-cd-num">{two(hs)}</span><span className="hc-cd-label">Sec</span></div>
-              </div>
+          <section id="hc-details" className="hc-section">
+            <HcReveal className="hc-panel hc-details-panel">
+              <div className="hc-corner tl" />
+              <div className="hc-corner tr" />
+              <div className="hc-corner bl" />
+              <div className="hc-corner br" />
+
+              <div className="hc-details-eyebrow">🕊️ Home Coming</div>
+              <h2 className="hc-details-title">Home Coming Celebration</h2>
 
               <div className="hc-divider" />
 
@@ -601,7 +600,6 @@ export default function HomecomingPage() {
                   <div className="hc-detail-label">Time</div>
                   <div className="hc-detail-value">{HOMECOMING_TIME}</div>
                 </div>
-              </div>
               </div>
             </HcReveal>
           </section>
