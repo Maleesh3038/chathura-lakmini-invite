@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 const MAPS_LINK = 'https://maps.app.goo.gl/qbDHs4aibkrYkdnt7?g_st=aw';
 const HOMECOMING_DATE = 'September 19, 2026';
 const HOMECOMING_TIME = '6:22 PM Onwards';
+const HOMECOMING_TARGET = '2026-09-19T18:22:00+05:30';
 const VENUE_NAME = 'Jayawardana Residence';
 const VENUE_ADDRESS = 'Paduwasnuwara East';
 const PHONE_REGEX = /^\+?[0-9]{7,15}$/;
@@ -44,6 +45,75 @@ function HcReveal({ children, className = '' }) {
 
 function HcPetal() {
   return <span className="hc-petal" aria-hidden="true" />;
+}
+
+function HcIconTikTok() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+      <path d="M16.6 5.2c-.9-.9-1.4-2.1-1.4-3.4h-3.1v13.6c0 1.5-1.2 2.7-2.7 2.7s-2.7-1.2-2.7-2.7 1.2-2.7 2.7-2.7c.3 0 .6.05.9.14V9.7c-.3-.04-.6-.07-.9-.07-3.2 0-5.8 2.6-5.8 5.8s2.6 5.8 5.8 5.8 5.8-2.6 5.8-5.8V8.9c1.2.9 2.7 1.4 4.3 1.4V7.2c-1 0-1.9-.3-2.6-.9-.15-.13-.28-.27-.4-.4-.4-.4-.7-.9-.9-1.4z" />
+    </svg>
+  );
+}
+function HcIconFacebook() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+      <path d="M13.5 21v-8.1h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5H16.7V3.6c-.28-.04-1.24-.12-2.36-.12-2.34 0-3.94 1.43-3.94 4.04v2.25H7.7v3.1h2.7V21h3.1z" />
+    </svg>
+  );
+}
+function HcIconInstagram() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+      <rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5" />
+      <circle cx="12" cy="12" r="4.2" />
+      <circle cx="17.1" cy="6.9" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function HcIconPhone() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6.6 10.8c1.3 2.6 3.4 4.7 6 6l2-2c.25-.25.6-.33.9-.2 1 .35 2.1.55 3.2.55.5 0 .9.4.9.9V19c0 .5-.4.9-.9.9C9.9 19.9 4.1 14.1 4.1 5.2c0-.5.4-.9.9-.9h3.2c.5 0 .9.4.9.9 0 1.1.2 2.2.55 3.2.1.3.05.65-.2.9l-2.85 2.5z" />
+    </svg>
+  );
+}
+
+function HcNavBar({ names }) {
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const links = [
+    { href: '#hc-rsvp', label: 'RSVP' },
+    { href: '#hc-find-table', label: 'Find Table' },
+    { href: '#hc-venue', label: 'Venue' },
+  ];
+
+  useEffect(() => {
+    function onScroll() { setScrolled(window.scrollY > 60); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const groomInitial = (names.groomName || 'C')[0];
+  const brideInitial = (names.brideName || 'L')[0];
+
+  return (
+    <nav className={`hc-navbar ${scrolled ? 'scrolled' : ''}`} aria-label="Main navigation">
+      <a href="#hc-top" className="hc-navbar-brand">
+        {groomInitial}<span className="hc-navbar-amp">&amp;</span>{brideInitial}
+      </a>
+      <div className={`hc-navbar-links ${menuOpen ? 'open' : ''}`}>
+        {links.map((l) => (
+          <a key={l.href} href={l.href} className="hc-navbar-link" onClick={() => setMenuOpen(false)}>
+            {l.label}
+          </a>
+        ))}
+      </div>
+      <button type="button" className="hc-navbar-toggle" aria-label="Toggle menu" onClick={() => setMenuOpen((v) => !v)}>
+        <span /><span /><span />
+      </button>
+    </nav>
+  );
 }
 
 function HcCornerFlourish({ flip }) {
@@ -151,6 +221,92 @@ function HcIntroVideo({ onEnter, leaving, names }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function HcAddToCalendar({ names }) {
+  const [open, setOpen] = useState(true);
+
+  function buildICS() {
+    const start = new Date(HOMECOMING_TARGET);
+    const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
+    const fmt = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    return [
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT',
+      `SUMMARY:${names.groomName} & ${names.brideName}'s Home Coming`,
+      `DTSTART:${fmt(start)}`, `DTEND:${fmt(end)}`,
+      `LOCATION:${VENUE_NAME}, ${VENUE_ADDRESS}`,
+      'END:VEVENT', 'END:VCALENDAR',
+    ].join('\r\n');
+  }
+
+  function downloadICS() {
+    const blob = new Blob([buildICS()], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      window.location.href = url;
+    } else {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'homecoming-invite.ics';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  function googleCalendarUrl() {
+    const start = new Date(HOMECOMING_TARGET);
+    const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
+    const fmt = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const text = encodeURIComponent(`${names.groomName} & ${names.brideName}'s Home Coming`);
+    const loc = encodeURIComponent(`${VENUE_NAME}, ${VENUE_ADDRESS}`);
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${fmt(start)}/${fmt(end)}&location=${loc}`;
+  }
+
+  return (
+    <HcReveal className="hc-panel hc-calendar-panel">
+      <button type="button" className="hc-calendar-header" onClick={() => setOpen(!open)}>
+        <span className="hc-calendar-icon">📅</span>
+        <span className="hc-calendar-header-text">
+          <span className="hc-calendar-title">Add to Calendar</span>
+          <span className="hc-calendar-subtitle">Save the date to your calendar</span>
+        </span>
+        <span className="hc-calendar-chevron">{open ? '⌃' : '⌄'}</span>
+      </button>
+      {open && (
+        <div className="hc-calendar-options">
+          <a className="hc-calendar-option" href={googleCalendarUrl()} target="_blank" rel="noopener noreferrer">
+            <span className="hc-calendar-option-icon">🗓️</span>
+            <span className="hc-calendar-option-label">Google Calendar</span>
+            <span className="hc-calendar-option-arrow">›</span>
+          </a>
+          <button type="button" className="hc-calendar-option" onClick={downloadICS}>
+            <span className="hc-calendar-option-icon">🍎</span>
+            <span className="hc-calendar-option-label">Apple Calendar / Outlook</span>
+            <span className="hc-calendar-option-arrow">›</span>
+          </button>
+        </div>
+      )}
+    </HcReveal>
+  );
+}
+
+function HcThankYou({ names }) {
+  return (
+    <section className="hc-section">
+      <HcReveal className="hc-panel hc-thankyou-panel">
+        <div className="hc-thankyou-icon">🌿</div>
+        <h2 className="hc-thankyou-title">To Our Wonderful Guests</h2>
+        <p className="hc-thankyou-msg">
+          From the bottom of our hearts, thank you for being part of our Home Coming. Your presence
+          means the world to us as we begin this new chapter together.
+        </p>
+        <p className="hc-thankyou-sign">— {names.groomName} &amp; {names.brideName}</p>
+      </HcReveal>
+    </section>
   );
 }
 
@@ -279,6 +435,12 @@ export default function HomecomingPage() {
   const [rsvpStep, setRsvpStep] = useState(0);
   const [status, setStatus] = useState(null);
   const [validationError, setValidationError] = useState('');
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -373,6 +535,14 @@ export default function HomecomingPage() {
 
   const embedSrc = `https://www.google.com/maps?q=${encodeURIComponent(`${VENUE_NAME}, ${VENUE_ADDRESS}`)}&z=15&output=embed`;
 
+  const hcTarget = new Date(HOMECOMING_TARGET).getTime();
+  const hcDiff = Math.max(0, hcTarget - now);
+  const two = (n) => String(n).padStart(2, '0');
+  const hd = Math.floor(hcDiff / 86400000);
+  const hh = Math.floor((hcDiff / 3600000) % 24);
+  const hm = Math.floor((hcDiff / 60000) % 60);
+  const hs = Math.floor((hcDiff / 1000) % 60);
+
   return (
     <div className="hc-page">
       <div className="hc-petals" aria-hidden="true">
@@ -383,7 +553,9 @@ export default function HomecomingPage() {
 
       {!introOpen && (
         <>
-          <section className="hc-hero">
+          <HcNavBar names={names} />
+
+          <section className="hc-hero" id="hc-top">
             <HcReveal className="hc-card">
               <div className="hc-badge">● Home Coming</div>
               <h1 className="hc-names">
@@ -394,6 +566,14 @@ export default function HomecomingPage() {
               <p className="hc-tagline">
                 With hearts full of joy, we warmly welcome you to celebrate our Home Coming.
               </p>
+
+              <div className="hc-countdown">
+                <div className="hc-cd-box"><span className="hc-cd-num">{two(hd)}</span><span className="hc-cd-label">Days</span></div>
+                <div className="hc-cd-box"><span className="hc-cd-num">{two(hh)}</span><span className="hc-cd-label">Hrs</span></div>
+                <div className="hc-cd-box"><span className="hc-cd-num">{two(hm)}</span><span className="hc-cd-label">Min</span></div>
+                <div className="hc-cd-box"><span className="hc-cd-num">{two(hs)}</span><span className="hc-cd-label">Sec</span></div>
+              </div>
+
               <div className="hc-divider" />
 
               <div className="hc-detail-row">
@@ -410,7 +590,7 @@ export default function HomecomingPage() {
                   <div className="hc-detail-value">{HOMECOMING_TIME}</div>
                 </div>
               </div>
-              <div className="hc-detail-row">
+              <div className="hc-detail-row" id="hc-venue">
                 <span className="hc-detail-icon">📍</span>
                 <div>
                   <div className="hc-detail-label">Venue</div>
@@ -547,11 +727,37 @@ export default function HomecomingPage() {
             </HcReveal>
           </section>
 
+          <section className="hc-section" style={{ paddingTop: 0 }}>
+            <HcAddToCalendar names={names} />
+          </section>
+
           <HcTableFinder />
+
+          <HcThankYou names={names} />
 
           <footer className="hc-footer">
             With love, {names.groomName} &amp; {names.brideName}
           </footer>
+
+          <div className="hc-credit">
+            <a href="https://inviteglow.com" target="_blank" rel="noopener noreferrer" className="hc-credit-brand">
+              Website by <strong>Invite Glow</strong>
+            </a>
+            <div className="hc-credit-links">
+              <a href="https://www.tiktok.com/@invitvei1w8?_r=1&_t=ZS-9858lr1qCkn" target="_blank" rel="noopener noreferrer" aria-label="Invite Glow on TikTok">
+                <HcIconTikTok />
+              </a>
+              <a href="https://www.facebook.com/share/1AtpWeKASA/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Invite Glow on Facebook">
+                <HcIconFacebook />
+              </a>
+              <a href="https://www.instagram.com/invite__glow?igsh=M3Fsc2E0NTBwYw==" target="_blank" rel="noopener noreferrer" aria-label="Invite Glow on Instagram">
+                <HcIconInstagram />
+              </a>
+              <a href="tel:+94770024484" aria-label="Call Invite Glow">
+                <HcIconPhone />
+              </a>
+            </div>
+          </div>
         </>
       )}
     </div>
