@@ -359,33 +359,56 @@ function RsvpTab({ passcode }) {
           <div className="admin-toggle-field">
             <label>Side</label>
             <div className="admin-toggle-group">
-              <button type="button" className={guestForm.side === 'Bride' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, side: 'Bride' })}>Bride&apos;s Side</button>
-              <button type="button" className={guestForm.side === 'Groom' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, side: 'Groom' })}>Groom&apos;s Side</button>
-              <button type="button" className={!guestForm.side ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, side: '' })}>Not set</button>
+              <button type="button" className={guestForm.side === 'Bride' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, side: 'Bride' })}>
+                {guestForm.side === 'Bride' && <span className="admin-toggle-check">✓</span>} Bride&apos;s Side
+              </button>
+              <button type="button" className={guestForm.side === 'Groom' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, side: 'Groom' })}>
+                {guestForm.side === 'Groom' && <span className="admin-toggle-check">✓</span>} Groom&apos;s Side
+              </button>
+              <button type="button" className={!guestForm.side ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, side: '' })}>
+                {!guestForm.side && <span className="admin-toggle-check">✓</span>} Not set
+              </button>
             </div>
           </div>
           <div className="admin-toggle-field">
             <label>Attending</label>
             <div className="admin-toggle-group">
-              <button type="button" className={guestForm.attending === 'Yes' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, attending: 'Yes' })}>Yes</button>
-              <button type="button" className={guestForm.attending === 'No' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, attending: 'No' })}>No</button>
+              <button type="button" className={guestForm.attending === 'Yes' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, attending: 'Yes' })}>
+                {guestForm.attending === 'Yes' && <span className="admin-toggle-check">✓</span>} Yes
+              </button>
+              <button type="button" className={guestForm.attending === 'No' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, attending: 'No' })}>
+                {guestForm.attending === 'No' && <span className="admin-toggle-check">✓</span>} No
+              </button>
             </div>
           </div>
           <input type="number" min="1" max="20" value={guestForm.guests} onChange={(e) => setGuestForm({ ...guestForm, guests: e.target.value })} placeholder="Number of Guests" />
           <div className="admin-toggle-field">
             <label>Drinks</label>
             <div className="admin-toggle-group">
-              <button type="button" className={guestForm.drinks === 'Yes' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, drinks: 'Yes' })}>Yes</button>
-              <button type="button" className={guestForm.drinks === 'No' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, drinks: 'No' })}>No</button>
-              <button type="button" className={!guestForm.drinks ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, drinks: '' })}>Not set</button>
+              <button type="button" className={guestForm.drinks === 'Yes' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, drinks: 'Yes' })}>
+                {guestForm.drinks === 'Yes' && <span className="admin-toggle-check">✓</span>} Yes
+              </button>
+              <button type="button" className={guestForm.drinks === 'No' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, drinks: 'No' })}>
+                {guestForm.drinks === 'No' && <span className="admin-toggle-check">✓</span>} No
+              </button>
+              <button type="button" className={!guestForm.drinks ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, drinks: '' })}>
+                {!guestForm.drinks && <span className="admin-toggle-check">✓</span>} Not set
+              </button>
             </div>
           </div>
-          <select value={guestForm.category} onChange={(e) => setGuestForm({ ...guestForm, category: e.target.value })}>
-            <option value="">Category — not set</option>
-            {GUEST_CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>
-            ))}
-          </select>
+          <div className="admin-toggle-field">
+            <label>Category</label>
+            <div className="admin-toggle-group">
+              <button type="button" className={!guestForm.category ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, category: '' })}>
+                {!guestForm.category && <span className="admin-toggle-check">✓</span>} Not set
+              </button>
+              {GUEST_CATEGORIES.map((c) => (
+                <button key={c} type="button" className={guestForm.category === c ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, category: c })}>
+                  {guestForm.category === c && <span className="admin-toggle-check">✓</span>} {c.replace(/_/g, ' ')}
+                </button>
+              ))}
+            </div>
+          </div>
           <input value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Note (optional)" />
           <div className="admin-item-actions">
             <button type="submit" className="btn-small btn-approve">Add Guest</button>
