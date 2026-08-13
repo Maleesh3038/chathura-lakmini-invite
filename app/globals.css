@@ -1425,6 +1425,29 @@ table.rsvp-table td{ color:var(--ink); }
   font-weight:500;
 }
 
+.admin-toggle-field{ display:flex; flex-direction:column; gap:6px; }
+.admin-toggle-field label{ margin-top:0; }
+.admin-toggle-group{ display:flex; flex-wrap:wrap; gap:8px; }
+.admin-toggle-group button{
+  padding:9px 16px;
+  border-radius:20px;
+  border:1px solid var(--line);
+  background:var(--bg-panel-2);
+  color:var(--ink);
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+  transition:background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+.admin-toggle-group button:hover{ border-color:var(--gold); }
+.admin-toggle-group button:active{ transform:scale(0.97); }
+.admin-toggle-group button.active{
+  background:linear-gradient(180deg, var(--gold-glow), var(--gold-bright));
+  border-color:var(--gold-bright);
+  color:#fffaf0;
+  font-weight:600;
+}
+
 @media (max-width:560px){
   .event-card{ gap:14px; }
   .event-index{ flex:0 0 44px; height:44px; font-size:16px; }
