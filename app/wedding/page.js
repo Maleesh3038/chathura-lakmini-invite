@@ -320,10 +320,9 @@ function IntroScreen({ onEnter, onPlayMusic, leaving, settings }) {
     return () => video.removeEventListener('loadedmetadata', paintFirstFrame);
   }, []);
 
-  // Tapping anywhere on the card starts the video and the music together —
-  // there's no separate button to click. This single tap is required by the
-  // browser (audio can never autoplay with sound before any interaction),
-  // but it plays both at once rather than needing its own button press.
+  // Both the button AND tapping anywhere else on the card start the video
+  // and the music together — this single tap/click is required by the
+  // browser (audio can never autoplay with sound before any interaction).
   function handleTap() {
     if (playing) return;
     setPlaying(true);
@@ -375,8 +374,14 @@ function IntroScreen({ onEnter, onPlayMusic, leaving, settings }) {
 
           <p className="intro-tagline">{settings.taglineEn}</p>
 
+          <button className="intro-cta" onClick={(e) => { e.stopPropagation(); handleTap(); }} disabled={playing}>
+            {playing ? 'Opening your invitation...' : (
+              <>You&apos;re Invited <span aria-hidden="true">→</span></>
+            )}
+          </button>
+
           <p className="intro-hint">
-            {playing ? '✨ Opening your invitation...' : settings.songUrl ? '🔊 Tap anywhere to begin — with music' : 'Tap anywhere to begin'}
+            {playing ? '✨ Opening your invitation...' : settings.songUrl ? '🔊 Tap to begin — with music' : 'Tap to begin'}
           </p>
 
           <div className="intro-corner bl"><CornerFlourish flip /></div>
