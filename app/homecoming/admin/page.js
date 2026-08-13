@@ -77,8 +77,8 @@ function RsvpTab({ passcode }) {
   function shareRowOnWhatsApp(r) {
     const guestLink = `${origin}/homecoming?to=${encodeURIComponent(r.name || '')}`;
     const message = waMessageTemplate.includes('{link}')
-      ? waMessageTemplate.replace('{link}', guestLink)
-      : `${waMessageTemplate}\n\n${guestLink}`;
+      ? waMessageTemplate.replace('{name}', r.name || '').replace('{link}', guestLink)
+      : `${waMessageTemplate.replace('{name}', r.name || '')}\n\n${guestLink}`;
     const waPhone = formatPhoneForWhatsApp(r.phone);
     const url = waPhone
       ? `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`
@@ -127,6 +127,14 @@ function RsvpTab({ passcode }) {
 
   async function addGuest(e) {
     e.preventDefault();
+    if (!guestForm.side) {
+      setAddStatus('err-side');
+      return;
+    }
+    if (!guestForm.category) {
+      setAddStatus('err-category');
+      return;
+    }
     setAddStatus('saving');
     try {
       const res = await fetch('/api/rsvp', {
@@ -288,6 +296,8 @@ function RsvpTab({ passcode }) {
         <button className="btn-small" onClick={exportToExcel} disabled={filteredData.length === 0}>⬇ Export to Excel</button>
       </div>
 
+      <ImportFromWeddingPanel passcode={passcode} onImported={load} />
+
       <div className="admin-filter-bar">
         <input
           type="text"
@@ -355,27 +365,55 @@ function RsvpTab({ passcode }) {
         <form className="admin-edit-form" onSubmit={addGuest} style={{ marginBottom: 20 }}>
           <input required value={guestForm.name} onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })} placeholder="Guest Name" />
           <input value={guestForm.phone} onChange={(e) => handleManualPhoneChange(e.target.value)} placeholder="Phone (optional)" />
-          <select value={guestForm.side} onChange={(e) => setGuestForm({ ...guestForm, side: e.target.value })}>
-            <option value="">Side? — not set</option>
-            <option value="Bride">Bride&apos;s Side</option>
-            <option value="Groom">Groom&apos;s Side</option>
-          </select>
-          <select value={guestForm.attending} onChange={(e) => setGuestForm({ ...guestForm, attending: e.target.value })}>
-            <option value="Yes">Attending</option>
-            <option value="No">Declined</option>
-          </select>
+          <div className="admin-toggle-field">
+            <label>Side *</label>
+            <div className="admin-toggle-group">
+              <button type="button" className={guestForm.side === 'Bride' ? 'active' : ''} onClick={() => { setGuestForm({ ...guestForm, side: 'Bride' }); setAddStatus(null); }}>
+                {guestForm.side === 'Bride' && <span className="admin-toggle-check">✓</span>} Bride&apos;s Side
+              </button>
+              <button type="button" className={guestForm.side === 'Groom' ? 'active' : ''} onClick={() => { setGuestForm({ ...guestForm, side: 'Groom' }); setAddStatus(null); }}>
+                {guestForm.side === 'Groom' && <span className="admin-toggle-check">✓</span>} Groom&apos;s Side
+              </button>
+            </div>
+            {addStatus === 'err-side' && <p className="form-msg err" style={{ margin: '4px 0 0' }}>Please select a side.</p>}
+          </div>
+          <div className="admin-toggle-field">
+            <label>Attending</label>
+            <div className="admin-toggle-group">
+              <button type="button" className={guestForm.attending === 'Yes' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, attending: 'Yes' })}>
+                {guestForm.attending === 'Yes' && <span className="admin-toggle-check">✓</span>} Yes
+              </button>
+              <button type="button" className={guestForm.attending === 'No' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, attending: 'No' })}>
+                {guestForm.attending === 'No' && <span className="admin-toggle-check">✓</span>} No
+              </button>
+            </div>
+          </div>
           <input type="number" min="1" max="20" value={guestForm.guests} onChange={(e) => setGuestForm({ ...guestForm, guests: e.target.value })} placeholder="Number of Guests" />
-          <select value={guestForm.drinks} onChange={(e) => setGuestForm({ ...guestForm, drinks: e.target.value })}>
-            <option value="">Drinks? — not set</option>
-            <option value="Yes">Drinks: Yes</option>
-            <option value="No">Drinks: No</option>
-          </select>
-          <select value={guestForm.category} onChange={(e) => setGuestForm({ ...guestForm, category: e.target.value })}>
-            <option value="">Category — not set</option>
-            {GUEST_CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>
-            ))}
-          </select>
+          <div className="admin-toggle-field">
+            <label>Drinks</label>
+            <div className="admin-toggle-group">
+              <button type="button" className={guestForm.drinks === 'Yes' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, drinks: 'Yes' })}>
+                {guestForm.drinks === 'Yes' && <span className="admin-toggle-check">✓</span>} Yes
+              </button>
+              <button type="button" className={guestForm.drinks === 'No' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, drinks: 'No' })}>
+                {guestForm.drinks === 'No' && <span className="admin-toggle-check">✓</span>} No
+              </button>
+              <button type="button" className={!guestForm.drinks ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, drinks: '' })}>
+                {!guestForm.drinks && <span className="admin-toggle-check">✓</span>} Not set
+              </button>
+            </div>
+          </div>
+          <div className="admin-toggle-field">
+            <label>Category *</label>
+            <div className="admin-toggle-group">
+              {GUEST_CATEGORIES.map((c) => (
+                <button key={c} type="button" className={guestForm.category === c ? 'active' : ''} onClick={() => { setGuestForm({ ...guestForm, category: c }); setAddStatus(null); }}>
+                  {guestForm.category === c && <span className="admin-toggle-check">✓</span>} {c.replace(/_/g, ' ')}
+                </button>
+              ))}
+            </div>
+            {addStatus === 'err-category' && <p className="form-msg err" style={{ margin: '4px 0 0' }}>Please select a category.</p>}
+          </div>
           <input value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Note (optional)" />
           <div className="admin-item-actions">
             <button type="submit" className="btn-small btn-approve">Add Guest</button>
@@ -538,6 +576,130 @@ function RsvpTab({ passcode }) {
           >
             Next →
           </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ImportFromWeddingPanel({ passcode, onImported }) {
+  const [weddingGuests, setWeddingGuests] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState({});
+  const [importing, setImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState(null);
+
+  async function loadWeddingGuests() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/rsvp?event=wedding');
+      const json = await res.json();
+      setWeddingGuests(json);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function toggleOpen() {
+    if (!open && weddingGuests.length === 0) loadWeddingGuests();
+    setOpen(!open);
+  }
+
+  function toggleSelect(id) {
+    setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  function selectAll() {
+    const all = {};
+    weddingGuests.forEach((g) => { all[g.id] = true; });
+    setSelected(all);
+  }
+
+  function clearSelection() {
+    setSelected({});
+  }
+
+  const selectedCount = Object.values(selected).filter(Boolean).length;
+
+  async function importSelected() {
+    const ids = Object.keys(selected).filter((id) => selected[id]);
+    if (ids.length === 0) return;
+    setImporting(true);
+    setImportStatus(null);
+    let successCount = 0;
+    for (const id of ids) {
+      const g = weddingGuests.find((x) => x.id === id);
+      if (!g) continue;
+      try {
+        const res = await fetch('/api/rsvp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
+          body: JSON.stringify({
+            name: g.name,
+            phone: g.phone,
+            side: g.side,
+            attending: 'Yes',
+            guests: g.guests,
+            drinks: g.drinks,
+            category: g.category,
+            source: 'manual',
+            event: 'homecoming',
+          }),
+        });
+        if (res.ok) successCount += 1;
+      } catch (e) {
+        // ignore individual failures, continue importing the rest
+      }
+    }
+    setImporting(false);
+    setImportStatus(`Imported ${successCount} of ${ids.length} guest(s).`);
+    setSelected({});
+    onImported();
+  }
+
+  return (
+    <div className="admin-import-panel">
+      <button type="button" className="btn-small" onClick={toggleOpen}>
+        {open ? '▲ Hide' : '👥'} Import Guests from Wedding List
+      </button>
+      {open && (
+        <div className="admin-import-body">
+          {loading ? (
+            <p className="empty-note">Loading wedding guest list...</p>
+          ) : weddingGuests.length === 0 ? (
+            <p className="empty-note">No wedding guests found yet.</p>
+          ) : (
+            <>
+              <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '2px 0 10px' }}>
+                Select guests who are also coming to the Home Coming. Importing a guest already on this
+                list (matched by phone number) will just update their details instead of duplicating them.
+              </p>
+              <div className="admin-item-actions" style={{ marginBottom: 10 }}>
+                <button type="button" className="btn-small" onClick={selectAll}>Select All</button>
+                <button type="button" className="btn-small" onClick={clearSelection}>Clear</button>
+              </div>
+              <div className="admin-import-list">
+                {weddingGuests.map((g) => (
+                  <label key={g.id} className="admin-import-item">
+                    <input type="checkbox" checked={!!selected[g.id]} onChange={() => toggleSelect(g.id)} />
+                    <span className="admin-import-name">{g.name}</span>
+                    <span className="admin-import-phone">{g.phone || '—'}</span>
+                  </label>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="btn-small btn-approve"
+                onClick={importSelected}
+                disabled={importing || selectedCount === 0}
+                style={{ marginTop: 10 }}
+              >
+                {importing ? 'Importing...' : `Import Selected (${selectedCount})`}
+              </button>
+              {importStatus && <p className="form-msg ok">{importStatus}</p>}
+            </>
+          )}
         </div>
       )}
     </div>
