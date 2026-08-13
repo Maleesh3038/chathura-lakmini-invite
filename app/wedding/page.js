@@ -300,51 +300,39 @@ function IntroScreen({ onEnter, onPlayMusic, leaving, settings }) {
   const groomInitial = (settings.groomName || 'C')[0];
   const brideInitial = (settings.brideName || 'L')[0];
   const videoRef = useRef(null);
-  const [playing, setPlaying] = useState(false);
+  const startedRef = useRef(false);
 
-  // Mobile browsers often refuse to paint the first frame of a paused video
-  // until it's actually played (to save data). Forcing a tiny seek once the
-  // video's metadata is ready tricks them into rendering that first frame.
+  // Auto-play the video the moment this screen appears, then move into the
+  // main site once it's done — no tap needed. Note: since there's no click
+  // (user gesture) here, browsers will very likely block the background
+  // music from starting — that's a browser autoplay restriction, not
+  // something we can override. The video itself plays fine since it's muted.
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
-    function paintFirstFrame() {
-      try {
-        video.currentTime = 0.01;
-      } catch (e) {
-        // ignore
-      }
-    }
-    video.addEventListener('loadedmetadata', paintFirstFrame);
-    video.load();
-    return () => video.removeEventListener('loadedmetadata', paintFirstFrame);
-  }, []);
+    if (!video || startedRef.current) return;
+    startedRef.current = true;
 
-  function handleCtaClick() {
-    if (playing) return;
-
-    // The music itself lives in the parent (Home) so it keeps playing across
-    // the transition into the main site instead of stopping when this intro
-    // screen unmounts. Calling it here — synchronously, inside the click
-    // handler — keeps it within the click's "user gesture" so browsers won't
-    // block playback.
-    onPlayMusic();
-
-    const video = videoRef.current;
-    if (video) {
-      setPlaying(true);
+    function start() {
+      onPlayMusic();
       video.currentTime = 0;
       video.play().catch(() => {
-        // Autoplay/play blocked or video unavailable — just proceed.
+        // Autoplay blocked or video unavailable — proceed anyway after a
+        // short pause so the invitation doesn't feel stuck.
       });
       setTimeout(() => {
         video.pause();
         onEnter();
       }, 5000);
-    } else {
-      onEnter();
     }
-  }
+
+    if (video.readyState >= 1) {
+      start();
+    } else {
+      video.addEventListener('loadedmetadata', start, { once: true });
+      video.load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={`intro-overlay ${leaving ? 'leaving' : ''}`}>
@@ -379,13 +367,7 @@ function IntroScreen({ onEnter, onPlayMusic, leaving, settings }) {
 
           <p className="intro-tagline">{settings.taglineEn}</p>
 
-          <button className="intro-cta" onClick={handleCtaClick} disabled={playing}>
-            You&apos;re Invited <span aria-hidden="true">→</span>
-          </button>
-
-          <p className="intro-hint">
-            {playing ? '✨ Opening your invitation...' : settings.songUrl ? '🔊 Tap to begin — with music' : 'Tap to begin'}
-          </p>
+          <p className="intro-hint">✨ Opening your invitation...</p>
 
           <div className="intro-corner bl"><CornerFlourish flip /></div>
           <div className="intro-corner br"><CornerFlourish /></div>
