@@ -78,8 +78,8 @@ function RsvpTab({ passcode }) {
   function shareRowOnWhatsApp(r) {
     const guestLink = `${origin}/wedding?to=${encodeURIComponent(r.name || '')}`;
     const message = waMessageTemplate.includes('{link}')
-      ? waMessageTemplate.replace('{link}', guestLink)
-      : `${waMessageTemplate}\n\n${guestLink}`;
+      ? waMessageTemplate.replace('{name}', r.name || '').replace('{link}', guestLink)
+      : `${waMessageTemplate.replace('{name}', r.name || '')}\n\n${guestLink}`;
     const waPhone = formatPhoneForWhatsApp(r.phone);
     const url = waPhone
       ? `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`
@@ -1110,7 +1110,14 @@ function SettingsTab({ passcode }) {
 }
 
 const DEFAULT_WA_MESSAGE =
-  "💌 We're getting married! We would be so honoured to have you celebrate this special day with us. Your presence would mean the world to us 🌸 Open your invitation below 👇\n{link}";
+  "✨ Dear {name},\n" +
+  "We are overjoyed to share some wonderful news with you! 💍\n" +
+  "We cordially and respectfully invite you to join us at our wedding on September 16, 2026, and make our special day even more meaningful. 🌸\n" +
+  "Please tap your personalised invitation link below to view the full wedding schedule, venue details, and to Confirm your attendance (ඔබගේ පැමිණීම තහවුරු කරන්න): 👇\n" +
+  "{link}\n" +
+  "(Kindly confirm your presence through the RSVP section on the website to help us make the best arrangements for you)\n" +
+  "With love,\n" +
+  "Chathura & Lakmini ❤️";
 
 function GuestLinksTab({ passcode }) {
   const [guestName, setGuestName] = useState('');
@@ -1135,7 +1142,7 @@ function GuestLinksTab({ passcode }) {
   const trimmedName = guestName.trim();
   const link = trimmedName ? `${origin}/wedding?to=${encodeURIComponent(trimmedName)}` : '';
   const finalMessage = link
-    ? (waMessage.includes('{link}') ? waMessage.replace('{link}', link) : `${waMessage}\n\n${link}`)
+    ? (waMessage.includes('{link}') ? waMessage.replace('{name}', trimmedName).replace('{link}', link) : `${waMessage.replace('{name}', trimmedName)}\n\n${link}`)
     : waMessage;
 
   async function copyLink() {
