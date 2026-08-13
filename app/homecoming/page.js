@@ -78,7 +78,27 @@ function HcIconPhone() {
   );
 }
 
-function HcNavBar({ names }) {
+function HcIconMusicOn() {
+  return (
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 18V5l11-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="17" cy="16" r="3" />
+    </svg>
+  );
+}
+function HcIconMusicOff() {
+  return (
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 18V5l11-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="17" cy="16" r="3" />
+      <line x1="3" y1="3" x2="21" y2="21" />
+    </svg>
+  );
+}
+
+function HcNavBar({ names, songUrl, musicPlaying, onToggleMusic }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const links = [
@@ -109,6 +129,17 @@ function HcNavBar({ names }) {
           </a>
         ))}
       </div>
+      {songUrl && (
+        <button
+          type="button"
+          className={`hc-navbar-music ${musicPlaying ? 'playing' : ''}`}
+          onClick={onToggleMusic}
+          aria-label={musicPlaying ? 'Pause music' : 'Play music'}
+          title={musicPlaying ? 'Pause music' : 'Play music'}
+        >
+          {musicPlaying ? <HcIconMusicOn /> : <HcIconMusicOff />}
+        </button>
+      )}
       <button type="button" className="hc-navbar-toggle" aria-label="Toggle menu" onClick={() => setMenuOpen((v) => !v)}>
         <span /><span /><span />
       </button>
@@ -137,7 +168,7 @@ function HcCornerFlourish({ flip }) {
   );
 }
 
-function HcIntroVideo({ onEnter, leaving, names }) {
+function HcIntroVideo({ onEnter, onPlayMusic, leaving, names }) {
   const videoRef = useRef(null);
   const [playing, setPlaying] = useState(false);
 
@@ -158,6 +189,7 @@ function HcIntroVideo({ onEnter, leaving, names }) {
 
   function handleClick() {
     if (playing) return;
+    onPlayMusic();
     const video = videoRef.current;
     if (video) {
       setPlaying(true);
@@ -429,6 +461,7 @@ function HcTableFinder() {
 
 export default function HomecomingPage() {
   const [names, setNames] = useState({ groomName: 'Chathura', brideName: 'Lakmini' });
+  const [songUrl, setSongUrl] = useState(null);
   const [introOpen, setIntroOpen] = useState(true);
   const [introLeaving, setIntroLeaving] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', side: '', attending: '', guests: 1, drinks: '' });
@@ -436,6 +469,8 @@ export default function HomecomingPage() {
   const [status, setStatus] = useState(null);
   const [validationError, setValidationError] = useState('');
   const [now, setNow] = useState(() => Date.now());
+  const audioRef = useRef(null);
+  const [musicPlaying, setMusicPlaying] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -450,9 +485,60 @@ export default function HomecomingPage() {
           groomName: data.groomName || 'Chathura',
           brideName: data.brideName || 'Lakmini',
         });
+        setSongUrl(data.songUrl || null);
       })
       .catch(() => {});
   }, []);
+
+  // The background song lives here (not inside the intro) so it keeps
+  // playing continuously across the transition into the main site, instead
+  // of stopping when the intro screen unmounts. Preloading it as soon as the
+  // song URL is known also keeps a persistent reference alive, which avoids
+  // the Audio element being garbage-collected before playback starts.
+  useEffect(() => {
+    if (!songUrl) return;
+    const audio = new Audio(songUrl);
+    audio.preload = 'auto';
+    audio.volume = 0.5;
+    audio.loop = true;
+    audio.addEventListener('play', () => setMusicPlaying(true));
+    audio.addEventListener('pause', () => setMusicPlaying(false));
+    audioRef.current = audio;
+    return () => {
+      audio.pause();
+      audioRef.current = null;
+    };
+  }, [songUrl]);
+
+  function playMusic() {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    } else if (songUrl) {
+      try {
+        const fresh = new Audio(songUrl);
+        fresh.volume = 0.5;
+        fresh.loop = true;
+        fresh.addEventListener('play', () => setMusicPlaying(true));
+        fresh.addEventListener('pause', () => setMusicPlaying(false));
+        audioRef.current = fresh;
+        fresh.play().catch(() => {});
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+
+  function toggleMusic() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }
 
   useEffect(() => {
     document.body.style.overflow = introOpen ? 'hidden' : '';
@@ -549,11 +635,11 @@ export default function HomecomingPage() {
         {Array.from({ length: 10 }).map((_, i) => <HcPetal key={i} />)}
       </div>
 
-      {introOpen && <HcIntroVideo onEnter={handleEnter} leaving={introLeaving} names={names} />}
+      {introOpen && <HcIntroVideo onEnter={handleEnter} onPlayMusic={playMusic} leaving={introLeaving} names={names} />}
 
       {!introOpen && (
         <>
-          <HcNavBar names={names} />
+          <HcNavBar names={names} songUrl={songUrl} musicPlaying={musicPlaying} onToggleMusic={toggleMusic} />
 
           <section className="hc-hero-full" id="hc-top">
             <video
