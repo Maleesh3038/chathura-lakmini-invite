@@ -1425,6 +1425,35 @@ table.rsvp-table td{ color:var(--ink); }
   font-weight:500;
 }
 
+.admin-import-panel{ margin-bottom: 20px; }
+.admin-import-body{
+  margin-top:12px;
+  padding:16px;
+  background:var(--bg-panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+}
+.admin-import-list{
+  max-height:280px;
+  overflow-y:auto;
+  border:1px solid var(--line);
+  border-radius:8px;
+}
+.admin-import-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 12px;
+  border-bottom:1px solid var(--line);
+  font-size:13px;
+  cursor:pointer;
+}
+.admin-import-item:last-child{ border-bottom:none; }
+.admin-import-item:hover{ background:rgba(184,134,63,0.06); }
+.admin-import-item input[type="checkbox"]{ flex:0 0 auto; width:16px; height:16px; cursor:pointer; }
+.admin-import-name{ flex:1; color:var(--ink); font-weight:500; }
+.admin-import-phone{ color:var(--muted); font-size:12px; }
+
 .admin-toggle-field{ display:flex; flex-direction:column; gap:6px; }
 .admin-toggle-field label{ margin-top:0; }
 .admin-toggle-group{ display:flex; flex-wrap:wrap; gap:10px; }
