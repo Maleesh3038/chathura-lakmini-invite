@@ -128,6 +128,14 @@ function RsvpTab({ passcode }) {
 
   async function addGuest(e) {
     e.preventDefault();
+    if (!guestForm.side) {
+      setAddStatus('err-side');
+      return;
+    }
+    if (!guestForm.category) {
+      setAddStatus('err-category');
+      return;
+    }
     setAddStatus('saving');
     try {
       const res = await fetch('/api/rsvp', {
@@ -357,18 +365,16 @@ function RsvpTab({ passcode }) {
           <input required value={guestForm.name} onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })} placeholder="Guest Name" />
           <input value={guestForm.phone} onChange={(e) => handleManualPhoneChange(e.target.value)} placeholder="Phone (optional)" />
           <div className="admin-toggle-field">
-            <label>Side</label>
+            <label>Side *</label>
             <div className="admin-toggle-group">
-              <button type="button" className={guestForm.side === 'Bride' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, side: 'Bride' })}>
+              <button type="button" className={guestForm.side === 'Bride' ? 'active' : ''} onClick={() => { setGuestForm({ ...guestForm, side: 'Bride' }); setAddStatus(null); }}>
                 {guestForm.side === 'Bride' && <span className="admin-toggle-check">✓</span>} Bride&apos;s Side
               </button>
-              <button type="button" className={guestForm.side === 'Groom' ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, side: 'Groom' })}>
+              <button type="button" className={guestForm.side === 'Groom' ? 'active' : ''} onClick={() => { setGuestForm({ ...guestForm, side: 'Groom' }); setAddStatus(null); }}>
                 {guestForm.side === 'Groom' && <span className="admin-toggle-check">✓</span>} Groom&apos;s Side
               </button>
-              <button type="button" className={!guestForm.side ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, side: '' })}>
-                {!guestForm.side && <span className="admin-toggle-check">✓</span>} Not set
-              </button>
             </div>
+            {addStatus === 'err-side' && <p className="form-msg err" style={{ margin: '4px 0 0' }}>Please select a side.</p>}
           </div>
           <div className="admin-toggle-field">
             <label>Attending</label>
@@ -397,17 +403,15 @@ function RsvpTab({ passcode }) {
             </div>
           </div>
           <div className="admin-toggle-field">
-            <label>Category</label>
+            <label>Category *</label>
             <div className="admin-toggle-group">
-              <button type="button" className={!guestForm.category ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, category: '' })}>
-                {!guestForm.category && <span className="admin-toggle-check">✓</span>} Not set
-              </button>
               {GUEST_CATEGORIES.map((c) => (
-                <button key={c} type="button" className={guestForm.category === c ? 'active' : ''} onClick={() => setGuestForm({ ...guestForm, category: c })}>
+                <button key={c} type="button" className={guestForm.category === c ? 'active' : ''} onClick={() => { setGuestForm({ ...guestForm, category: c }); setAddStatus(null); }}>
                   {guestForm.category === c && <span className="admin-toggle-check">✓</span>} {c.replace(/_/g, ' ')}
                 </button>
               ))}
             </div>
+            {addStatus === 'err-category' && <p className="form-msg err" style={{ margin: '4px 0 0' }}>Please select a category.</p>}
           </div>
           <input value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Note (optional)" />
           <div className="admin-item-actions">
