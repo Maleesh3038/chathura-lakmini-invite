@@ -1,17 +1,21 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { isValidPasscode } from '@/lib/checkPasscode';
 
-function adminPasscode(request) {
-  return request.headers.get('x-admin-passcode') || '';
-}
-
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const wantAll = searchParams.get('all') === 'true';
-  const isAdmin = wantAll && isValidPasscode(adminPasscode(request));
+  const event = searchParams.get('event') || 'wedding';
+  const all = searchParams.get('all') === 'true';
+  const passcode = request.headers.get('x-admin-passcode') || '';
 
-  let query = supabaseAdmin.from('wishes').select('*').order('submitted_at', { ascending: false });
-  if (!isAdmin) {
+  let query = supabaseAdmin
+    .from('wishes')
+    .select('*')
+    .eq('event_type', event)
+    .order('submitted_at', { ascending: false });
+
+  // Public visitors only ever see visible ("approved") wishes. The admin
+  // dashboard passes ?all=true with the passcode to see hidden ones too.
+  if (!(all && isValidPasscode(passcode))) {
     query = query.eq('approved', true);
   }
 
@@ -22,7 +26,7 @@ export async function GET(request) {
     id: w.id,
     name: w.name,
     message: w.message,
-    media: Array.isArray(w.media) && w.media.length ? w.media : (w.photo_url ? [{ url: w.photo_url, type: 'image' }] : []),
+    media: (w.media && w.media.length ? w.media : (w.photo_url ? [{ url: w.photo_url, type: 'image' }] : [])),
     approved: w.approved,
     submittedAt: w.submitted_at,
   }));
@@ -35,14 +39,24 @@ export async function POST(request) {
     if (!body.name || !body.message) {
       return Response.json({ ok: false, error: 'Name and message are required.' }, { status: 400 });
     }
-    const media = Array.isArray(body.media) ? body.media.slice(0, 10) : [];
 
-    const { error } = await supabaseAdmin.from('wishes').insert({
+    const eventType = body.event === 'homecoming' ? 'homecoming' : 'wedding';
+    const media = Array.isArray(body.media) ? body.media.slice(0, 6) : [];
+
+    const payload = {
       name: String(body.name).slice(0, 80),
       message: String(body.message).slice(0, 600),
       media,
-      approved: false,
-    });
+      photo_url: media[0]?.url || null,
+      // Wishes go live immediately — no admin approval needed. The couple
+      // can still hide (or delete) anything inappropriate from the admin
+      // dashboard afterwards.
+      approved: true,
+      submitted_at: new Date().toISOString(),
+      event_type: eventType,
+    };
+
+    const { error } = await supabaseAdmin.from('wishes').insert(payload);
     if (error) throw error;
     return Response.json({ ok: true });
   } catch (e) {
@@ -52,16 +66,17 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
-    if (!isValidPasscode(adminPasscode(request))) {
+    const passcode = request.headers.get('x-admin-passcode') || '';
+    if (!isValidPasscode(passcode)) {
       return Response.json({ ok: false, error: 'Invalid passcode.' }, { status: 401 });
     }
     const body = await request.json();
     if (!body.id) return Response.json({ ok: false, error: 'Missing id.' }, { status: 400 });
 
-    const { error } = await supabaseAdmin
-      .from('wishes')
-      .update({ approved: !!body.approved })
-      .eq('id', body.id);
+    const update = {};
+    if (body.approved !== undefined) update.approved = !!body.approved;
+
+    const { error } = await supabaseAdmin.from('wishes').update(update).eq('id', body.id);
     if (error) throw error;
     return Response.json({ ok: true });
   } catch (e) {
@@ -71,7 +86,8 @@ export async function PATCH(request) {
 
 export async function DELETE(request) {
   try {
-    if (!isValidPasscode(adminPasscode(request))) {
+    const passcode = request.headers.get('x-admin-passcode') || '';
+    if (!isValidPasscode(passcode)) {
       return Response.json({ ok: false, error: 'Invalid passcode.' }, { status: 401 });
     }
     const body = await request.json();
