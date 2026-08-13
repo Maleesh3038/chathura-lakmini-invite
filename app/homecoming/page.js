@@ -177,7 +177,7 @@ function HcIntroVideo({ onEnter, leaving, names }) {
 
   return (
     <div className={`hc-intro-overlay ${leaving ? 'leaving' : ''}`}>
-      <div className="hc-intro-card">
+      <div className="hc-intro-card" onClick={handleClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}>
         <div className="hc-intro-bg" aria-hidden="true">
           <video
             ref={videoRef}
@@ -208,13 +208,13 @@ function HcIntroVideo({ onEnter, leaving, names }) {
 
           <p className="hc-tagline">You are warmly invited to our Home Coming celebration.</p>
 
-          <button className="hc-cta" onClick={handleClick} disabled={playing}>
+          <button className="hc-cta" onClick={(e) => { e.stopPropagation(); handleClick(); }} disabled={playing}>
             {playing ? 'Opening your invitation...' : (
               <>You&apos;re Invited <span aria-hidden="true">→</span></>
             )}
           </button>
 
-          <p className="hc-intro-hint">{playing ? '✨ Opening...' : 'Tap to begin'}</p>
+          <p className="hc-intro-hint">{playing ? '✨ Opening...' : 'Tap anywhere to begin'}</p>
 
           <div className="hc-intro-corner bl"><HcCornerFlourish flip /></div>
           <div className="hc-intro-corner br"><HcCornerFlourish /></div>
