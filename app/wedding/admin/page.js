@@ -797,7 +797,7 @@ function WishesTab({ passcode }) {
             <div className="admin-item-head">
               <strong>{w.name}</strong>
               <span className={`badge ${w.approved ? 'badge-approved' : 'badge-pending'}`}>
-                {w.approved ? 'Approved' : 'Pending'}
+                {w.approved ? 'Visible' : 'Hidden'}
               </span>
             </div>
             <p>{w.message}</p>
@@ -805,7 +805,7 @@ function WishesTab({ passcode }) {
           </div>
           <div className="admin-item-actions">
             <button className="btn-small btn-approve" onClick={() => toggleApprove(w)}>
-              {w.approved ? 'Unapprove' : 'Approve'}
+              {w.approved ? '🙈 Hide' : '👁️ Unhide'}
             </button>
             <button className="btn-small btn-delete" onClick={() => removeWish(w)}>Delete</button>
           </div>
