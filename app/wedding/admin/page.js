@@ -33,7 +33,131 @@ function emptyGuestForm() {
   return { name: '', phone: '', side: '', attending: 'Yes', guests: 1, drinks: '', category: '', message: '' };
 }
 
-function RsvpTab({ passcode }) {
+function ImportFromWeddingPanel({ passcode, onImported }) {
+  const [weddingGuests, setWeddingGuests] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState({});
+  const [importing, setImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState(null);
+
+  async function loadWeddingGuests() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/rsvp?event=wedding');
+      const json = await res.json();
+      setWeddingGuests(json);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function toggleOpen() {
+    if (!open && weddingGuests.length === 0) loadWeddingGuests();
+    setOpen(!open);
+  }
+
+  function toggleSelect(id) {
+    setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  function selectAll() {
+    const all = {};
+    weddingGuests.forEach((g) => { all[g.id] = true; });
+    setSelected(all);
+  }
+
+  function clearSelection() {
+    setSelected({});
+  }
+
+  const selectedCount = Object.values(selected).filter(Boolean).length;
+
+  async function importSelected() {
+    const ids = Object.keys(selected).filter((id) => selected[id]);
+    if (ids.length === 0) return;
+    setImporting(true);
+    setImportStatus(null);
+    let successCount = 0;
+    for (const id of ids) {
+      const g = weddingGuests.find((x) => x.id === id);
+      if (!g) continue;
+      try {
+        const res = await fetch('/api/rsvp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
+          body: JSON.stringify({
+            name: g.name,
+            phone: g.phone,
+            side: g.side,
+            attending: 'Yes',
+            guests: g.guests,
+            drinks: g.drinks,
+            category: g.category,
+            source: 'manual',
+            event: 'homecoming',
+          }),
+        });
+        if (res.ok) successCount += 1;
+      } catch (e) {
+        // ignore individual failures, continue importing the rest
+      }
+    }
+    setImporting(false);
+    setImportStatus(`Imported ${successCount} of ${ids.length} guest(s).`);
+    setSelected({});
+    onImported();
+  }
+
+  return (
+    <div className="admin-import-panel">
+      <button type="button" className="btn-small" onClick={toggleOpen}>
+        {open ? '▲ Hide' : '👥'} Import Guests from Wedding List
+      </button>
+      {open && (
+        <div className="admin-import-body">
+          {loading ? (
+            <p className="empty-note">Loading wedding guest list...</p>
+          ) : weddingGuests.length === 0 ? (
+            <p className="empty-note">No wedding guests found yet.</p>
+          ) : (
+            <>
+              <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '2px 0 10px' }}>
+                Select guests who are also coming to the Home Coming. Importing a guest already on this
+                list (matched by phone number) will just update their details instead of duplicating them.
+              </p>
+              <div className="admin-item-actions" style={{ marginBottom: 10 }}>
+                <button type="button" className="btn-small" onClick={selectAll}>Select All</button>
+                <button type="button" className="btn-small" onClick={clearSelection}>Clear</button>
+              </div>
+              <div className="admin-import-list">
+                {weddingGuests.map((g) => (
+                  <label key={g.id} className="admin-import-item">
+                    <input type="checkbox" checked={!!selected[g.id]} onChange={() => toggleSelect(g.id)} />
+                    <span className="admin-import-name">{g.name}</span>
+                    <span className="admin-import-phone">{g.phone || '—'}</span>
+                  </label>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="btn-small btn-approve"
+                onClick={importSelected}
+                disabled={importing || selectedCount === 0}
+                style={{ marginTop: 10 }}
+              >
+                {importing ? 'Importing...' : `Import Selected (${selectedCount})`}
+              </button>
+              {importStatus && <p className="form-msg ok">{importStatus}</p>}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RsvpTab({ passcode, event = 'wedding' }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -76,7 +200,7 @@ function RsvpTab({ passcode }) {
   }
 
   function shareRowOnWhatsApp(r) {
-    const guestLink = `${origin}/wedding?to=${encodeURIComponent(r.name || '')}`;
+    const guestLink = `${origin}/${event === 'homecoming' ? 'homecoming' : 'wedding'}?to=${encodeURIComponent(r.name || '')}`;
     const message = waMessageTemplate.includes('{link}')
       ? waMessageTemplate.replace('{name}', r.name || '').replace('{link}', guestLink)
       : `${waMessageTemplate.replace('{name}', r.name || '')}\n\n${guestLink}`;
@@ -90,7 +214,7 @@ function RsvpTab({ passcode }) {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch('/api/rsvp');
+      const res = await fetch(`/api/rsvp?event=${event}`);
       const json = await res.json();
       setData(json);
     } finally {
@@ -141,7 +265,7 @@ function RsvpTab({ passcode }) {
       const res = await fetch('/api/rsvp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
-        body: JSON.stringify({ ...guestForm, source: 'manual' }),
+        body: JSON.stringify({ ...guestForm, source: 'manual', event }),
       });
       if (!res.ok) throw new Error('failed');
       setAddStatus('ok');
@@ -228,7 +352,7 @@ function RsvpTab({ passcode }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'wedding-rsvps.csv';
+    a.download = event === 'homecoming' ? 'homecoming-rsvps.csv' : 'wedding-rsvps.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -296,6 +420,8 @@ function RsvpTab({ passcode }) {
         {!showAdd && <button className="btn" onClick={() => setShowAdd(true)}>+ Add Guest Manually</button>}
         <button className="btn-small" onClick={exportToExcel} disabled={filteredData.length === 0}>⬇ Export to Excel</button>
       </div>
+
+      {event === 'homecoming' && <ImportFromWeddingPanel passcode={passcode} onImported={load} />}
 
       <div className="admin-filter-bar">
         <input
@@ -1310,6 +1436,7 @@ export default function AdminPage() {
 
       <div className="admin-tabs">
         <button className={`admin-tab ${tab === 'rsvps' ? 'active' : ''}`} onClick={() => setTab('rsvps')}>RSVPs</button>
+        <button className={`admin-tab ${tab === 'homecoming' ? 'active' : ''}`} onClick={() => setTab('homecoming')}>Home Coming</button>
         <button className={`admin-tab ${tab === 'wishes' ? 'active' : ''}`} onClick={() => setTab('wishes')}>Guest Wishes</button>
         <button className={`admin-tab ${tab === 'schedule' ? 'active' : ''}`} onClick={() => setTab('schedule')}>Wedding Schedule</button>
         <button className={`admin-tab ${tab === 'settings' ? 'active' : ''}`} onClick={() => setTab('settings')}>Site Content</button>
@@ -1317,7 +1444,8 @@ export default function AdminPage() {
       </div>
 
       <div style={{ marginTop: 24 }}>
-        {tab === 'rsvps' && <RsvpTab passcode={pin} />}
+        {tab === 'rsvps' && <RsvpTab passcode={pin} event="wedding" />}
+        {tab === 'homecoming' && <RsvpTab passcode={pin} event="homecoming" />}
         {tab === 'wishes' && <WishesTab passcode={pin} />}
         {tab === 'schedule' && <ScheduleTab passcode={pin} />}
         {tab === 'settings' && <SettingsTab passcode={pin} />}
