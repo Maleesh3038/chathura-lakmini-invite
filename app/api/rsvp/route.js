@@ -54,12 +54,18 @@ export async function POST(request) {
       attending: body.attending,
       guests: body.guests || 1,
       drinks: body.drinks ? String(body.drinks).slice(0, 10) : null,
-      category: body.category ? String(body.category).slice(0, 40) : null,
       message: body.message ? String(body.message).slice(0, 600) : null,
       submitted_at: new Date().toISOString(),
       source,
       event_type: eventType,
     };
+    // `category` is an admin-only field — the public RSVP form never sends
+    // it. Only touch it here if it was actually provided (i.e. an admin
+    // action), otherwise a guest submitting their own RSVP would silently
+    // wipe out a category the admin had already set on that row.
+    if (body.category !== undefined) {
+      payload.category = body.category ? String(body.category).slice(0, 40) : null;
+    }
 
     let error;
     if (phone) {
