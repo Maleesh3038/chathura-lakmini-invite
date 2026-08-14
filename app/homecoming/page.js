@@ -103,7 +103,6 @@ function HcNavBar({ names, songUrl, musicPlaying, onToggleMusic }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const links = [
     { href: '#hc-rsvp', label: 'RSVP' },
-    { href: '#hc-find-table', label: 'Find Table' },
     { href: '#hc-venue', label: 'Venue' },
   ];
 
@@ -330,130 +329,12 @@ function HcThankYou({ names }) {
   return (
     <section className="hc-section">
       <HcReveal className="hc-panel hc-thankyou-panel">
-        <div className="hc-thankyou-icon">🌿</div>
         <h2 className="hc-thankyou-title">To Our Wonderful Guests</h2>
         <p className="hc-thankyou-msg">
           From the bottom of our hearts, thank you for being part of our Home Coming. Your presence
           means the world to us as we begin this new chapter together.
         </p>
         <p className="hc-thankyou-sign">— {names.groomName} &amp; {names.brideName}</p>
-      </HcReveal>
-    </section>
-  );
-}
-
-function HcTableFinder() {
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('idle');
-  const [results, setResults] = useState([]);
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const debounceRef = useRef(null);
-
-  async function fetchMatches(q, suggest) {
-    try {
-      const res = await fetch('/api/rsvp/lookup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q, suggest, event: 'homecoming' }),
-      });
-      if (!res.ok) return [];
-      const json = await res.json();
-      return json.results || [];
-    } catch (err) {
-      return [];
-    }
-  }
-
-  function handleChange(e) {
-    const val = e.target.value;
-    setQuery(val);
-    setStatus('idle');
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    const trimmed = val.trim();
-    if (!trimmed) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-    debounceRef.current = setTimeout(async () => {
-      const matches = await fetchMatches(trimmed, true);
-      setSuggestions(matches);
-      setShowSuggestions(matches.length > 0);
-    }, 220);
-  }
-
-  function pickSuggestion(match) {
-    setQuery(match.name);
-    setShowSuggestions(false);
-    setResults([match]);
-    setStatus('done');
-  }
-
-  async function handleSearch(e) {
-    e.preventDefault();
-    if (!query.trim()) return;
-    setShowSuggestions(false);
-    setStatus('loading');
-    const matches = await fetchMatches(query.trim(), false);
-    setResults(matches);
-    setStatus('done');
-  }
-
-  return (
-    <section id="hc-find-table" className="hc-section">
-      <div className="hc-section-head">
-        <div className="hc-eyebrow">Seating</div>
-        <h2 className="hc-section-title">Find Your Table</h2>
-      </div>
-      <HcReveal className="hc-panel">
-        <form onSubmit={handleSearch} autoComplete="off">
-          <div className="hc-field" style={{ position: 'relative' }}>
-            <label htmlFor="hc-t-query">Name or Phone Number</label>
-            <input
-              id="hc-t-query"
-              type="text"
-              required
-              placeholder="e.g. Nimal Perera or 0771234567"
-              value={query}
-              onChange={handleChange}
-              onFocus={() => { if (suggestions.length) setShowSuggestions(true); }}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-            />
-            {showSuggestions && (
-              <div className="hc-suggestions">
-                {suggestions.map((s, i) => (
-                  <div key={i} className="hc-suggestion-item" onMouseDown={() => pickSuggestion(s)}>
-                    <span>
-                      <span className="hc-suggestion-name">{s.name}</span>
-                      {s.phone && <span className="hc-suggestion-phone">{s.phone}</span>}
-                    </span>
-                    {s.tableNumber && <span className="hc-suggestion-num">Table {s.tableNumber}</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <button type="submit" className="hc-cta hc-cta-block" disabled={status === 'loading'}>
-            {status === 'loading' ? 'Searching...' : 'Search'}
-          </button>
-          {status === 'done' && results.length === 0 && (
-            <div className="hc-msg hc-msg-err">No matching guest found. Please check the spelling or try your phone number.</div>
-          )}
-          {status === 'done' && results.length > 0 && (
-            <div className="hc-results">
-              {results.map((r, i) => (
-                <div key={i} className="hc-result-item">
-                  <span>
-                    <span className="hc-result-name">{r.name}</span>
-                    {r.phone && <span className="hc-result-phone">{r.phone}</span>}
-                  </span>
-                  <span className="hc-result-num">{r.tableNumber ? `Table ${r.tableNumber}` : 'Table not assigned yet'}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </form>
       </HcReveal>
     </section>
   );
@@ -836,8 +717,6 @@ export default function HomecomingPage() {
           <section className="hc-section" style={{ paddingTop: 0 }}>
             <HcAddToCalendar names={names} />
           </section>
-
-          <HcTableFinder />
 
           <HcThankYou names={names} />
 
