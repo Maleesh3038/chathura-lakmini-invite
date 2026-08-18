@@ -7,27 +7,41 @@ export const dynamic = 'force-dynamic';
 
 const SPOTLIGHT_SECONDS = 8;
 const REFRESH_SECONDS = 12;
-const MAX_WALL_CARDS = 14;
+const MAX_WALL_CARDS = 32;
 
-// Fixed scatter "slots" around the edges of the screen, each as a
-// percentage position + a slight rotation for that pinned-note feel.
-// Left empty in the middle for the title + spotlight card.
-const SLOTS = [
-  { top: '3%', left: '2%', rotate: -3 },
-  { top: '2%', left: '19%', rotate: 2 },
-  { top: '3%', left: '38%', rotate: -2 },
-  { top: '2%', left: '57%', rotate: 3 },
-  { top: '3%', left: '74%', rotate: -2 },
-  { top: '2%', left: '90%', rotate: 2 },
-  { top: '20%', left: '1%', rotate: 2 },
-  { top: '38%', left: '2%', rotate: -3 },
-  { top: '20%', left: '91%', rotate: -2 },
-  { top: '38%', left: '90%', rotate: 3 },
-  { top: '78%', left: '1%', rotate: 3 },
-  { top: '80%', left: '18%', rotate: -2 },
-  { top: '82%', left: '58%', rotate: 2 },
-  { top: '80%', left: '75%', rotate: -3 },
-];
+// Generates a dense ring of scatter "slots" around the edges of the screen
+// (a top band and a bottom band of rows), leaving the vertical middle empty
+// for the title + spotlight card. Denser than a hand-picked list, so far
+// more wishes can be shown on screen at once.
+function generateSlots() {
+  const slots = [];
+  const topCols = 7;
+  const topRows = 2;
+  const bottomCols = 7;
+  const bottomRows = 2;
+
+  for (let row = 0; row < topRows; row++) {
+    for (let col = 0; col < topCols; col++) {
+      slots.push({
+        top: `${1 + row * 9}%`,
+        left: `${0.5 + col * (99 / topCols)}%`,
+        rotate: (col % 2 === 0 ? -1 : 1) * (2 + (row % 3)),
+      });
+    }
+  }
+  for (let row = 0; row < bottomRows; row++) {
+    for (let col = 0; col < bottomCols; col++) {
+      slots.push({
+        top: `${80 + row * 9}%`,
+        left: `${0.5 + col * (99 / bottomCols)}%`,
+        rotate: (col % 2 === 0 ? 1 : -1) * (2 + (row % 3)),
+      });
+    }
+  }
+  return slots;
+}
+
+const SLOTS = generateSlots();
 
 function Petals() {
   const canvasRef = useRef(null);
@@ -192,7 +206,7 @@ export default function WishesDisplayPage() {
                 )}
               </div>
             )}
-            <p className="wd-note-message">{truncate(w.message, 90)}</p>
+            <p className="wd-note-message">{truncate(w.message, 65)}</p>
             <p className="wd-note-name">{w.name.toUpperCase()}</p>
           </div>
         );
