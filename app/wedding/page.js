@@ -924,6 +924,15 @@ function downloadICS(settings) {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
+function maskPhone(phone) {
+  if (!phone) return phone;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length <= 6) return phone;
+  const start = digits.slice(0, 4);
+  const end = digits.slice(-2);
+  return `${start}${'x'.repeat(digits.length - 6)}${end}`;
+}
+
 function TableLookupSection() {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('idle'); // idle | loading | done | error
@@ -1015,7 +1024,7 @@ function TableLookupSection() {
                   >
                     <span className="table-suggestion-info">
                       <span className="table-suggestion-name">{s.name}</span>
-                      {s.phone && <span className="table-suggestion-phone">{s.phone}</span>}
+                      {s.phone && <span className="table-suggestion-phone">{maskPhone(s.phone)}</span>}
                     </span>
                     {s.tableNumber && <span className="table-suggestion-num">Table {s.tableNumber}</span>}
                   </div>
@@ -1036,7 +1045,7 @@ function TableLookupSection() {
                 <div key={i} className="table-result-item">
                   <span className="table-result-info">
                     <span className="table-result-name">{r.name}</span>
-                    {r.phone && <span className="table-result-phone">{r.phone}</span>}
+                    {r.phone && <span className="table-result-phone">{maskPhone(r.phone)}</span>}
                   </span>
                   <span className="table-result-num">
                     {r.tableNumber ? `Table ${r.tableNumber}` : 'Table not assigned yet'}
