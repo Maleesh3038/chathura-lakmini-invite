@@ -14,43 +14,64 @@ const REFRESH_SECONDS = 12;
 // middle of the screen is always left clear for the title + spotlight card;
 // as the count grows, cards just get packed in denser (more, smaller rows)
 // rather than ever needing to page/rotate them out.
-function generateSlots(count) {
-  if (count <= 0) return { slots: [], colWidth: 12 };
-  const perSide = Math.ceil(count / 2);
-  const maxCols = 14;
-  const maxBandHeight = 20; // % of viewport — hard cap so the center title
-  // and spotlight card always keep a big, guaranteed-clear middle area.
-  const rowHeightPercent = 7.5;
-
-  // Prefer widening (more columns) over growing taller (more rows), so the
-  // top/bottom bands stay shallow even as the wish count grows.
-  let cols = Math.min(maxCols, Math.max(6, Math.ceil(perSide / 2)));
-  let rows = Math.max(1, Math.ceil(perSide / cols));
-  while (rows * rowHeightPercent > maxBandHeight && cols < maxCols) {
-    cols += 1;
-    rows = Math.max(1, Math.ceil(perSide / cols));
+function layoutHorizontalBand(n, topStart, topEnd, tiltSign, out) {
+  if (n <= 0) return;
+  const maxRows = Math.max(1, Math.floor((topEnd - topStart) / 7.5) + 1);
+  let cols = Math.max(4, Math.ceil(n / maxRows));
+  let rows = Math.min(maxRows, Math.max(1, Math.ceil(n / cols)));
+  const rowGap = rows > 1 ? (topEnd - topStart) / (rows - 1) : 0;
+  const colWidth = 98 / cols;
+  for (let i = 0; i < n; i++) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    out.push({
+      top: `${topStart + row * rowGap}%`,
+      left: `${1 + col * colWidth}%`,
+      width: `${colWidth - 0.7}vw`,
+      rotate: (col % 2 === 0 ? -1 : 1) * (2 + (row % 3)) * tiltSign,
+    });
   }
+}
 
-  const bandHeight = Math.min(maxBandHeight, rows * rowHeightPercent);
-  const rowGap = rows > 1 ? bandHeight / (rows - 1) : 0;
-  const colWidth = 99 / cols;
+function layoutVerticalBand(n, leftStart, vertStart, vertEnd, tiltSign, out) {
+  if (n <= 0) return;
+  const bandWidth = 11; // % of viewport width reserved for this side column
+  const maxCols = 2;
+  let cols = n <= 6 ? 1 : maxCols;
+  let rows = Math.max(1, Math.ceil(n / cols));
+  const colGap = cols > 1 ? bandWidth / cols : 0;
+  const rowGap = rows > 1 ? (vertEnd - vertStart) / (rows - 1) : 0;
+  for (let i = 0; i < n; i++) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    out.push({
+      top: `${vertStart + row * rowGap}%`,
+      left: `${leftStart + col * colGap}%`,
+      width: `${cols > 1 ? bandWidth / cols - 0.6 : bandWidth - 1}vw`,
+      rotate: (row % 2 === 0 ? -1 : 1) * 2 * tiltSign,
+    });
+  }
+}
+
+// Spreads wishes across all four edges of the screen (top, bottom, left,
+// right) rather than piling everything into just a top/bottom band — this
+// keeps any one band from growing tall enough to crowd the center title +
+// spotlight card, and matches a proper "wall of notes" framing all around.
+function generateSlots(count) {
+  if (count <= 0) return { slots: [] };
+
+  const topCount = Math.ceil(count * 0.34);
+  const bottomCount = Math.ceil(count * 0.34);
+  const leftCount = Math.ceil(count * 0.16);
+  const rightCount = Math.max(0, count - topCount - bottomCount - leftCount);
 
   const slots = [];
-  for (let side = 0; side < 2; side++) {
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const top = side === 0
-          ? `${1 + row * rowGap}%`
-          : `${98 - bandHeight + row * rowGap}%`;
-        slots.push({
-          top,
-          left: `${0.5 + col * colWidth}%`,
-          rotate: (col % 2 === 0 ? -1 : 1) * (2 + (row % 3)) * (side === 0 ? 1 : -1),
-        });
-      }
-    }
-  }
-  return { slots, colWidth };
+  layoutHorizontalBand(topCount, 1, 19, 1, slots);
+  layoutHorizontalBand(bottomCount, 81, 99, -1, slots);
+  layoutVerticalBand(leftCount, 0.5, 22, 78, 1, slots);
+  layoutVerticalBand(rightCount, 88.5, 22, 78, -1, slots);
+
+  return { slots };
 }
 
 function Petals() {
@@ -174,7 +195,7 @@ export default function WishesDisplayPage() {
   // Every wish except the one currently in the spotlight — all shown on the
   // wall at once, however many there are.
   const wallWishes = wishes.filter((_, i) => i !== spotlightIndex);
-  const { slots, colWidth } = generateSlots(wallWishes.length);
+  const { slots } = generateSlots(wallWishes.length);
 
   return (
     <div className="wd-page">
@@ -194,7 +215,8 @@ export default function WishesDisplayPage() {
       {status === 'ok' && wallWishes.map((w, i) => {
         const slot = slots[i];
         const thumb = w.media && w.media[0];
-        const maxMessageLen = colWidth >= 11 ? 65 : colWidth >= 8 ? 45 : 30;
+        const widthNum = parseFloat(slot.width);
+        const maxMessageLen = widthNum >= 11 ? 65 : widthNum >= 8 ? 45 : 30;
         return (
           <div
             key={w.id}
@@ -202,7 +224,7 @@ export default function WishesDisplayPage() {
             style={{
               top: slot.top,
               left: slot.left,
-              width: `${colWidth - 0.6}vw`,
+              width: slot.width,
               transform: `rotate(${slot.rotate}deg)`,
             }}
           >
