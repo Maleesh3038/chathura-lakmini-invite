@@ -639,7 +639,7 @@ function RsvpTab({ passcode, event = 'wedding' }) {
                   </td>
                   <td data-label="Table">
                     {isEditing ? (
-                      <input style={{ ...inputStyle, minWidth: 50 }} value={editRow.tableNumber} onChange={(e) => setEditRow({ ...editRow, tableNumber: e.target.value })} placeholder="e.g. 12" />
+                      <input style={{ ...inputStyle, minWidth: 50 }} value={editRow.tableNumber} onChange={(e) => setEditRow({ ...editRow, tableNumber: e.target.value })} placeholder="e.g. 12 or VIP" />
                     ) : (
                       r.tableNumber || '—'
                     )}
