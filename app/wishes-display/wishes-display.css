@@ -4,7 +4,7 @@
   position:fixed;
   inset:0;
   overflow:hidden;
-  background:radial-gradient(ellipse at 50% 20%, #3d2416 0%, #1a0f0a 70%);
+  background:linear-gradient(135deg, #7a1f3d 0%, #5c1830 35%, #6b2418 70%, #a85a2e 100%);
   font-family:'Outfit', sans-serif;
   color:#f5e9d6;
 }
@@ -12,36 +12,20 @@
 /* ---------- ATMOSPHERE ---------- */
 .wd-atmosphere{ position:absolute; inset:0; z-index:0; pointer-events:none; }
 .wd-petals{ position:absolute; inset:0; width:100%; height:100%; }
-.wd-glow{
-  position:absolute;
-  border-radius:50%;
-  filter:blur(90px);
-  opacity:0.35;
-}
-.wd-glow-a{
-  width:50vw; height:50vw;
-  top:-15vw; left:-10vw;
-  background:radial-gradient(circle, #e7bd6a, transparent 70%);
-}
-.wd-glow-b{
-  width:45vw; height:45vw;
-  bottom:-15vw; right:-10vw;
-  background:radial-gradient(circle, #b9695f, transparent 70%);
-}
 .wd-vignette{
   position:absolute;
   inset:0;
-  background:radial-gradient(ellipse at center, transparent 40%, rgba(10,5,3,0.6) 100%);
+  background:radial-gradient(ellipse at center, transparent 35%, rgba(20,5,10,0.45) 100%);
 }
 
 /* ---------- FULLSCREEN BUTTON ---------- */
 .wd-fs-btn{
   position:fixed;
-  top:24px;
-  right:24px;
-  z-index:20;
-  width:44px;
-  height:44px;
+  top:16px;
+  right:16px;
+  z-index:30;
+  width:38px;
+  height:38px;
   border-radius:50%;
   border:1px solid rgba(231,189,106,0.35);
   background:rgba(0,0,0,0.25);
@@ -52,15 +36,41 @@
   cursor:pointer;
   backdrop-filter:blur(6px);
   transition:background 0.2s ease, opacity 0.3s ease;
-  opacity:0.5;
+  opacity:0.4;
 }
 .wd-fs-btn:hover{ background:rgba(0,0,0,0.45); opacity:1; }
-.wd-fs-btn svg{ width:18px; height:18px; }
+.wd-fs-btn svg{ width:16px; height:16px; }
 
-/* ---------- STAGE ---------- */
+/* ---------- WALL NOTES ---------- */
+.wd-note{
+  position:fixed;
+  z-index:2;
+  width:clamp(150px, 15vw, 220px);
+  background:#faf3e0;
+  border:1px solid #d8b26a;
+  border-radius:10px;
+  padding:14px 16px;
+  box-shadow:0 10px 24px rgba(0,0,0,0.28);
+  transition:opacity 0.6s ease;
+}
+.wd-note-message{
+  font-size:clamp(11px, 0.95vw, 14px);
+  line-height:1.5;
+  color:#3d2416;
+  margin:0 0 8px;
+}
+.wd-note-name{
+  font-size:clamp(9px, 0.7vw, 11px);
+  letter-spacing:0.08em;
+  color:#a8783f;
+  font-weight:600;
+  margin:0;
+}
+
+/* ---------- STAGE (center) ---------- */
 .wd-stage{
   position:relative;
-  z-index:1;
+  z-index:5;
   min-height:100vh;
   display:flex;
   flex-direction:column;
@@ -70,27 +80,25 @@
   text-align:center;
 }
 
-.wd-topbar{ margin-bottom:clamp(24px, 4vh, 56px); }
+.wd-topbar{ margin-bottom:clamp(18px, 3vh, 34px); }
 .wd-kicker{
-  font-size:clamp(11px, 1.1vw, 14px);
+  font-size:clamp(11px, 1vw, 13px);
   letter-spacing:0.4em;
   text-transform:uppercase;
-  color:#c9a86a;
-  margin:0 0 10px;
+  color:#e7bd6a;
+  margin:0 0 8px;
 }
 .wd-topbar h1{
-  font-family:'Cormorant Garamond', serif;
-  font-style:italic;
-  font-weight:600;
-  font-size:clamp(28px, 4vw, 52px);
-  color:#f5e9d6;
+  font-family:'Great Vibes', cursive;
+  font-weight:400;
+  font-size:clamp(34px, 5vw, 62px);
+  color:#fffaf0;
   margin:0;
+  text-shadow:0 4px 20px rgba(0,0,0,0.3);
 }
 .wd-topbar h1 span{
-  font-family:'Great Vibes', cursive;
-  font-style:normal;
-  color:#e0857a;
-  padding:0 12px;
+  color:#e7bd6a;
+  padding:0 10px;
 }
 
 /* ---------- LOADER / ERROR ---------- */
@@ -99,7 +107,7 @@
   flex-direction:column;
   align-items:center;
   gap:18px;
-  color:#d9c4a0;
+  color:#f0e0c8;
   font-size:clamp(14px, 1.3vw, 18px);
 }
 .wd-ring{
@@ -122,94 +130,64 @@
 }
 .wd-ghost-btn:hover{ background:rgba(231,189,106,0.1); }
 
-/* ---------- WISH CARD ---------- */
-.wd-wish{
-  max-width:min(720px, 88vw);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+/* ---------- SPOTLIGHT CARD ---------- */
+.wd-spotlight{
+  max-width:min(680px, 82vw);
+  width:100%;
+  background:#faf3e0;
+  border-radius:20px;
+  padding:clamp(28px, 4vw, 48px) clamp(30px, 5vw, 56px);
+  box-shadow:0 30px 70px rgba(0,0,0,0.4);
   opacity:1;
   transform:translateY(0) scale(1);
-  transition:opacity 0.5s ease, transform 0.5s ease;
+  transition:opacity 0.45s ease, transform 0.45s ease;
 }
-.wd-wish.fading{
+.wd-spotlight.fading{
   opacity:0;
-  transform:translateY(14px) scale(0.98);
+  transform:translateY(10px) scale(0.98);
 }
 
-.wd-ornament{ display:flex; align-items:center; gap:16px; margin-bottom:22px; }
-.wd-ornament-bottom{ margin-top:26px; margin-bottom:0; }
-.wd-ornament span{
-  width:clamp(40px, 8vw, 90px);
-  height:1px;
-  background:linear-gradient(to right, transparent, #c9a86a, transparent);
-}
-.wd-ornament svg{ width:20px; height:20px; fill:#c9576a; opacity:0.85; }
-.wd-ornament i{
-  width:6px; height:6px;
-  border-radius:50%;
-  background:#c9576a;
-  opacity:0.7;
-  font-style:normal;
-}
-
-.wd-media{
-  width:100%;
-  max-width:420px;
-  max-height:38vh;
-  border-radius:16px;
-  overflow:hidden;
-  margin-bottom:26px;
-  box-shadow:0 20px 60px rgba(0,0,0,0.45);
-  border:1px solid rgba(231,189,106,0.2);
-}
-.wd-media img, .wd-media video{
-  width:100%;
-  height:100%;
-  max-height:38vh;
-  object-fit:cover;
-  display:block;
-}
-
-.wd-message{
-  font-family:'Cormorant Garamond', serif;
-  font-style:italic;
-  font-weight:500;
-  font-size:clamp(20px, 2.6vw, 34px);
-  line-height:1.5;
-  color:#faf3e4;
+.wd-spotlight-divider{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
   margin:0 0 20px;
 }
-.wd-name{
-  font-size:clamp(14px, 1.4vw, 18px);
-  letter-spacing:0.06em;
-  color:#c9a86a;
-  margin:0;
-  font-weight:500;
+.wd-spotlight-divider:last-child{ margin:20px 0 0; }
+.wd-spotlight-divider span{
+  width:clamp(40px, 6vw, 80px);
+  height:1px;
+  background:linear-gradient(to right, transparent, #c9a052, transparent);
 }
-
-/* ---------- DOTS ---------- */
-.wd-dots{
-  position:fixed;
-  bottom:28px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  gap:8px;
-  z-index:10;
+.wd-spotlight-divider i{
+  font-style:normal;
+  color:#8a2c4e;
+  font-size:16px;
 }
-.wd-dot{
-  width:6px; height:6px;
+.wd-spotlight-divider i.dot{
+  display:inline-block;
+  width:5px; height:5px;
   border-radius:50%;
-  background:rgba(231,189,106,0.3);
-  transition:background 0.3s ease, transform 0.3s ease;
-}
-.wd-dot.active{
-  background:#e7bd6a;
-  transform:scale(1.4);
+  background:#c9a052;
 }
 
-@media (max-width:600px){
-  .wd-media{ max-height:30vh; }
-  .wd-media img, .wd-media video{ max-height:30vh; }
+.wd-spotlight-message{
+  font-family:'Cormorant Garamond', serif;
+  font-weight:600;
+  font-size:clamp(20px, 2.6vw, 32px);
+  line-height:1.4;
+  color:#2c1810;
+  margin:0 0 18px;
+}
+.wd-spotlight-name{
+  font-size:clamp(12px, 1.1vw, 15px);
+  letter-spacing:0.1em;
+  color:#a8783f;
+  font-weight:600;
+  margin:0;
+}
+
+@media (max-width:900px){
+  .wd-note{ display:none; }
 }
