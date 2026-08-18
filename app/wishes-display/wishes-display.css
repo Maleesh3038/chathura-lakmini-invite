@@ -1,0 +1,215 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&display=swap');
+
+.wd-page{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+  background:radial-gradient(ellipse at 50% 20%, #3d2416 0%, #1a0f0a 70%);
+  font-family:'Outfit', sans-serif;
+  color:#f5e9d6;
+}
+
+/* ---------- ATMOSPHERE ---------- */
+.wd-atmosphere{ position:absolute; inset:0; z-index:0; pointer-events:none; }
+.wd-petals{ position:absolute; inset:0; width:100%; height:100%; }
+.wd-glow{
+  position:absolute;
+  border-radius:50%;
+  filter:blur(90px);
+  opacity:0.35;
+}
+.wd-glow-a{
+  width:50vw; height:50vw;
+  top:-15vw; left:-10vw;
+  background:radial-gradient(circle, #e7bd6a, transparent 70%);
+}
+.wd-glow-b{
+  width:45vw; height:45vw;
+  bottom:-15vw; right:-10vw;
+  background:radial-gradient(circle, #b9695f, transparent 70%);
+}
+.wd-vignette{
+  position:absolute;
+  inset:0;
+  background:radial-gradient(ellipse at center, transparent 40%, rgba(10,5,3,0.6) 100%);
+}
+
+/* ---------- FULLSCREEN BUTTON ---------- */
+.wd-fs-btn{
+  position:fixed;
+  top:24px;
+  right:24px;
+  z-index:20;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  border:1px solid rgba(231,189,106,0.35);
+  background:rgba(0,0,0,0.25);
+  color:#e7bd6a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  backdrop-filter:blur(6px);
+  transition:background 0.2s ease, opacity 0.3s ease;
+  opacity:0.5;
+}
+.wd-fs-btn:hover{ background:rgba(0,0,0,0.45); opacity:1; }
+.wd-fs-btn svg{ width:18px; height:18px; }
+
+/* ---------- STAGE ---------- */
+.wd-stage{
+  position:relative;
+  z-index:1;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:40px 24px;
+  text-align:center;
+}
+
+.wd-topbar{ margin-bottom:clamp(24px, 4vh, 56px); }
+.wd-kicker{
+  font-size:clamp(11px, 1.1vw, 14px);
+  letter-spacing:0.4em;
+  text-transform:uppercase;
+  color:#c9a86a;
+  margin:0 0 10px;
+}
+.wd-topbar h1{
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  font-weight:600;
+  font-size:clamp(28px, 4vw, 52px);
+  color:#f5e9d6;
+  margin:0;
+}
+.wd-topbar h1 span{
+  font-family:'Great Vibes', cursive;
+  font-style:normal;
+  color:#e0857a;
+  padding:0 12px;
+}
+
+/* ---------- LOADER / ERROR ---------- */
+.wd-loader, .wd-error{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:18px;
+  color:#d9c4a0;
+  font-size:clamp(14px, 1.3vw, 18px);
+}
+.wd-ring{
+  width:44px; height:44px;
+  border-radius:50%;
+  border:3px solid rgba(231,189,106,0.25);
+  border-top-color:#e7bd6a;
+  animation:wd-spin 1s linear infinite;
+}
+@keyframes wd-spin{ to{ transform:rotate(360deg); } }
+.wd-ghost-btn{
+  padding:10px 26px;
+  border-radius:24px;
+  border:1px solid rgba(231,189,106,0.4);
+  background:transparent;
+  color:#e7bd6a;
+  font-size:14px;
+  cursor:pointer;
+  transition:background 0.2s ease;
+}
+.wd-ghost-btn:hover{ background:rgba(231,189,106,0.1); }
+
+/* ---------- WISH CARD ---------- */
+.wd-wish{
+  max-width:min(720px, 88vw);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  opacity:1;
+  transform:translateY(0) scale(1);
+  transition:opacity 0.5s ease, transform 0.5s ease;
+}
+.wd-wish.fading{
+  opacity:0;
+  transform:translateY(14px) scale(0.98);
+}
+
+.wd-ornament{ display:flex; align-items:center; gap:16px; margin-bottom:22px; }
+.wd-ornament-bottom{ margin-top:26px; margin-bottom:0; }
+.wd-ornament span{
+  width:clamp(40px, 8vw, 90px);
+  height:1px;
+  background:linear-gradient(to right, transparent, #c9a86a, transparent);
+}
+.wd-ornament svg{ width:20px; height:20px; fill:#c9576a; opacity:0.85; }
+.wd-ornament i{
+  width:6px; height:6px;
+  border-radius:50%;
+  background:#c9576a;
+  opacity:0.7;
+  font-style:normal;
+}
+
+.wd-media{
+  width:100%;
+  max-width:420px;
+  max-height:38vh;
+  border-radius:16px;
+  overflow:hidden;
+  margin-bottom:26px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.45);
+  border:1px solid rgba(231,189,106,0.2);
+}
+.wd-media img, .wd-media video{
+  width:100%;
+  height:100%;
+  max-height:38vh;
+  object-fit:cover;
+  display:block;
+}
+
+.wd-message{
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  font-weight:500;
+  font-size:clamp(20px, 2.6vw, 34px);
+  line-height:1.5;
+  color:#faf3e4;
+  margin:0 0 20px;
+}
+.wd-name{
+  font-size:clamp(14px, 1.4vw, 18px);
+  letter-spacing:0.06em;
+  color:#c9a86a;
+  margin:0;
+  font-weight:500;
+}
+
+/* ---------- DOTS ---------- */
+.wd-dots{
+  position:fixed;
+  bottom:28px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:8px;
+  z-index:10;
+}
+.wd-dot{
+  width:6px; height:6px;
+  border-radius:50%;
+  background:rgba(231,189,106,0.3);
+  transition:background 0.3s ease, transform 0.3s ease;
+}
+.wd-dot.active{
+  background:#e7bd6a;
+  transform:scale(1.4);
+}
+
+@media (max-width:600px){
+  .wd-media{ max-height:30vh; }
+  .wd-media img, .wd-media video{ max-height:30vh; }
+}
