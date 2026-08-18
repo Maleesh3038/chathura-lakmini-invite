@@ -7,41 +7,41 @@ export const dynamic = 'force-dynamic';
 
 const SPOTLIGHT_SECONDS = 8;
 const REFRESH_SECONDS = 12;
-const MAX_WALL_CARDS = 32;
 
-// Generates a dense ring of scatter "slots" around the edges of the screen
-// (a top band and a bottom band of rows), leaving the vertical middle empty
-// for the title + spotlight card. Denser than a hand-picked list, so far
-// more wishes can be shown on screen at once.
-function generateSlots() {
+// Generates enough scatter "slots" around the edges of the screen to fit
+// ALL of the given count at once — splitting them between a top band and a
+// bottom band, and picking however many rows/columns each band needs. The
+// middle of the screen is always left clear for the title + spotlight card;
+// as the count grows, cards just get packed in denser (more, smaller rows)
+// rather than ever needing to page/rotate them out.
+function generateSlots(count) {
+  if (count <= 0) return { slots: [], colWidth: 12 };
+  const perSide = Math.ceil(count / 2);
+  const cols = Math.min(14, Math.max(5, Math.ceil(Math.sqrt(perSide * 2.2))));
+  const rows = Math.max(1, Math.ceil(perSide / cols));
+  // Each band can grow up to ~34% of the screen height before it would
+  // start crowding the center spotlight area.
+  const bandHeight = Math.min(34, rows * 8.5);
+  const rowGap = rows > 1 ? bandHeight / (rows - 1 || 1) : 0;
+  const colWidth = 99 / cols;
+
   const slots = [];
-  const topCols = 7;
-  const topRows = 2;
-  const bottomCols = 7;
-  const bottomRows = 2;
-
-  for (let row = 0; row < topRows; row++) {
-    for (let col = 0; col < topCols; col++) {
-      slots.push({
-        top: `${1 + row * 9}%`,
-        left: `${0.5 + col * (99 / topCols)}%`,
-        rotate: (col % 2 === 0 ? -1 : 1) * (2 + (row % 3)),
-      });
+  for (let side = 0; side < 2; side++) {
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const top = side === 0
+          ? `${1 + row * rowGap}%`
+          : `${99 - bandHeight + row * rowGap}%`;
+        slots.push({
+          top,
+          left: `${0.5 + col * colWidth}%`,
+          rotate: (col % 2 === 0 ? -1 : 1) * (2 + (row % 3)) * (side === 0 ? 1 : -1),
+        });
+      }
     }
   }
-  for (let row = 0; row < bottomRows; row++) {
-    for (let col = 0; col < bottomCols; col++) {
-      slots.push({
-        top: `${80 + row * 9}%`,
-        left: `${0.5 + col * (99 / bottomCols)}%`,
-        rotate: (col % 2 === 0 ? 1 : -1) * (2 + (row % 3)),
-      });
-    }
-  }
-  return slots;
+  return { slots, colWidth };
 }
-
-const SLOTS = generateSlots();
 
 function Petals() {
   const canvasRef = useRef(null);
@@ -107,7 +107,6 @@ function truncate(text, max) {
 export default function WishesDisplayPage() {
   const [wishes, setWishes] = useState([]);
   const [spotlightIndex, setSpotlightIndex] = useState(0);
-  const [wallPage, setWallPage] = useState(0);
   const [status, setStatus] = useState('loading');
   const [fading, setFading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -136,7 +135,6 @@ export default function WishesDisplayPage() {
       setFading(true);
       setTimeout(() => {
         setSpotlightIndex((i) => (i + 1) % wishes.length);
-        setWallPage((p) => p + 1);
         setFading(false);
       }, 450);
     }, SPOTLIGHT_SECONDS * 1000);
@@ -163,15 +161,10 @@ export default function WishesDisplayPage() {
 
   const spotlight = wishes[spotlightIndex];
 
-  // Every wish except the one currently in the spotlight, split into
-  // "pages" the size of our scatter slots. Which page is shown rotates
-  // over time (via wallPage), so with enough time every wish appears on
-  // the wall — not just however many fit on screen at once.
-  const nonSpotlight = wishes.filter((_, i) => i !== spotlightIndex);
-  const slotCount = Math.min(SLOTS.length, MAX_WALL_CARDS);
-  const pageCount = Math.max(1, Math.ceil(nonSpotlight.length / slotCount));
-  const safePage = wallPage % pageCount;
-  const wallWishes = nonSpotlight.slice(safePage * slotCount, safePage * slotCount + slotCount);
+  // Every wish except the one currently in the spotlight — all shown on the
+  // wall at once, however many there are.
+  const wallWishes = wishes.filter((_, i) => i !== spotlightIndex);
+  const { slots, colWidth } = generateSlots(wallWishes.length);
 
   return (
     <div className="wd-page">
@@ -189,13 +182,19 @@ export default function WishesDisplayPage() {
       </button>
 
       {status === 'ok' && wallWishes.map((w, i) => {
-        const slot = SLOTS[i % SLOTS.length];
+        const slot = slots[i];
         const thumb = w.media && w.media[0];
+        const maxMessageLen = colWidth >= 11 ? 65 : colWidth >= 8 ? 45 : 30;
         return (
           <div
             key={w.id}
             className="wd-note"
-            style={{ top: slot.top, left: slot.left, transform: `rotate(${slot.rotate}deg)` }}
+            style={{
+              top: slot.top,
+              left: slot.left,
+              width: `${colWidth - 0.6}vw`,
+              transform: `rotate(${slot.rotate}deg)`,
+            }}
           >
             {thumb && (
               <div className="wd-note-media">
@@ -206,7 +205,7 @@ export default function WishesDisplayPage() {
                 )}
               </div>
             )}
-            <p className="wd-note-message">{truncate(w.message, 65)}</p>
+            <p className="wd-note-message">{truncate(w.message, maxMessageLen)}</p>
             <p className="wd-note-name">{w.name.toUpperCase()}</p>
           </div>
         );
