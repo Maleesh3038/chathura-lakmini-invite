@@ -164,6 +164,8 @@ export default function WishesDisplayPage() {
   const [wallFading, setWallFading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [viewport, setViewport] = useState({ w: 1280, h: 720 });
+  const spotlightRef = useRef(null);
+  const spotlightMessageRef = useRef(null);
 
   // ---------- viewport tracking (drives collision-free layout) ----------
   useEffect(() => {
@@ -217,6 +219,31 @@ export default function WishesDisplayPage() {
   const spotlight = wishes[spotlightIndex];
   const nonSpotlight = wishes.filter((_, i) => i !== spotlightIndex);
   const pageCount = capacity > 0 ? Math.max(1, Math.ceil(nonSpotlight.length / capacity)) : 1;
+
+  // The spotlight card must never grow past this height, or it would start
+  // covering the border cards above/below it.
+  const zones = getZones(viewport.w, viewport.h);
+  const spotlightMaxHeight = Math.max(220, zones.centerBottom - zones.centerTop - 24);
+
+  useEffect(() => {
+    if (!spotlight) return;
+    const card = spotlightRef.current;
+    const msg = spotlightMessageRef.current;
+    if (!card || !msg) return;
+
+    msg.style.fontSize = '';
+    const raf = requestAnimationFrame(() => {
+      let fontSize = parseFloat(getComputedStyle(msg).fontSize);
+      const minFont = 13;
+      let guard = 0;
+      while (card.scrollHeight > spotlightMaxHeight && fontSize > minFont && guard < 30) {
+        fontSize -= 1;
+        msg.style.fontSize = `${fontSize}px`;
+        guard += 1;
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [spotlight, spotlightMaxHeight]);
 
   useEffect(() => {
     if (pageCount <= 1) return;
@@ -325,7 +352,7 @@ export default function WishesDisplayPage() {
         )}
 
         {status === 'ok' && spotlight && (
-          <article className={`wd-spotlight ${fading ? 'fading' : ''}`}>
+          <article ref={spotlightRef} className={`wd-spotlight ${fading ? 'fading' : ''}`} style={{ maxHeight: `${spotlightMaxHeight}px` }}>
             <div className="wd-spotlight-divider">
               <span />
               <i>♥</i>
@@ -340,7 +367,7 @@ export default function WishesDisplayPage() {
                 )}
               </div>
             )}
-            <blockquote className="wd-spotlight-message">{spotlight.message}</blockquote>
+            <blockquote ref={spotlightMessageRef} className="wd-spotlight-message">{spotlight.message}</blockquote>
             <p className="wd-spotlight-name">— {(spotlight.name || '').toUpperCase()}</p>
             <div className="wd-spotlight-divider">
               <span />
