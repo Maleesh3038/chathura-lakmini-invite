@@ -93,7 +93,13 @@
   text-align:center;
 }
 
-.wd-topbar{ margin-bottom:clamp(18px, 3vh, 34px); }
+.wd-topbar{
+  margin-bottom:clamp(18px, 3vh, 34px);
+  padding:14px 32px;
+  border-radius:20px;
+  background:rgba(20,5,10,0.32);
+  backdrop-filter:blur(4px);
+}
 .wd-kicker{
   font-size:clamp(11px, 1vw, 13px);
   letter-spacing:0.4em;
