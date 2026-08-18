@@ -6,74 +6,102 @@ import './wishes-display.css';
 export const dynamic = 'force-dynamic';
 
 const SPOTLIGHT_SECONDS = 8;
+const WALL_PAGE_SECONDS = 14;
 const REFRESH_SECONDS = 12;
+const MARGIN = 18; // px from the screen edge
+const GAP = 12; // px between cards
 
-// Generates enough scatter "slots" around the edges of the screen to fit
-// ALL of the given count at once — splitting them between a top band and a
-// bottom band, and picking however many rows/columns each band needs. The
-// middle of the screen is always left clear for the title + spotlight card;
-// as the count grows, cards just get packed in denser (more, smaller rows)
-// rather than ever needing to page/rotate them out.
-function layoutHorizontalBand(n, topStart, topEnd, tiltSign, out) {
-  if (n <= 0) return;
-  const maxRows = Math.max(1, Math.floor((topEnd - topStart) / 7.5) + 1);
-  let cols = Math.max(4, Math.ceil(n / maxRows));
-  let rows = Math.min(maxRows, Math.max(1, Math.ceil(n / cols)));
-  const rowGap = rows > 1 ? (topEnd - topStart) / (rows - 1) : 0;
-  const colWidth = 98 / cols;
-  for (let i = 0; i < n; i++) {
-    const row = Math.floor(i / cols);
-    const col = i % cols;
-    out.push({
-      top: `${topStart + row * rowGap}%`,
-      left: `${1 + col * colWidth}%`,
-      width: `${colWidth - 0.7}vw`,
-      rotate: (col % 2 === 0 ? -1 : 1) * (2 + (row % 3)) * tiltSign,
-    });
-  }
+// The screen is split into 5 non-overlapping zones: a big center zone
+// (reserved for the title + spotlight card, never touched by border cards)
+// and four bands around it — top, bottom, left, right.
+function getZones(vw, vh) {
+  const centerTop = vh * 0.2;
+  const centerBottom = vh * 0.8;
+  const centerLeft = vw * 0.22;
+  const centerRight = vw * 0.78;
+  return { centerTop, centerBottom, centerLeft, centerRight };
 }
 
-function layoutVerticalBand(n, leftStart, vertStart, vertEnd, tiltSign, out) {
-  if (n <= 0) return;
-  const bandWidth = 15; // % of viewport width reserved for this side column
-  const cols = 1; // single column, wider cards with room for full text
-  const rows = n;
-  const rowGap = rows > 1 ? (vertEnd - vertStart) / (rows - 1) : 0;
-  for (let i = 0; i < n; i++) {
-    out.push({
-      top: `${vertStart + i * rowGap}%`,
-      left: `${leftStart}%`,
-      width: `${bandWidth - 1}vw`,
-      rotate: (i % 2 === 0 ? -1 : 1) * 2 * tiltSign,
-      isSide: true,
-    });
-  }
+function getCardSize(vw, vh) {
+  const width = clampNum(vw * 0.105, 128, 215);
+  const height = width * 0.8;
+  return { width, height };
 }
 
-// Spreads wishes across all four edges of the screen (top, bottom, left,
-// right) rather than piling everything into just a top/bottom band — this
-// keeps any one band from growing tall enough to crowd the center title +
-// spotlight card, and matches a proper "wall of notes" framing all around.
-function generateSlots(count) {
-  if (count <= 0) return { slots: [] };
+function clampNum(v, min, max) {
+  return Math.min(max, Math.max(min, v));
+}
 
-  const topCount = Math.ceil(count * 0.34);
-  const bottomCount = Math.ceil(count * 0.34);
-  const leftCount = Math.ceil(count * 0.16);
-  const rightCount = Math.max(0, count - topCount - bottomCount - leftCount);
+// Lays out a horizontal band (top or bottom): as many full, non-overlapping
+// rows/columns as actually fit in the given rectangle — nothing is ever
+// squeezed in beyond what fits.
+function layoutHorizontal(bandTop, bandHeight, vw, cardW, cardH) {
+  const usableW = vw - MARGIN * 2;
+  const cols = Math.max(1, Math.floor((usableW + GAP) / (cardW + GAP)));
+  const rows = Math.max(1, Math.floor((bandHeight + GAP) / (cardH + GAP)));
+  const rowGap = rows > 1 ? (bandHeight - cardH) / (rows - 1) : 0;
+  const positions = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      positions.push({
+        top: bandTop + r * rowGap,
+        left: MARGIN + c * (cardW + GAP),
+        width: cardW,
+        rotate: (c % 2 === 0 ? -1 : 1) * (2 + (r % 2)),
+      });
+    }
+  }
+  return positions;
+}
 
-  const slots = [];
-  layoutHorizontalBand(topCount, 1, 19, 1, slots);
-  layoutHorizontalBand(bottomCount, 81, 99, -1, slots);
-  layoutVerticalBand(leftCount, 0.5, 22, 78, 1, slots);
-  layoutVerticalBand(rightCount, 84, 22, 78, -1, slots);
+// Lays out a vertical band (left or right column) the same way, but stacked
+// vertically within the middle strip between the top and bottom bands.
+function layoutVertical(bandLeft, bandWidth, vTop, vBottom, cardW, cardH) {
+  const usableH = vBottom - vTop;
+  const cols = Math.max(1, Math.floor((bandWidth + GAP) / (cardW + GAP)));
+  const rows = Math.max(1, Math.floor((usableH + GAP) / (cardH + GAP)));
+  const rowGap = rows > 1 ? (usableH - cardH) / (rows - 1) : 0;
+  const positions = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      positions.push({
+        top: vTop + r * rowGap,
+        left: bandLeft + c * (cardW + GAP),
+        width: cardW,
+        rotate: (r % 2 === 0 ? -1 : 1) * 2,
+      });
+    }
+  }
+  return positions;
+}
 
-  return { slots };
+function buildLayout(vw, vh) {
+  if (vw < 640) return [];
+  const zones = getZones(vw, vh);
+  const { width: cardW, height: cardH } = getCardSize(vw, vh);
+
+  const topBandHeight = zones.centerTop - MARGIN;
+  const bottomBandHeight = vh - MARGIN - zones.centerBottom;
+  const leftBandWidth = zones.centerLeft - MARGIN;
+  const rightBandWidth = vw - MARGIN - zones.centerRight;
+
+  const top = layoutHorizontal(MARGIN, topBandHeight, vw, cardW, cardH);
+  const bottom = layoutHorizontal(zones.centerBottom, bottomBandHeight, vw, cardW, cardH)
+    .map((p) => ({ ...p, rotate: -p.rotate }));
+  const left = layoutVertical(MARGIN, leftBandWidth, zones.centerTop, zones.centerBottom, cardW, cardH);
+  const right = layoutVertical(zones.centerRight, rightBandWidth, zones.centerTop, zones.centerBottom, cardW, cardH)
+    .map((p) => ({ ...p, rotate: -p.rotate }));
+
+  return [...top, ...bottom, ...left, ...right];
+}
+
+function truncate(text, max) {
+  if (!text) return '';
+  return text.length > max ? `${text.slice(0, max).trim()}…` : text;
 }
 
 function Petals() {
   const canvasRef = useRef(null);
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -96,10 +124,10 @@ function Petals() {
         speed: 0.3 + Math.random() * 0.6,
         drift: (Math.random() - 0.5) * 0.5,
         sway: Math.random() * Math.PI * 2,
-        opacity: 0.2 + Math.random() * 0.35,
+        opacity: 0.18 + Math.random() * 0.3,
       };
     }
-    const count = Math.max(16, Math.floor(window.innerWidth / 100));
+    const count = Math.max(14, Math.floor(window.innerWidth / 110));
     petals = Array.from({ length: count }, makePetal);
 
     function draw() {
@@ -127,24 +155,33 @@ function Petals() {
   return <canvas ref={canvasRef} className="wd-petals" aria-hidden="true" />;
 }
 
-function truncate(text, max) {
-  if (!text) return '';
-  return text.length > max ? `${text.slice(0, max).trim()}…` : text;
-}
-
 export default function WishesDisplayPage() {
   const [wishes, setWishes] = useState([]);
   const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const [wallPage, setWallPage] = useState(0);
   const [status, setStatus] = useState('loading');
   const [fading, setFading] = useState(false);
+  const [wallFading, setWallFading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [viewport, setViewport] = useState({ w: 1280, h: 720 });
 
+  // ---------- viewport tracking (drives collision-free layout) ----------
+  useEffect(() => {
+    function measure() {
+      setViewport({ w: window.innerWidth, h: window.innerHeight });
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  // ---------- data ----------
   async function loadWishes() {
     try {
       const res = await fetch('/api/wishes', { cache: 'no-store' });
       if (!res.ok) throw new Error('failed');
       const data = await res.json();
-      setWishes(Array.isArray(data) ? data : []);
+      setWishes(Array.isArray(data) ? data.filter((w) => w.approved !== false) : []);
       setStatus('ok');
     } catch (e) {
       setStatus('error');
@@ -153,10 +190,11 @@ export default function WishesDisplayPage() {
 
   useEffect(() => {
     loadWishes();
-    const refreshTimer = setInterval(loadWishes, REFRESH_SECONDS * 1000);
-    return () => clearInterval(refreshTimer);
+    const t = setInterval(loadWishes, REFRESH_SECONDS * 1000);
+    return () => clearInterval(t);
   }, []);
 
+  // ---------- center spotlight rotation ----------
   useEffect(() => {
     if (wishes.length < 2) return;
     const timer = setInterval(() => {
@@ -173,6 +211,33 @@ export default function WishesDisplayPage() {
     if (spotlightIndex >= wishes.length) setSpotlightIndex(0);
   }, [wishes, spotlightIndex]);
 
+  // ---------- wall page rotation (only if more wishes than fit at once) ----------
+  const layout = buildLayout(viewport.w, viewport.h);
+  const capacity = layout.length;
+  const spotlight = wishes[spotlightIndex];
+  const nonSpotlight = wishes.filter((_, i) => i !== spotlightIndex);
+  const pageCount = capacity > 0 ? Math.max(1, Math.ceil(nonSpotlight.length / capacity)) : 1;
+
+  useEffect(() => {
+    if (pageCount <= 1) return;
+    const timer = setInterval(() => {
+      setWallFading(true);
+      setTimeout(() => {
+        setWallPage((p) => (p + 1) % pageCount);
+        setWallFading(false);
+      }, 400);
+    }, WALL_PAGE_SECONDS * 1000);
+    return () => clearInterval(timer);
+  }, [pageCount]);
+
+  useEffect(() => {
+    if (wallPage >= pageCount) setWallPage(0);
+  }, [pageCount, wallPage]);
+
+  const safePage = wallPage % pageCount;
+  const wallWishes = nonSpotlight.slice(safePage * capacity, safePage * capacity + capacity);
+
+  // ---------- fullscreen ----------
   useEffect(() => {
     function onFsChange() { setIsFullscreen(!!document.fullscreenElement); }
     document.addEventListener('fullscreenchange', onFsChange);
@@ -186,13 +251,6 @@ export default function WishesDisplayPage() {
       document.documentElement.requestFullscreen().catch(() => {});
     }
   }
-
-  const spotlight = wishes[spotlightIndex];
-
-  // Every wish except the one currently in the spotlight — all shown on the
-  // wall at once, however many there are.
-  const wallWishes = wishes.filter((_, i) => i !== spotlightIndex);
-  const { slots } = generateSlots(wallWishes.length);
 
   return (
     <div className="wd-page">
@@ -210,19 +268,19 @@ export default function WishesDisplayPage() {
       </button>
 
       {status === 'ok' && wallWishes.map((w, i) => {
-        const slot = slots[i];
+        const pos = layout[i];
+        if (!pos) return null;
         const thumb = w.media && w.media[0];
-        const widthNum = parseFloat(slot.width);
-        const maxMessageLen = slot.isSide ? 260 : (widthNum >= 11 ? 65 : widthNum >= 8 ? 45 : 30);
+        const maxLen = pos.width >= 180 ? 90 : pos.width >= 150 ? 65 : 45;
         return (
           <div
             key={w.id}
-            className="wd-note"
+            className={`wd-note ${wallFading ? 'fading' : ''}`}
             style={{
-              top: slot.top,
-              left: slot.left,
-              width: slot.width,
-              transform: `rotate(${slot.rotate}deg)`,
+              top: `${pos.top}px`,
+              left: `${pos.left}px`,
+              width: `${pos.width}px`,
+              transform: `rotate(${pos.rotate}deg)`,
             }}
           >
             {thumb && (
@@ -234,8 +292,8 @@ export default function WishesDisplayPage() {
                 )}
               </div>
             )}
-            <p className="wd-note-message">{truncate(w.message, maxMessageLen)}</p>
-            <p className="wd-note-name">{w.name.toUpperCase()}</p>
+            <p className="wd-note-message">{truncate(w.message, maxLen)}</p>
+            <p className="wd-note-name">{(w.name || '').toUpperCase()}</p>
           </div>
         );
       })}
@@ -283,7 +341,7 @@ export default function WishesDisplayPage() {
               </div>
             )}
             <blockquote className="wd-spotlight-message">{spotlight.message}</blockquote>
-            <p className="wd-spotlight-name">— {spotlight.name.toUpperCase()}</p>
+            <p className="wd-spotlight-name">— {(spotlight.name || '').toUpperCase()}</p>
             <div className="wd-spotlight-divider">
               <span />
               <i className="dot" />
