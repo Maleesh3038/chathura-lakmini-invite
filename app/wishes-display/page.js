@@ -35,20 +35,17 @@ function layoutHorizontalBand(n, topStart, topEnd, tiltSign, out) {
 
 function layoutVerticalBand(n, leftStart, vertStart, vertEnd, tiltSign, out) {
   if (n <= 0) return;
-  const bandWidth = 11; // % of viewport width reserved for this side column
-  const maxCols = 2;
-  let cols = n <= 6 ? 1 : maxCols;
-  let rows = Math.max(1, Math.ceil(n / cols));
-  const colGap = cols > 1 ? bandWidth / cols : 0;
+  const bandWidth = 15; // % of viewport width reserved for this side column
+  const cols = 1; // single column, wider cards with room for full text
+  const rows = n;
   const rowGap = rows > 1 ? (vertEnd - vertStart) / (rows - 1) : 0;
   for (let i = 0; i < n; i++) {
-    const row = Math.floor(i / cols);
-    const col = i % cols;
     out.push({
-      top: `${vertStart + row * rowGap}%`,
-      left: `${leftStart + col * colGap}%`,
-      width: `${cols > 1 ? bandWidth / cols - 0.6 : bandWidth - 1}vw`,
-      rotate: (row % 2 === 0 ? -1 : 1) * 2 * tiltSign,
+      top: `${vertStart + i * rowGap}%`,
+      left: `${leftStart}%`,
+      width: `${bandWidth - 1}vw`,
+      rotate: (i % 2 === 0 ? -1 : 1) * 2 * tiltSign,
+      isSide: true,
     });
   }
 }
@@ -69,7 +66,7 @@ function generateSlots(count) {
   layoutHorizontalBand(topCount, 1, 19, 1, slots);
   layoutHorizontalBand(bottomCount, 81, 99, -1, slots);
   layoutVerticalBand(leftCount, 0.5, 22, 78, 1, slots);
-  layoutVerticalBand(rightCount, 88.5, 22, 78, -1, slots);
+  layoutVerticalBand(rightCount, 84, 22, 78, -1, slots);
 
   return { slots };
 }
@@ -216,7 +213,7 @@ export default function WishesDisplayPage() {
         const slot = slots[i];
         const thumb = w.media && w.media[0];
         const widthNum = parseFloat(slot.width);
-        const maxMessageLen = widthNum >= 11 ? 65 : widthNum >= 8 ? 45 : 30;
+        const maxMessageLen = slot.isSide ? 260 : (widthNum >= 11 ? 65 : widthNum >= 8 ? 45 : 30);
         return (
           <div
             key={w.id}
