@@ -93,6 +93,7 @@ function truncate(text, max) {
 export default function WishesDisplayPage() {
   const [wishes, setWishes] = useState([]);
   const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const [wallPage, setWallPage] = useState(0);
   const [status, setStatus] = useState('loading');
   const [fading, setFading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -121,6 +122,7 @@ export default function WishesDisplayPage() {
       setFading(true);
       setTimeout(() => {
         setSpotlightIndex((i) => (i + 1) % wishes.length);
+        setWallPage((p) => p + 1);
         setFading(false);
       }, 450);
     }, SPOTLIGHT_SECONDS * 1000);
@@ -147,11 +149,15 @@ export default function WishesDisplayPage() {
 
   const spotlight = wishes[spotlightIndex];
 
-  // The wall cards are every wish EXCEPT the one currently in the spotlight,
-  // capped at however many scatter slots we have.
-  const wallWishes = wishes
-    .filter((_, i) => i !== spotlightIndex)
-    .slice(0, Math.min(SLOTS.length, MAX_WALL_CARDS));
+  // Every wish except the one currently in the spotlight, split into
+  // "pages" the size of our scatter slots. Which page is shown rotates
+  // over time (via wallPage), so with enough time every wish appears on
+  // the wall — not just however many fit on screen at once.
+  const nonSpotlight = wishes.filter((_, i) => i !== spotlightIndex);
+  const slotCount = Math.min(SLOTS.length, MAX_WALL_CARDS);
+  const pageCount = Math.max(1, Math.ceil(nonSpotlight.length / slotCount));
+  const safePage = wallPage % pageCount;
+  const wallWishes = nonSpotlight.slice(safePage * slotCount, safePage * slotCount + slotCount);
 
   return (
     <div className="wd-page">
@@ -170,12 +176,22 @@ export default function WishesDisplayPage() {
 
       {status === 'ok' && wallWishes.map((w, i) => {
         const slot = SLOTS[i % SLOTS.length];
+        const thumb = w.media && w.media[0];
         return (
           <div
             key={w.id}
             className="wd-note"
             style={{ top: slot.top, left: slot.left, transform: `rotate(${slot.rotate}deg)` }}
           >
+            {thumb && (
+              <div className="wd-note-media">
+                {thumb.type === 'video' ? (
+                  <video src={thumb.url} muted playsInline />
+                ) : (
+                  <img src={thumb.url} alt="" />
+                )}
+              </div>
+            )}
             <p className="wd-note-message">{truncate(w.message, 90)}</p>
             <p className="wd-note-name">{w.name.toUpperCase()}</p>
           </div>
@@ -215,6 +231,15 @@ export default function WishesDisplayPage() {
               <i>♥</i>
               <span />
             </div>
+            {spotlight.media && spotlight.media[0] && (
+              <div className="wd-spotlight-media">
+                {spotlight.media[0].type === 'video' ? (
+                  <video src={spotlight.media[0].url} autoPlay muted loop playsInline />
+                ) : (
+                  <img src={spotlight.media[0].url} alt="" />
+                )}
+              </div>
+            )}
             <blockquote className="wd-spotlight-message">{spotlight.message}</blockquote>
             <p className="wd-spotlight-name">— {spotlight.name.toUpperCase()}</p>
             <div className="wd-spotlight-divider">
