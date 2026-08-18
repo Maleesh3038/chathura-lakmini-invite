@@ -17,12 +17,22 @@ const REFRESH_SECONDS = 12;
 function generateSlots(count) {
   if (count <= 0) return { slots: [], colWidth: 12 };
   const perSide = Math.ceil(count / 2);
-  const cols = Math.min(14, Math.max(5, Math.ceil(Math.sqrt(perSide * 2.2))));
-  const rows = Math.max(1, Math.ceil(perSide / cols));
-  // Each band can grow up to ~34% of the screen height before it would
-  // start crowding the center spotlight area.
-  const bandHeight = Math.min(34, rows * 8.5);
-  const rowGap = rows > 1 ? bandHeight / (rows - 1 || 1) : 0;
+  const maxCols = 14;
+  const maxBandHeight = 20; // % of viewport — hard cap so the center title
+  // and spotlight card always keep a big, guaranteed-clear middle area.
+  const rowHeightPercent = 7.5;
+
+  // Prefer widening (more columns) over growing taller (more rows), so the
+  // top/bottom bands stay shallow even as the wish count grows.
+  let cols = Math.min(maxCols, Math.max(6, Math.ceil(perSide / 2)));
+  let rows = Math.max(1, Math.ceil(perSide / cols));
+  while (rows * rowHeightPercent > maxBandHeight && cols < maxCols) {
+    cols += 1;
+    rows = Math.max(1, Math.ceil(perSide / cols));
+  }
+
+  const bandHeight = Math.min(maxBandHeight, rows * rowHeightPercent);
+  const rowGap = rows > 1 ? bandHeight / (rows - 1) : 0;
   const colWidth = 99 / cols;
 
   const slots = [];
@@ -31,7 +41,7 @@ function generateSlots(count) {
       for (let col = 0; col < cols; col++) {
         const top = side === 0
           ? `${1 + row * rowGap}%`
-          : `${99 - bandHeight + row * rowGap}%`;
+          : `${98 - bandHeight + row * rowGap}%`;
         slots.push({
           top,
           left: `${0.5 + col * colWidth}%`,
