@@ -6,7 +6,7 @@ import './wishes-display.css';
 export const dynamic = 'force-dynamic';
 
 const SPOTLIGHT_SECONDS = 8;
-const REFRESH_SECONDS = 30;
+const REFRESH_SECONDS = 12;
 const MAX_WALL_CARDS = 14;
 
 // Fixed scatter "slots" around the edges of the screen, each as a
