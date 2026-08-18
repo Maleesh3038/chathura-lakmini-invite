@@ -5,8 +5,29 @@ import './wishes-display.css';
 
 export const dynamic = 'force-dynamic';
 
-const CYCLE_SECONDS = 9;
+const SPOTLIGHT_SECONDS = 8;
 const REFRESH_SECONDS = 30;
+const MAX_WALL_CARDS = 14;
+
+// Fixed scatter "slots" around the edges of the screen, each as a
+// percentage position + a slight rotation for that pinned-note feel.
+// Left empty in the middle for the title + spotlight card.
+const SLOTS = [
+  { top: '3%', left: '2%', rotate: -3 },
+  { top: '2%', left: '19%', rotate: 2 },
+  { top: '3%', left: '38%', rotate: -2 },
+  { top: '2%', left: '57%', rotate: 3 },
+  { top: '3%', left: '74%', rotate: -2 },
+  { top: '2%', left: '90%', rotate: 2 },
+  { top: '20%', left: '1%', rotate: 2 },
+  { top: '38%', left: '2%', rotate: -3 },
+  { top: '20%', left: '91%', rotate: -2 },
+  { top: '38%', left: '90%', rotate: 3 },
+  { top: '78%', left: '1%', rotate: 3 },
+  { top: '80%', left: '18%', rotate: -2 },
+  { top: '82%', left: '58%', rotate: 2 },
+  { top: '80%', left: '75%', rotate: -3 },
+];
 
 function Petals() {
   const canvasRef = useRef(null);
@@ -30,13 +51,13 @@ function Petals() {
         x: Math.random() * canvas.width,
         y: -20 - Math.random() * 200,
         r: 4 + Math.random() * 6,
-        speed: 0.4 + Math.random() * 0.8,
-        drift: (Math.random() - 0.5) * 0.6,
+        speed: 0.3 + Math.random() * 0.6,
+        drift: (Math.random() - 0.5) * 0.5,
         sway: Math.random() * Math.PI * 2,
-        opacity: 0.25 + Math.random() * 0.4,
+        opacity: 0.2 + Math.random() * 0.35,
       };
     }
-    const count = Math.max(18, Math.floor(window.innerWidth / 90));
+    const count = Math.max(16, Math.floor(window.innerWidth / 100));
     petals = Array.from({ length: count }, makePetal);
 
     function draw() {
@@ -44,11 +65,11 @@ function Petals() {
       petals.forEach((p) => {
         p.y += p.speed;
         p.sway += 0.01;
-        p.x += p.drift + Math.sin(p.sway) * 0.4;
+        p.x += p.drift + Math.sin(p.sway) * 0.35;
         if (p.y > canvas.height + 20) Object.assign(p, makePetal(), { y: -20 });
         ctx.beginPath();
-        ctx.fillStyle = `rgba(231,189,106,${p.opacity})`;
-        ctx.ellipse(p.x, p.y, p.r, p.r * 0.7, p.sway, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(230,196,168,${p.opacity})`;
+        ctx.ellipse(p.x, p.y, p.r, p.r * 0.65, p.sway, 0, Math.PI * 2);
         ctx.fill();
       });
       raf = requestAnimationFrame(draw);
@@ -64,12 +85,17 @@ function Petals() {
   return <canvas ref={canvasRef} className="wd-petals" aria-hidden="true" />;
 }
 
+function truncate(text, max) {
+  if (!text) return '';
+  return text.length > max ? `${text.slice(0, max).trim()}…` : text;
+}
+
 export default function WishesDisplayPage() {
   const [wishes, setWishes] = useState([]);
-  const [index, setIndex] = useState(0);
-  const [status, setStatus] = useState('loading'); // loading | ok | error
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const [status, setStatus] = useState('loading');
   const [fading, setFading] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   async function loadWishes() {
     try {
@@ -91,24 +117,22 @@ export default function WishesDisplayPage() {
 
   useEffect(() => {
     if (wishes.length < 2) return;
-    const cycleTimer = setInterval(() => {
+    const timer = setInterval(() => {
       setFading(true);
       setTimeout(() => {
-        setIndex((i) => (i + 1) % wishes.length);
+        setSpotlightIndex((i) => (i + 1) % wishes.length);
         setFading(false);
-      }, 500);
-    }, CYCLE_SECONDS * 1000);
-    return () => clearInterval(cycleTimer);
+      }, 450);
+    }, SPOTLIGHT_SECONDS * 1000);
+    return () => clearInterval(timer);
   }, [wishes.length]);
 
   useEffect(() => {
-    if (index >= wishes.length) setIndex(0);
-  }, [wishes, index]);
+    if (spotlightIndex >= wishes.length) setSpotlightIndex(0);
+  }, [wishes, spotlightIndex]);
 
   useEffect(() => {
-    function onFsChange() {
-      setIsFullscreen(!!document.fullscreenElement);
-    }
+    function onFsChange() { setIsFullscreen(!!document.fullscreenElement); }
     document.addEventListener('fullscreenchange', onFsChange);
     return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, []);
@@ -121,15 +145,18 @@ export default function WishesDisplayPage() {
     }
   }
 
-  const current = wishes[index];
-  const media = current?.media?.[0];
+  const spotlight = wishes[spotlightIndex];
+
+  // The wall cards are every wish EXCEPT the one currently in the spotlight,
+  // capped at however many scatter slots we have.
+  const wallWishes = wishes
+    .filter((_, i) => i !== spotlightIndex)
+    .slice(0, Math.min(SLOTS.length, MAX_WALL_CARDS));
 
   return (
     <div className="wd-page">
       <div className="wd-atmosphere" aria-hidden="true">
         <Petals />
-        <div className="wd-glow wd-glow-a" />
-        <div className="wd-glow wd-glow-b" />
         <div className="wd-vignette" />
       </div>
 
@@ -140,6 +167,20 @@ export default function WishesDisplayPage() {
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M8 20H4v-4M16 20h4v-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
         )}
       </button>
+
+      {status === 'ok' && wallWishes.map((w, i) => {
+        const slot = SLOTS[i % SLOTS.length];
+        return (
+          <div
+            key={w.id}
+            className="wd-note"
+            style={{ top: slot.top, left: slot.left, transform: `rotate(${slot.rotate}deg)` }}
+          >
+            <p className="wd-note-message">{truncate(w.message, 90)}</p>
+            <p className="wd-note-name">{w.name.toUpperCase()}</p>
+          </div>
+        );
+      })}
 
       <main className="wd-stage">
         <header className="wd-topbar">
@@ -167,41 +208,21 @@ export default function WishesDisplayPage() {
           </section>
         )}
 
-        {status === 'ok' && current && (
-          <article className={`wd-wish ${fading ? 'fading' : ''}`}>
-            <div className="wd-ornament wd-ornament-top">
+        {status === 'ok' && spotlight && (
+          <article className={`wd-spotlight ${fading ? 'fading' : ''}`}>
+            <div className="wd-spotlight-divider">
               <span />
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.4-9.3-8.2C.7 9.4 2.4 5 6.2 5c2 0 3.4 1.1 4.3 2.4C11.4 6.1 12.8 5 14.8 5c3.8 0 5.5 4.4 3.5 7.8C19 16.6 12 21 12 21z" /></svg>
+              <i>♥</i>
               <span />
             </div>
-
-            {media && (
-              <div className="wd-media">
-                {media.type === 'video' ? (
-                  <video src={media.url} autoPlay muted loop playsInline />
-                ) : (
-                  <img src={media.url} alt="" />
-                )}
-              </div>
-            )}
-
-            <blockquote className="wd-message">{current.message}</blockquote>
-            <p className="wd-name">— {current.name}</p>
-
-            <div className="wd-ornament wd-ornament-bottom">
+            <blockquote className="wd-spotlight-message">{spotlight.message}</blockquote>
+            <p className="wd-spotlight-name">— {spotlight.name.toUpperCase()}</p>
+            <div className="wd-spotlight-divider">
               <span />
-              <i />
+              <i className="dot" />
               <span />
             </div>
           </article>
-        )}
-
-        {status === 'ok' && wishes.length > 1 && (
-          <div className="wd-dots">
-            {wishes.map((_, i) => (
-              <span key={i} className={`wd-dot ${i === index ? 'active' : ''}`} />
-            ))}
-          </div>
         )}
       </main>
     </div>
