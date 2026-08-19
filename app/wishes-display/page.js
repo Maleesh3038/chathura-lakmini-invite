@@ -5,94 +5,57 @@ import './wishes-display.css';
 
 export const dynamic = 'force-dynamic';
 
-const SPOTLIGHT_SECONDS = 8;
-const WALL_PAGE_SECONDS = 14;
-const REFRESH_SECONDS = 12;
-const MARGIN = 18; // px from the screen edge
-const GAP = 12; // px between cards
+const POLL_MS = 20000;
+const LOOP_DURATION_MS = 8 * 60 * 1000; // 8 minutes per full clockwise loop
+const MARGIN = 16; // px, distance of the conveyor path from the screen edge
 
-// The screen is split into 5 non-overlapping zones: a big center zone
-// (reserved for the title + spotlight card, never touched by border cards)
-// and four bands around it — top, bottom, left, right.
-function getZones(vw, vh) {
-  const centerTop = vh * 0.2;
-  const centerBottom = vh * 0.8;
-  const centerLeft = vw * 0.22;
-  const centerRight = vw * 0.78;
-  return { centerTop, centerBottom, centerLeft, centerRight };
-}
-
-function getCardSize(vw, vh) {
-  const width = clampNum(vw * 0.105, 128, 215);
-  const height = width * 0.8;
-  return { width, height };
+function normalize(f) {
+  let x = f % 1;
+  if (x < 0) x += 1;
+  return x;
 }
 
 function clampNum(v, min, max) {
   return Math.min(max, Math.max(min, v));
 }
 
-// Lays out a horizontal band (top or bottom): as many full, non-overlapping
-// rows/columns as actually fit in the given rectangle — nothing is ever
-// squeezed in beyond what fits.
-function layoutHorizontal(bandTop, bandHeight, vw, cardW, cardH) {
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function computeBorderCapacity(vw, vh) {
+  if (vw < 640) return 0;
+  const cardW = clampNum(vw * 0.105, 120, 205);
+  const cardH = cardW * 0.82;
+  const perimeter = 2 * (vw - MARGIN * 2 + vh - MARGIN * 2);
+  const minGap = Math.max(cardW, cardH) * 1.3;
+  return clampNum(Math.floor(perimeter / minGap), 6, 22);
+}
+
+// Maps a 0..1 fraction of the loop to an (x, y) point walking clockwise
+// around the screen perimeter, starting at the top-left corner: right along
+// the top, down the right side, left along the bottom, up the left side.
+function pointOnPerimeter(fraction, vw, vh) {
   const usableW = vw - MARGIN * 2;
-  const cols = Math.max(1, Math.floor((usableW + GAP) / (cardW + GAP)));
-  const rows = Math.max(1, Math.floor((bandHeight + GAP) / (cardH + GAP)));
-  const rowGap = rows > 1 ? (bandHeight - cardH) / (rows - 1) : 0;
-  const positions = [];
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      positions.push({
-        top: bandTop + r * rowGap,
-        left: MARGIN + c * (cardW + GAP),
-        width: cardW,
-        rotate: (c % 2 === 0 ? -1 : 1) * (2 + (r % 2)),
-      });
-    }
+  const usableH = vh - MARGIN * 2;
+  const perimeter = 2 * (usableW + usableH);
+  const dist = normalize(fraction) * perimeter;
+
+  if (dist < usableW) {
+    return { x: MARGIN + dist, y: MARGIN };
   }
-  return positions;
-}
-
-// Lays out a vertical band (left or right column) the same way, but stacked
-// vertically within the middle strip between the top and bottom bands.
-function layoutVertical(bandLeft, bandWidth, vTop, vBottom, cardW, cardH) {
-  const usableH = vBottom - vTop;
-  const cols = Math.max(1, Math.floor((bandWidth + GAP) / (cardW + GAP)));
-  const rows = Math.max(1, Math.floor((usableH + GAP) / (cardH + GAP)));
-  const rowGap = rows > 1 ? (usableH - cardH) / (rows - 1) : 0;
-  const positions = [];
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      positions.push({
-        top: vTop + r * rowGap,
-        left: bandLeft + c * (cardW + GAP),
-        width: cardW,
-        rotate: (r % 2 === 0 ? -1 : 1) * 2,
-      });
-    }
+  if (dist < usableW + usableH) {
+    return { x: MARGIN + usableW, y: MARGIN + (dist - usableW) };
   }
-  return positions;
-}
-
-function buildLayout(vw, vh) {
-  if (vw < 640) return [];
-  const zones = getZones(vw, vh);
-  const { width: cardW, height: cardH } = getCardSize(vw, vh);
-
-  const topBandHeight = zones.centerTop - MARGIN;
-  const bottomBandHeight = vh - MARGIN - zones.centerBottom;
-  const leftBandWidth = zones.centerLeft - MARGIN;
-  const rightBandWidth = vw - MARGIN - zones.centerRight;
-
-  const top = layoutHorizontal(MARGIN, topBandHeight, vw, cardW, cardH);
-  const bottom = layoutHorizontal(zones.centerBottom, bottomBandHeight, vw, cardW, cardH)
-    .map((p) => ({ ...p, rotate: -p.rotate }));
-  const left = layoutVertical(MARGIN, leftBandWidth, zones.centerTop, zones.centerBottom, cardW, cardH);
-  const right = layoutVertical(zones.centerRight, rightBandWidth, zones.centerTop, zones.centerBottom, cardW, cardH)
-    .map((p) => ({ ...p, rotate: -p.rotate }));
-
-  return [...top, ...bottom, ...left, ...right];
+  if (dist < usableW * 2 + usableH) {
+    return { x: MARGIN + usableW - (dist - usableW - usableH), y: MARGIN + usableH };
+  }
+  return { x: MARGIN, y: MARGIN + usableH - (dist - usableW * 2 - usableH) };
 }
 
 function truncate(text, max) {
@@ -138,7 +101,7 @@ function Petals() {
         p.x += p.drift + Math.sin(p.sway) * 0.35;
         if (p.y > canvas.height + 20) Object.assign(p, makePetal(), { y: -20 });
         ctx.beginPath();
-        ctx.fillStyle = `rgba(230,196,168,${p.opacity})`;
+        ctx.fillStyle = `rgba(240,193,92,${p.opacity})`;
         ctx.ellipse(p.x, p.y, p.r, p.r * 0.65, p.sway, 0, Math.PI * 2);
         ctx.fill();
       });
@@ -156,113 +119,219 @@ function Petals() {
 }
 
 export default function WishesDisplayPage() {
-  const [wishes, setWishes] = useState([]);
-  const [spotlightIndex, setSpotlightIndex] = useState(0);
-  const [wallPage, setWallPage] = useState(0);
   const [status, setStatus] = useState('loading');
-  const [fading, setFading] = useState(false);
-  const [wallFading, setWallFading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [viewport, setViewport] = useState({ w: 1280, h: 720 });
+  const [fading, setFading] = useState(false);
+  const [currentWish, setCurrentWish] = useState(null);
+  const [borderIds, setBorderIds] = useState([]); // which wish ids currently have a DOM card
+
+  // ---------- refs (mutable, don't need re-render on change) ----------
+  const wishesRef = useRef([]);           // full id -> wish map lookup array
+  const knownIdsRef = useRef(new Set());
+  const playOrderRef = useRef([]);
+  const playIndexRef = useRef(0);
+  const advanceTimerRef = useRef(null);
+
+  const borderMetaRef = useRef(new Map()); // id -> { baseOffset }
+  const borderNodesRef = useRef(new Map()); // id -> DOM element
+  const borderCapacityRef = useRef(16);
+  const globalOffsetRef = useRef(0);
+  const lastFrameRef = useRef(0);
+  const rafRef = useRef(null);
+  const viewportRef = useRef({ w: 1280, h: 720 });
+
   const spotlightRef = useRef(null);
   const spotlightMessageRef = useRef(null);
 
-  // ---------- viewport tracking (drives collision-free layout) ----------
+  function getWishById(id) {
+    return wishesRef.current.find((w) => w.id === id) || null;
+  }
+
+  // ---------- data fetching ----------
+  async function loadWishes() {
+    try {
+      const res = await fetch('/api/wishes', { cache: 'no-store' });
+      if (!res.ok) throw new Error('failed');
+      const data = await res.json();
+      const approved = (Array.isArray(data) ? data : []).filter((w) => w.approved !== false);
+      handleNewData(approved);
+    } catch (e) {
+      if (wishesRef.current.length === 0) setStatus('error');
+    }
+  }
+
+  function handleNewData(list) {
+    const incomingIds = new Set(list.map((w) => w.id));
+    const brandNew = [];
+    list.forEach((w) => {
+      if (!knownIdsRef.current.has(w.id)) {
+        knownIdsRef.current.add(w.id);
+        brandNew.push(w);
+      }
+    });
+
+    wishesRef.current = list;
+    playOrderRef.current = playOrderRef.current.filter((id) => incomingIds.has(id));
+    borderMetaRef.current.forEach((_, id) => {
+      if (!incomingIds.has(id)) borderMetaRef.current.delete(id);
+    });
+
+    if (list.length === 0) {
+      setStatus('empty');
+      return;
+    }
+
+    if (playOrderRef.current.length === 0) {
+      // First load: shuffle the play order and seed the border evenly.
+      playOrderRef.current = shuffle(list.map((w) => w.id));
+      const seedCount = Math.min(borderCapacityRef.current, list.length);
+      const seedIds = list.slice(0, seedCount).map((w) => w.id);
+      seedIds.forEach((id, i) => {
+        borderMetaRef.current.set(id, {
+          baseOffset: normalize(i / seedIds.length - globalOffsetRef.current),
+        });
+      });
+      setBorderIds(seedIds);
+      setStatus('ok');
+      startSlideshow();
+    } else {
+      brandNew.forEach((w) => {
+        const insertAt = playIndexRef.current + 1 +
+          Math.floor(Math.random() * Math.max(1, playOrderRef.current.length - playIndexRef.current));
+        playOrderRef.current.splice(Math.min(insertAt, playOrderRef.current.length), 0, w.id);
+        addToBorderFront(w.id);
+      });
+      if (brandNew.length > 0) {
+        setBorderIds(Array.from(borderMetaRef.current.keys()));
+      }
+    }
+  }
+
+  function addToBorderFront(id) {
+    const ordered = Array.from(borderMetaRef.current.entries());
+    const keep = ordered.slice(Math.max(0, ordered.length - (borderCapacityRef.current - 1)));
+    borderMetaRef.current = new Map();
+    borderMetaRef.current.set(id, { baseOffset: normalize(0 - globalOffsetRef.current) });
+    keep.forEach(([oid, meta]) => {
+      borderMetaRef.current.set(oid, meta);
+    });
+  }
+
+  // ---------- center slideshow ----------
+  function startSlideshow() {
+    if (playOrderRef.current.length === 0) return;
+    playIndexRef.current = 0;
+    showWish(playOrderRef.current[0]);
+  }
+
+  function showWish(id) {
+    const wish = getWishById(id);
+    if (!wish) return;
+    setFading(true);
+    setTimeout(() => {
+      setCurrentWish(wish);
+      setFading(false);
+      scheduleAdvance(wish);
+    }, 260);
+  }
+
+  function scheduleAdvance(wish) {
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    const len = (wish.message || '').length;
+    const duration = Math.min(16000, Math.max(6000, 6000 + len * 45));
+    advanceTimerRef.current = setTimeout(advanceSlideshow, duration);
+  }
+
+  function advanceSlideshow() {
+    if (playOrderRef.current.length === 0) return;
+    playIndexRef.current = (playIndexRef.current + 1) % playOrderRef.current.length;
+    showWish(playOrderRef.current[playIndexRef.current]);
+  }
+
+  function featureWishById(id) {
+    const idx = playOrderRef.current.indexOf(id);
+    if (idx !== -1) playIndexRef.current = idx;
+    showWish(id);
+  }
+
+  // ---------- text auto-fit (no scrollbar, ever) ----------
+  useEffect(() => {
+    if (!currentWish) return;
+    const clip = spotlightRef.current;
+    const msg = spotlightMessageRef.current;
+    if (!clip || !msg) return;
+
+    msg.style.fontSize = '';
+    msg.style.animation = 'none';
+    msg.style.transform = 'translateY(0)';
+
+    const raf = requestAnimationFrame(() => {
+      let fontSize = parseFloat(getComputedStyle(msg).fontSize);
+      const minFont = 14;
+      let guard = 0;
+      while (msg.scrollHeight > clip.clientHeight && fontSize > minFont && guard < 30) {
+        fontSize -= 1;
+        msg.style.fontSize = `${fontSize}px`;
+        guard += 1;
+      }
+      if (msg.scrollHeight > clip.clientHeight) {
+        const overflow = msg.scrollHeight - clip.clientHeight;
+        const duration = Math.max(6, overflow / 18);
+        msg.style.setProperty('--wd-scroll-distance', `-${overflow}px`);
+        msg.style.animation = `wd-autoscroll ${duration}s ease-in-out 1.2s infinite alternate`;
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [currentWish]);
+
+  // ---------- fetching + polling ----------
+  useEffect(() => {
+    loadWishes();
+    const t = setInterval(loadWishes, POLL_MS);
+    return () => {
+      clearInterval(t);
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    };
+  }, []);
+
+  // ---------- viewport + capacity ----------
   useEffect(() => {
     function measure() {
-      setViewport({ w: window.innerWidth, h: window.innerHeight });
+      viewportRef.current = { w: window.innerWidth, h: window.innerHeight };
+      const newCap = computeBorderCapacity(viewportRef.current.w, viewportRef.current.h);
+      borderCapacityRef.current = newCap;
+      if (borderMetaRef.current.size > newCap) {
+        const trimmed = Array.from(borderMetaRef.current.entries()).slice(0, newCap);
+        borderMetaRef.current = new Map(trimmed);
+        setBorderIds(trimmed.map(([id]) => id));
+      }
     }
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
   }, []);
 
-  // ---------- data ----------
-  async function loadWishes() {
-    try {
-      const res = await fetch('/api/wishes', { cache: 'no-store' });
-      if (!res.ok) throw new Error('failed');
-      const data = await res.json();
-      setWishes(Array.isArray(data) ? data.filter((w) => w.approved !== false) : []);
-      setStatus('ok');
-    } catch (e) {
-      setStatus('error');
+  // ---------- conveyor animation loop ----------
+  useEffect(() => {
+    lastFrameRef.current = performance.now();
+    function tick(now) {
+      const dt = now - lastFrameRef.current;
+      lastFrameRef.current = now;
+      globalOffsetRef.current = normalize(globalOffsetRef.current + dt / LOOP_DURATION_MS);
+
+      borderMetaRef.current.forEach((meta, id) => {
+        const node = borderNodesRef.current.get(id);
+        if (!node) return;
+        const fraction = normalize(meta.baseOffset + globalOffsetRef.current);
+        const pt = pointOnPerimeter(fraction, viewportRef.current.w, viewportRef.current.h);
+        node.style.transform = `translate(${pt.x}px, ${pt.y}px) translate(-50%, -50%)`;
+      });
+
+      rafRef.current = requestAnimationFrame(tick);
     }
-  }
-
-  useEffect(() => {
-    loadWishes();
-    const t = setInterval(loadWishes, REFRESH_SECONDS * 1000);
-    return () => clearInterval(t);
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
   }, []);
-
-  // ---------- center spotlight rotation ----------
-  useEffect(() => {
-    if (wishes.length < 2) return;
-    const timer = setInterval(() => {
-      setFading(true);
-      setTimeout(() => {
-        setSpotlightIndex((i) => (i + 1) % wishes.length);
-        setFading(false);
-      }, 450);
-    }, SPOTLIGHT_SECONDS * 1000);
-    return () => clearInterval(timer);
-  }, [wishes.length]);
-
-  useEffect(() => {
-    if (spotlightIndex >= wishes.length) setSpotlightIndex(0);
-  }, [wishes, spotlightIndex]);
-
-  // ---------- wall page rotation (only if more wishes than fit at once) ----------
-  const layout = buildLayout(viewport.w, viewport.h);
-  const capacity = layout.length;
-  const spotlight = wishes[spotlightIndex];
-  const nonSpotlight = wishes.filter((_, i) => i !== spotlightIndex);
-  const pageCount = capacity > 0 ? Math.max(1, Math.ceil(nonSpotlight.length / capacity)) : 1;
-
-  // The spotlight card must never grow past this height, or it would start
-  // covering the border cards above/below it.
-  const zones = getZones(viewport.w, viewport.h);
-  const spotlightMaxHeight = Math.max(220, zones.centerBottom - zones.centerTop - 24);
-
-  useEffect(() => {
-    if (!spotlight) return;
-    const card = spotlightRef.current;
-    const msg = spotlightMessageRef.current;
-    if (!card || !msg) return;
-
-    msg.style.fontSize = '';
-    const raf = requestAnimationFrame(() => {
-      let fontSize = parseFloat(getComputedStyle(msg).fontSize);
-      const minFont = 13;
-      let guard = 0;
-      while (card.scrollHeight > spotlightMaxHeight && fontSize > minFont && guard < 30) {
-        fontSize -= 1;
-        msg.style.fontSize = `${fontSize}px`;
-        guard += 1;
-      }
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [spotlight, spotlightMaxHeight]);
-
-  useEffect(() => {
-    if (pageCount <= 1) return;
-    const timer = setInterval(() => {
-      setWallFading(true);
-      setTimeout(() => {
-        setWallPage((p) => (p + 1) % pageCount);
-        setWallFading(false);
-      }, 400);
-    }, WALL_PAGE_SECONDS * 1000);
-    return () => clearInterval(timer);
-  }, [pageCount]);
-
-  useEffect(() => {
-    if (wallPage >= pageCount) setWallPage(0);
-  }, [pageCount, wallPage]);
-
-  const safePage = wallPage % pageCount;
-  const wallWishes = nonSpotlight.slice(safePage * capacity, safePage * capacity + capacity);
 
   // ---------- fullscreen ----------
   useEffect(() => {
@@ -294,36 +363,37 @@ export default function WishesDisplayPage() {
         )}
       </button>
 
-      {status === 'ok' && wallWishes.map((w, i) => {
-        const pos = layout[i];
-        if (!pos) return null;
-        const thumb = w.media && w.media[0];
-        const maxLen = pos.width >= 180 ? 90 : pos.width >= 150 ? 65 : 45;
-        return (
-          <div
-            key={w.id}
-            className={`wd-note ${wallFading ? 'fading' : ''}`}
-            style={{
-              top: `${pos.top}px`,
-              left: `${pos.left}px`,
-              width: `${pos.width}px`,
-              transform: `rotate(${pos.rotate}deg)`,
-            }}
-          >
-            {thumb && (
-              <div className="wd-note-media">
-                {thumb.type === 'video' ? (
-                  <video src={thumb.url} muted playsInline />
-                ) : (
-                  <img src={thumb.url} alt="" />
-                )}
-              </div>
-            )}
-            <p className="wd-note-message">{truncate(w.message, maxLen)}</p>
-            <p className="wd-note-name">{(w.name || '').toUpperCase()}</p>
-          </div>
-        );
-      })}
+      <div className="wd-border-layer" aria-hidden="false">
+        {borderIds.map((id) => {
+          const w = getWishById(id);
+          if (!w) return null;
+          const thumb = w.media && w.media[0];
+          const isFeatured = currentWish && currentWish.id === id;
+          return (
+            <div
+              key={id}
+              ref={(node) => {
+                if (node) borderNodesRef.current.set(id, node);
+                else borderNodesRef.current.delete(id);
+              }}
+              className={`wd-note ${isFeatured ? 'featured' : ''}`}
+              onClick={() => featureWishById(id)}
+            >
+              {thumb && (
+                <div className="wd-note-media">
+                  {thumb.type === 'video' ? (
+                    <video src={thumb.url} muted playsInline />
+                  ) : (
+                    <img src={thumb.url} alt="" />
+                  )}
+                </div>
+              )}
+              <p className="wd-note-message">{truncate(w.message, 85)}</p>
+              <p className="wd-note-name">{(w.name || '').toUpperCase()}</p>
+            </div>
+          );
+        })}
+      </div>
 
       <main className="wd-stage">
         <header className="wd-topbar">
@@ -345,30 +415,32 @@ export default function WishesDisplayPage() {
           </section>
         )}
 
-        {status === 'ok' && wishes.length === 0 && (
+        {status === 'empty' && (
           <section className="wd-error">
             <p>No wishes yet — they&apos;ll appear here as guests share them 💌</p>
           </section>
         )}
 
-        {status === 'ok' && spotlight && (
-          <article ref={spotlightRef} className={`wd-spotlight ${fading ? 'fading' : ''}`} style={{ maxHeight: `${spotlightMaxHeight}px` }}>
+        {status === 'ok' && currentWish && (
+          <article className={`wd-spotlight-outer ${fading ? 'fading' : ''}`}>
             <div className="wd-spotlight-divider">
               <span />
               <i>♥</i>
               <span />
             </div>
-            {spotlight.media && spotlight.media[0] && (
+            {currentWish.media && currentWish.media[0] && (
               <div className="wd-spotlight-media">
-                {spotlight.media[0].type === 'video' ? (
-                  <video src={spotlight.media[0].url} autoPlay muted loop playsInline />
+                {currentWish.media[0].type === 'video' ? (
+                  <video src={currentWish.media[0].url} autoPlay muted loop playsInline />
                 ) : (
-                  <img src={spotlight.media[0].url} alt="" />
+                  <img src={currentWish.media[0].url} alt="" />
                 )}
               </div>
             )}
-            <blockquote ref={spotlightMessageRef} className="wd-spotlight-message">{spotlight.message}</blockquote>
-            <p className="wd-spotlight-name">— {(spotlight.name || '').toUpperCase()}</p>
+            <div ref={spotlightRef} className="wd-spotlight-clip">
+              <blockquote ref={spotlightMessageRef} className="wd-spotlight-message">{currentWish.message}</blockquote>
+            </div>
+            <p className="wd-spotlight-name">— {(currentWish.name || '').toUpperCase()}</p>
             <div className="wd-spotlight-divider">
               <span />
               <i className="dot" />
