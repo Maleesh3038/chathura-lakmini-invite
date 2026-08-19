@@ -1240,14 +1240,14 @@ function SettingsTab({ passcode }) {
 }
 
 const DEFAULT_WA_MESSAGE =
-  "✨ Dear {name},\n" +
-  "We are overjoyed to share some wonderful news with you! 💍\n" +
-  "We cordially and respectfully invite you to join us at our wedding on September 16, 2026, and make our special day even more meaningful. 🌸\n" +
-  "Please tap your personalised invitation link below to view the full wedding schedule, venue details, and to Confirm your attendance (ඔබගේ පැමිණීම තහවුරු කරන්න): 👇\n" +
+  "\u2728 Dear {name},\n" +
+  "We are overjoyed to share some wonderful news with you! \u{1F48D}\n" +
+  "We cordially and respectfully invite you to join us at our wedding on September 16, 2026, and make our special day even more meaningful. \u{1F338}\n" +
+  "Please tap your personalised invitation link below to view the full wedding schedule, venue details, and to Confirm your attendance (\u0D94\u0DB6\u0D9C\u0DDA \u0DB4\u0DD0\u0DB8\u0DD2\u0DAB\u0DD3\u0DB8 \u0DAD\u0DC4\u0DC0\u0DD4\u0DBB\u0DD4 \u0D9A\u0DBB\u0DB1\u0DCA\u0DB1): \u{1F447}\n" +
   "{link}\n" +
   "(Kindly confirm your presence through the RSVP section on the website to help us make the best arrangements for you)\n" +
   "With love,\n" +
-  "Chathura & Lakmini ❤️";
+  "Chathura & Lakmini \u2764\uFE0F";
 
 function GuestLinksTab({ passcode }) {
   const [guestName, setGuestName] = useState('');
