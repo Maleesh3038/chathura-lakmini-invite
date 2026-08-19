@@ -206,8 +206,8 @@ function RsvpTab({ passcode, event = 'wedding' }) {
       : `${waMessageTemplate.replace('{name}', r.name || '')}\n\n${guestLink}`;
     const waPhone = formatPhoneForWhatsApp(r.phone);
     const url = waPhone
-      ? `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`
-      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+      ? `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(message)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   }
 
@@ -1295,7 +1295,7 @@ function GuestLinksTab({ passcode }) {
 
   function shareOnWhatsApp() {
     if (!link) return;
-    window.open(`https://wa.me/?text=${encodeURIComponent(finalMessage)}`, '_blank');
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(finalMessage)}`, '_blank');
   }
 
   async function finishEditingMessage() {
