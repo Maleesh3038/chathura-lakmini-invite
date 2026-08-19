@@ -1251,7 +1251,8 @@ const DEFAULT_WA_MESSAGE =
 
 function GuestLinksTab({ passcode }) {
   const [guestName, setGuestName] = useState('');
-  const [waMessage, setWaMessage] = useState(DEFAULT_WA_MESSAGE);
+  const [activeEvent, setActiveEvent] = useState('wedding');
+  const [waMessages, setWaMessages] = useState({ wedding: DEFAULT_WA_MESSAGE, homecoming: DEFAULT_WA_MESSAGE });
   const [editingMessage, setEditingMessage] = useState(false);
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState('');
@@ -1262,15 +1263,21 @@ function GuestLinksTab({ passcode }) {
     fetch('/api/settings')
       .then((r) => r.json())
       .then((data) => {
-        if (data && data.waMessageTemplate) {
-          setWaMessage(data.waMessageTemplate);
-        }
+        setWaMessages({
+          wedding: (data && data.waMessageTemplate) || DEFAULT_WA_MESSAGE,
+          homecoming: (data && data.homecomingWaMessageTemplate) || DEFAULT_WA_MESSAGE,
+        });
       })
       .catch(() => {});
   }, []);
 
+  const waMessage = waMessages[activeEvent];
+  function setWaMessage(value) {
+    setWaMessages((prev) => ({ ...prev, [activeEvent]: value }));
+  }
+
   const trimmedName = guestName.trim();
-  const link = trimmedName ? `${origin}/wedding?to=${encodeURIComponent(trimmedName)}` : '';
+  const link = trimmedName ? `${origin}/${activeEvent}?to=${encodeURIComponent(trimmedName)}` : '';
   const finalMessage = link
     ? (waMessage.includes('{link}') ? waMessage.replace('{name}', trimmedName).replace('{link}', link) : `${waMessage.replace('{name}', trimmedName)}\n\n${link}`)
     : waMessage;
@@ -1295,10 +1302,11 @@ function GuestLinksTab({ passcode }) {
     setEditingMessage(false);
     setSaveStatus('saving');
     try {
+      const key = activeEvent === 'homecoming' ? 'homecomingWaMessageTemplate' : 'waMessageTemplate';
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-passcode': passcode },
-        body: JSON.stringify({ waMessageTemplate: waMessage }),
+        body: JSON.stringify({ [key]: waMessage }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || json.ok === false) throw new Error(json.error || 'Failed to save');
@@ -1313,9 +1321,27 @@ function GuestLinksTab({ passcode }) {
     <div>
       <div className="admin-edit-form" style={{ maxWidth: 520 }}>
         <label>💌 Generate Guest Link</label>
+
+        <div className="admin-toggle-group" style={{ marginBottom: 14 }}>
+          <button
+            type="button"
+            className={activeEvent === 'wedding' ? 'active' : ''}
+            onClick={() => { setActiveEvent('wedding'); setEditingMessage(false); }}
+          >
+            {activeEvent === 'wedding' && <span className="admin-toggle-check">✓</span>} Wedding
+          </button>
+          <button
+            type="button"
+            className={activeEvent === 'homecoming' ? 'active' : ''}
+            onClick={() => { setActiveEvent('homecoming'); setEditingMessage(false); }}
+          >
+            {activeEvent === 'homecoming' && <span className="admin-toggle-check">✓</span>} Home Coming
+          </button>
+        </div>
+
         <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '2px 0 10px' }}>
-          Type a guest&apos;s name to generate a personalized invitation link — their name
-          will show on a &quot;Dear [Name]&quot; welcome screen for a few seconds when they
+          Type a guest&apos;s name to generate a personalized {activeEvent === 'homecoming' ? 'Home Coming' : 'Wedding'} invitation
+          link — their name will show on a &quot;Dear [Name]&quot; welcome screen for a few seconds when they
           open it, and auto-fill in the RSVP form.
         </p>
         <input
@@ -1342,7 +1368,7 @@ function GuestLinksTab({ passcode }) {
             </div>
 
             <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label style={{ marginTop: 0 }}>📱 WhatsApp Message</label>
+              <label style={{ marginTop: 0 }}>📱 WhatsApp Message ({activeEvent === 'homecoming' ? 'Home Coming' : 'Wedding'})</label>
               <button
                 type="button"
                 className="btn-small"
