@@ -146,6 +146,20 @@ function HcNavBar({ names, songUrl, musicPlaying, onToggleMusic }) {
   );
 }
 
+function HcGuestGreeting({ name, leaving }) {
+  return (
+    <div className={`hc-guest-greeting ${leaving ? 'leaving' : ''}`}>
+      <div className="hc-gg-circle top" />
+      <div className="hc-gg-text">
+        Dear <span className="hc-gg-name">{name}</span>,
+      </div>
+      <div className="hc-gg-divider" />
+      <div className="hc-gg-sub">You&apos;re Invited</div>
+      <div className="hc-gg-circle bottom" />
+    </div>
+  );
+}
+
 function HcCornerFlourish({ flip }) {
   return (
     <svg viewBox="0 0 60 60" width="30" height="30" style={{ transform: flip ? 'scaleX(-1)' : 'none' }}>
@@ -340,12 +354,17 @@ function HcThankYou({ names }) {
   );
 }
 
-export default function HomecomingPage() {
+export default function HomecomingPage({ searchParams }) {
+  const guestNameParam = (searchParams?.to || '').toString().trim() || null;
+
   const [names, setNames] = useState({ groomName: 'Chathura', brideName: 'Lakmini' });
   const [songUrl, setSongUrl] = useState(null);
   const [introOpen, setIntroOpen] = useState(true);
+  const [guestName] = useState(guestNameParam);
+  const [showGreeting, setShowGreeting] = useState(!!guestNameParam);
+  const [greetingLeaving, setGreetingLeaving] = useState(false);
   const [introLeaving, setIntroLeaving] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', side: '', attending: '', guests: 1, drinks: '' });
+  const [form, setForm] = useState({ name: guestNameParam || '', phone: '', side: '', attending: '', guests: 1, drinks: '' });
   const [rsvpStep, setRsvpStep] = useState(0);
   const [status, setStatus] = useState(null);
   const [validationError, setValidationError] = useState('');
@@ -357,6 +376,14 @@ export default function HomecomingPage() {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    if (guestNameParam) {
+      const t1 = setTimeout(() => setGreetingLeaving(true), 5000);
+      const t2 = setTimeout(() => setShowGreeting(false), 5550);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, [guestNameParam]);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -516,7 +543,11 @@ export default function HomecomingPage() {
         {Array.from({ length: 10 }).map((_, i) => <HcPetal key={i} />)}
       </div>
 
-      {introOpen && <HcIntroVideo onEnter={handleEnter} onPlayMusic={playMusic} leaving={introLeaving} names={names} />}
+      {showGreeting && <HcGuestGreeting name={guestName} leaving={greetingLeaving} />}
+
+      {introOpen && (!guestNameParam || greetingLeaving) && (
+        <HcIntroVideo onEnter={handleEnter} onPlayMusic={playMusic} leaving={introLeaving} names={names} />
+      )}
 
       {!introOpen && (
         <>
